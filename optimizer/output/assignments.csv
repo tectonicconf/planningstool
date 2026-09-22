@@ -1,0 +1,92 @@
+volunteer_id,first_name,last_name,shift_id,date,start_time,end_time,venue,location,role_category,preferred_role
+sub_0071,Felix,Van Damme,S018,2026-10-21,07:00,11:00,Wintercircus,Atrium,Setup & Logistics,True
+sub_0137,Bram,Willems,S018,2026-10-21,07:00,11:00,Wintercircus,Atrium,Setup & Logistics,True
+sub_0148,Arthur,Martens,S018,2026-10-21,07:00,11:00,Wintercircus,Atrium,Setup & Logistics,True
+sub_0153,Liam,Willems,S018,2026-10-21,07:00,11:00,Wintercircus,Atrium,Setup & Logistics,True
+sub_0171,Manon,Maes,S018,2026-10-21,07:00,11:00,Wintercircus,Atrium,Setup & Logistics,True
+sub_0197,Camille,De Clercq,S018,2026-10-21,07:00,11:00,Wintercircus,Atrium,Setup & Logistics,True
+sub_0028,Julie,Verhoeven,S019,2026-10-21,07:30,11:30,Wintercircus,Entrance / Atrium,Info & Welcome,True
+sub_0060,Amelie,Claes,S019,2026-10-21,07:30,11:30,Wintercircus,Entrance / Atrium,Info & Welcome,True
+sub_0063,Jules,Jacobs,S019,2026-10-21,07:30,11:30,Wintercircus,Entrance / Atrium,Info & Welcome,True
+sub_0119,Victor,Goossens,S019,2026-10-21,07:30,11:30,Wintercircus,Entrance / Atrium,Info & Welcome,True
+sub_0124,Nina,De Smet,S019,2026-10-21,07:30,11:30,Wintercircus,Entrance / Atrium,Info & Welcome,True
+sub_0155,Emma,Vermeulen,S019,2026-10-21,07:30,11:30,Wintercircus,Entrance / Atrium,Info & Welcome,True
+sub_0159,Arthur,Vermeire,S019,2026-10-21,07:30,11:30,Wintercircus,Entrance / Atrium,Info & Welcome,True
+sub_0182,Emma,Peeters,S019,2026-10-21,07:30,11:30,Wintercircus,Entrance / Atrium,Info & Welcome,True
+sub_0020,Jules,De Vos,S020,2026-10-21,08:00,12:00,Wintercircus,Bar Bassie / Tribune,Food & Drinks,True
+sub_0041,Liam,Claes,S020,2026-10-21,08:00,12:00,Wintercircus,Bar Bassie / Tribune,Food & Drinks,True
+sub_0076,Jules,Baert,S020,2026-10-21,08:00,12:00,Wintercircus,Bar Bassie / Tribune,Food & Drinks,True
+sub_0102,Marie,Vandamme,S020,2026-10-21,08:00,12:00,Wintercircus,Bar Bassie / Tribune,Food & Drinks,True
+sub_0013,Louis,De Clercq,S021,2026-10-21,08:00,12:00,Wintercircus,Main Stage,Stage & Session Support,True
+sub_0049,Elise,Wouters,S021,2026-10-21,08:00,12:00,Wintercircus,Main Stage,Stage & Session Support,True
+sub_0103,Mathias,Mertens,S021,2026-10-21,08:00,12:00,Wintercircus,Main Stage,Stage & Session Support,True
+sub_0188,Mathias,Peeters,S021,2026-10-21,08:00,12:00,Wintercircus,Main Stage,Stage & Session Support,True
+sub_0078,Lucas,Verhoeven,S022,2026-10-21,08:00,12:00,Wintercircus,Innovation Stage,Stage & Session Support,True
+sub_0165,Victor,Maes,S022,2026-10-21,08:00,12:00,Wintercircus,Innovation Stage,Stage & Session Support,True
+sub_0193,Louis,Vermeire,S022,2026-10-21,08:00,12:00,Wintercircus,Innovation Stage,Stage & Session Support,True
+sub_0079,Wout,Janssens,S023,2026-10-21,08:00,12:00,Wintercircus,Main Stage,Technical Support,True
+sub_0110,Louise,Martens,S023,2026-10-21,08:00,12:00,Wintercircus,Main Stage,Technical Support,True
+sub_0145,Louis,Vermeire,S023,2026-10-21,08:00,12:00,Wintercircus,Main Stage,Technical Support,True
+sub_0051,Maxime,Vermeulen,S024,2026-10-21,09:00,13:00,Wintercircus,Atrium / circulation,Guest Flow & Stewarding,True
+sub_0080,Victor,Vermeulen,S024,2026-10-21,09:00,13:00,Wintercircus,Atrium / circulation,Guest Flow & Stewarding,True
+sub_0094,Sophie,Jacobs,S024,2026-10-21,09:00,13:00,Wintercircus,Atrium / circulation,Guest Flow & Stewarding,True
+sub_0098,Nina,Claes,S024,2026-10-21,09:00,13:00,Wintercircus,Atrium / circulation,Guest Flow & Stewarding,True
+sub_0100,Wout,Aerts,S024,2026-10-21,09:00,13:00,Wintercircus,Atrium / circulation,Guest Flow & Stewarding,True
+sub_0139,Seppe,Jacobs,S024,2026-10-21,09:00,13:00,Wintercircus,Atrium / circulation,Guest Flow & Stewarding,True
+sub_0164,Charlotte,Janssens,S024,2026-10-21,09:00,13:00,Wintercircus,Atrium / circulation,Guest Flow & Stewarding,True
+sub_0194,Seppe,De Smet,S024,2026-10-21,09:00,13:00,Wintercircus,Atrium / circulation,Guest Flow & Stewarding,True
+sub_0004,Felix,Wouters,S025,2026-10-21,09:00,13:00,Wintercircus,Workshop Rooms 1 & 2,Guest Flow & Stewarding,True
+sub_0086,Lena,De Smet,S025,2026-10-21,09:00,13:00,Wintercircus,Workshop Rooms 1 & 2,Guest Flow & Stewarding,True
+sub_0089,Arthur,Mertens,S025,2026-10-21,09:00,13:00,Wintercircus,Workshop Rooms 1 & 2,Guest Flow & Stewarding,True
+sub_0141,Thomas,De Clercq,S025,2026-10-21,09:00,13:00,Wintercircus,Workshop Rooms 1 & 2,Guest Flow & Stewarding,True
+sub_0010,Mathias,Mertens,S026,2026-10-21,09:00,13:00,Wintercircus,All floors,Runner & Flexible Support,True
+sub_0033,Louise,De Smet,S026,2026-10-21,09:00,13:00,Wintercircus,All floors,Runner & Flexible Support,True
+sub_0046,Liam,Baert,S026,2026-10-21,09:00,13:00,Wintercircus,All floors,Runner & Flexible Support,True
+sub_0162,Julie,Van Damme,S026,2026-10-21,09:00,13:00,Wintercircus,All floors,Runner & Flexible Support,True
+sub_0167,Laura,Vermeire,S026,2026-10-21,09:00,13:00,Wintercircus,All floors,Runner & Flexible Support,True
+sub_0051,Maxime,Vermeulen,S036,2026-10-21,13:00,17:00,Wintercircus,Entrance / Atrium,Info & Welcome,True
+sub_0060,Amelie,Claes,S036,2026-10-21,13:00,17:00,Wintercircus,Entrance / Atrium,Info & Welcome,True
+sub_0089,Arthur,Mertens,S036,2026-10-21,13:00,17:00,Wintercircus,Entrance / Atrium,Info & Welcome,True
+sub_0119,Victor,Goossens,S036,2026-10-21,13:00,17:00,Wintercircus,Entrance / Atrium,Info & Welcome,True
+sub_0141,Thomas,De Clercq,S036,2026-10-21,13:00,17:00,Wintercircus,Entrance / Atrium,Info & Welcome,True
+sub_0010,Mathias,Mertens,S037,2026-10-21,13:00,17:00,Wintercircus,Rooftop Lounge,Food & Drinks,True
+sub_0020,Jules,De Vos,S037,2026-10-21,13:00,17:00,Wintercircus,Rooftop Lounge,Food & Drinks,True
+sub_0063,Jules,Jacobs,S037,2026-10-21,13:00,17:00,Wintercircus,Rooftop Lounge,Food & Drinks,True
+sub_0194,Seppe,De Smet,S037,2026-10-21,13:00,17:00,Wintercircus,Rooftop Lounge,Food & Drinks,True
+sub_0028,Julie,Verhoeven,S038,2026-10-21,14:00,18:00,Vooruit,Theaterzaal,Stage & Session Support,True
+sub_0188,Mathias,Peeters,S038,2026-10-21,14:00,18:00,Vooruit,Theaterzaal,Stage & Session Support,True
+sub_0013,Louis,De Clercq,S039,2026-10-21,14:00,18:00,Vooruit,Foyer Theaterzaal,Guest Flow & Stewarding,True
+sub_0065,Noah,Aerts,S039,2026-10-21,14:00,18:00,Vooruit,Foyer Theaterzaal,Guest Flow & Stewarding,True
+sub_0166,Jules,Claes,S039,2026-10-21,14:00,18:00,Vooruit,Foyer Theaterzaal,Guest Flow & Stewarding,True
+sub_0167,Laura,Vermeire,S048,2026-10-21,18:00,22:00,Wintercircus,Rooftop Lounge,Food & Drinks,True
+sub_0182,Emma,Peeters,S048,2026-10-21,18:00,22:00,Wintercircus,Rooftop Lounge,Food & Drinks,True
+sub_0194,Seppe,De Smet,S048,2026-10-21,18:00,22:00,Wintercircus,Rooftop Lounge,Food & Drinks,True
+sub_0197,Camille,De Clercq,S048,2026-10-21,18:00,22:00,Wintercircus,Rooftop Lounge,Food & Drinks,True
+sub_0079,Wout,Janssens,S049,2026-10-21,18:00,22:00,Wintercircus,All floors,Runner & Flexible Support,True
+sub_0124,Nina,De Smet,S049,2026-10-21,18:00,22:00,Wintercircus,All floors,Runner & Flexible Support,True
+sub_0174,Maxime,Janssens,S049,2026-10-21,18:00,22:00,Wintercircus,All floors,Runner & Flexible Support,True
+sub_0098,Nina,Claes,S050,2026-10-22,07:00,11:00,Wintercircus,All areas,Setup & Logistics,True
+sub_0110,Louise,Martens,S050,2026-10-22,07:00,11:00,Wintercircus,All areas,Setup & Logistics,True
+sub_0120,Charlotte,Martens,S050,2026-10-22,07:00,11:00,Wintercircus,All areas,Setup & Logistics,True
+sub_0141,Thomas,De Clercq,S050,2026-10-22,07:00,11:00,Wintercircus,All areas,Setup & Logistics,True
+sub_0148,Arthur,Martens,S050,2026-10-22,07:00,11:00,Wintercircus,All areas,Setup & Logistics,True
+sub_0166,Jules,Claes,S050,2026-10-22,07:00,11:00,Wintercircus,All areas,Setup & Logistics,True
+sub_0167,Laura,Vermeire,S050,2026-10-22,07:00,11:00,Wintercircus,All areas,Setup & Logistics,True
+sub_0177,Hanne,Willems,S050,2026-10-22,07:00,11:00,Wintercircus,All areas,Setup & Logistics,True
+sub_0182,Emma,Peeters,S050,2026-10-22,07:00,11:00,Wintercircus,All areas,Setup & Logistics,True
+sub_0187,Amelie,Goossens,S050,2026-10-22,07:00,11:00,Wintercircus,All areas,Setup & Logistics,True
+sub_0020,Jules,De Vos,S051,2026-10-22,07:00,11:00,Vooruit,All areas,Setup & Logistics,True
+sub_0071,Felix,Van Damme,S051,2026-10-22,07:00,11:00,Vooruit,All areas,Setup & Logistics,True
+sub_0086,Lena,De Smet,S051,2026-10-22,07:00,11:00,Vooruit,All areas,Setup & Logistics,True
+sub_0091,Liam,Vermeire,S051,2026-10-22,07:00,11:00,Vooruit,All areas,Setup & Logistics,True
+sub_0137,Bram,Willems,S051,2026-10-22,07:00,11:00,Vooruit,All areas,Setup & Logistics,True
+sub_0155,Emma,Vermeulen,S051,2026-10-22,07:00,11:00,Vooruit,All areas,Setup & Logistics,True
+sub_0163,Emma,Claes,S051,2026-10-22,07:00,11:00,Vooruit,All areas,Setup & Logistics,True
+sub_0165,Victor,Maes,S051,2026-10-22,07:00,11:00,Vooruit,All areas,Setup & Logistics,True
+sub_0004,Felix,Wouters,S052,2026-10-22,08:00,12:00,Wintercircus,All areas,Runner & Flexible Support,True
+sub_0033,Louise,De Smet,S052,2026-10-22,08:00,12:00,Wintercircus,All areas,Runner & Flexible Support,True
+sub_0102,Marie,Vandamme,S052,2026-10-22,08:00,12:00,Wintercircus,All areas,Runner & Flexible Support,True
+sub_0124,Nina,De Smet,S052,2026-10-22,08:00,12:00,Wintercircus,All areas,Runner & Flexible Support,True
+sub_0080,Victor,Vermeulen,S053,2026-10-22,08:00,12:00,Vooruit,All areas,Runner & Flexible Support,True
+sub_0162,Julie,Van Damme,S053,2026-10-22,08:00,12:00,Vooruit,All areas,Runner & Flexible Support,True
+sub_0174,Maxime,Janssens,S053,2026-10-22,08:00,12:00,Vooruit,All areas,Runner & Flexible Support,True
