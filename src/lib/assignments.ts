@@ -1,0 +1,48 @@
+"use server";
+
+import { supabaseAdmin } from "@/lib/supabase";
+
+export type AssignmentResponse = "accept" | "decline";
+
+export type RespondToAssignmentResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+// Ownership is re-derived from the token on every call rather than trusted
+// from the client, and only a still-`pending` row for that volunteer can be
+// changed — see AGENTS.md / Next.js data-security guide on Server Actions.
+export async function respondToAssignment(
+  token: string,
+  assignmentId: number,
+  response: AssignmentResponse,
+): Promise<RespondToAssignmentResult> {
+  const { data: volunteer, error: volunteerError } = await supabaseAdmin
+    .from("volunteers")
+    .select("id")
+    .eq("magic_link_token", token)
+    .maybeSingle();
+
+  if (volunteerError || !volunteer) {
+    return { ok: false, error: "Volunteer not found." };
+  }
+
+  const newStatus = response === "accept" ? "confirmed" : "cancelled";
+
+  const { data, error } = await supabaseAdmin
+    .from("assignments")
+    .update({ status: newStatus })
+    .eq("id", assignmentId)
+    .eq("volunteer_id", volunteer.id)
+    .eq("status", "pending")
+    .select("id");
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  if (!data || data.length === 0) {
+    return { ok: false, error: "This shift is no longer pending." };
+  }
+
+  return { ok: true };
+}
