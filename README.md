@@ -222,27 +222,29 @@ If no eligible backup exists, the position remains open.
 - `last_name`
 - `email`
 - `phone_number`
-- `access_code`
-- `magic_link_token`
+- `magic_link_token` — long, random, unguessable. Doubles as the volunteer's access code: there is no separate one.
 - `preferences`
 - `availability`
 - `is_backup`
 - `wants_responsibility`
 - `association`
-- `uploaded_video`
+- `approval_status` (`approved`, `not_approved`, `unreviewed`)
+- `uploaded_video` (boolean — whether they submitted one, used to spot motivated volunteers; not the video itself)
 - `created_at`
 
 ### `shifts`
 
 - `id`
+- `date`
 - `day`
 - `slot`
 - `start_time`
 - `end_time`
 - `hours`
-- `location`
+- `location` (venue and room combined, e.g. "Vooruit - Concertzaal" — the venues are close together and not filtered on separately)
 - `role_category`
 - `volunteers_needed`
+- `event_context`
 - `created_at`
 
 ### `assignments`
@@ -251,12 +253,9 @@ If no eligible backup exists, the position remains open.
 - `volunteer_id`
 - `shift_id`
 - `status` (`pending`, `confirmed`, `cancelled`)
-- `cancellation_reason`
-- `updated_at`
-- `updated_by`
-- `last_email_sent_at`
-- `last_email_type`
 - `created_at`
+
+Fields like a cancellation reason, an email-send log, or an audit trail of who last changed a row aren't tracked yet — they'll get added (likely via a related table) once those features are actually built.
 
 For capacity calculations:
 

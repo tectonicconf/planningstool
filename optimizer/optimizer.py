@@ -7,6 +7,8 @@ from load_data import (
     load_all_data,
     volunteer_available_for_shift,
     volunteer_prefers_shift,
+    write_volunteers_csv,
+    write_shifts_csv,
 )
 
 
@@ -26,13 +28,13 @@ ASSIGNMENTS_FILE = OUTPUT_DIR / "assignments.csv"
 # OBJECTIVE WEIGHTS
 # ------------------------------------------------------------
 #
+# Filling shifts is solved as its own phase below (see PHASE 1 /
+# PHASE 2), so it always wins over preferences, no matter what
+# these weights are set to. These only break ties *among*
+# schedules that already fill the maximum number of positions.
+#
 # Higher weight = more important to the optimizer.
-#
-# Filling shifts is intentionally much more important than
-# matching preferences.
-#
 
-FILL_SHIFT_WEIGHT = 100
 ROLE_PREFERENCE_WEIGHT = 10
 DESIRED_SHIFT_WEIGHT = 15
 
@@ -112,6 +114,12 @@ def optimize():
 
     volunteer_ids = list(volunteers.keys())
     shift_ids = list(shifts.keys())
+
+    # Cleaned, Supabase-ready volunteers/shifts exports. These
+    # don't depend on the solve below, so they're written as
+    # soon as the source data is loaded.
+    write_volunteers_csv(volunteers, availability, role_preferences)
+    write_shifts_csv(shifts)
 
     print()
     print("Building optimization model...")
@@ -242,26 +250,59 @@ def optimize():
         )
 
     # ========================================================
-    # OBJECTIVE
+    # PHASE 1
+    # MAXIMIZE FILLED POSITIONS
+    # ========================================================
+    #
+    # This is solved as its own objective, in isolation, so
+    # filling a shift can never be traded away for a preference
+    # or a desired-shift-count match later on.
+
+    total_filled = sum(
+        x[volunteer_id, shift_id]
+        for volunteer_id in volunteer_ids
+        for shift_id in shift_ids
+    )
+
+    model.Maximize(total_filled)
+
+    solver = cp_model.CpSolver()
+
+    # Gives OR-Tools multiple CPU threads.
+    solver.parameters.num_search_workers = 8
+
+    status = solver.Solve(model)
+
+    if status not in {
+        cp_model.OPTIMAL,
+        cp_model.FEASIBLE,
+    }:
+
+        print()
+        print("No feasible schedule found.")
+
+        return
+
+    max_filled = int(solver.Value(total_filled))
+
+    print()
+    print(f"Phase 1: {max_filled} positions can be filled.")
+
+    # Lock that count in. Phase 2 can only decide WHO fills each
+    # spot, never fill fewer spots to chase a preference.
+
+    model.Add(
+        total_filled == max_filled
+    )
+
+    # ========================================================
+    # PHASE 2
+    # AMONG SCHEDULES THAT FILL THE MAX, PREFER...
     # ========================================================
 
     objective_terms = []
 
     # --------------------------------------------------------
-    # OBJECTIVE 1
-    # FILL AS MANY POSITIONS AS POSSIBLE
-    # --------------------------------------------------------
-
-    for volunteer_id in volunteer_ids:
-        for shift_id in shift_ids:
-
-            objective_terms.append(
-                FILL_SHIFT_WEIGHT
-                * x[volunteer_id, shift_id]
-            )
-
-    # --------------------------------------------------------
-    # OBJECTIVE 2
     # ROLE PREFERENCES
     # --------------------------------------------------------
 
@@ -283,7 +324,6 @@ def optimize():
                 )
 
     # --------------------------------------------------------
-    # OBJECTIVE 3
     # DESIRED NUMBER OF SHIFTS
     # --------------------------------------------------------
 
@@ -331,7 +371,7 @@ def optimize():
         )
 
     # --------------------------------------------------------
-    # MAXIMIZE TOTAL SCORE
+    # MAXIMIZE PREFERENCE SCORE
     # --------------------------------------------------------
 
     model.Maximize(
@@ -341,11 +381,6 @@ def optimize():
     # ========================================================
     # SOLVE
     # ========================================================
-
-    solver = cp_model.CpSolver()
-
-    # Gives OR-Tools multiple CPU threads.
-    solver.parameters.num_search_workers = 8
 
     status = solver.Solve(model)
 
@@ -395,6 +430,7 @@ def optimize():
                 )
 
                 assignments.append({
+                    "id": len(assignments) + 1,
                     "volunteer_id": volunteer_id,
                     "first_name": volunteer[
                         "first_name"
@@ -418,24 +454,24 @@ def optimize():
                         "role_category"
                     ],
                     "preferred_role": preferred,
+                    # Every assignment starts out awaiting the
+                    # volunteer's confirmation via their personal
+                    # link (see README's Email/Backup flows).
+                    "status": "pending",
                 })
 
     # ========================================================
     # WRITE OUTPUT CSV
     # ========================================================
 
+    # volunteer_id/shift_id is all the `assignments` table needs —
+    # everything else about a volunteer or shift is looked up via
+    # a join, so writing it here would just be duplicated data.
     fieldnames = [
+        "id",
         "volunteer_id",
-        "first_name",
-        "last_name",
         "shift_id",
-        "date",
-        "start_time",
-        "end_time",
-        "venue",
-        "location",
-        "role_category",
-        "preferred_role",
+        "status",
     ]
 
     with open(
@@ -448,6 +484,7 @@ def optimize():
         writer = csv.DictWriter(
             file,
             fieldnames=fieldnames,
+            extrasaction="ignore",
         )
 
         writer.writeheader()

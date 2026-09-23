@@ -10,8 +10,8 @@ export async function getVolunteerByToken(
 ): Promise<Volunteer | null> {
   const { data, error } = await supabaseAdmin
     .from("volunteers")
-    .select('firstName:"First Name", lastName:"Last Name"')
-    .eq("Respondent ID", token)
+    .select("firstName:first_name, lastName:last_name")
+    .eq("magic_link_token", token)
     .maybeSingle();
 
   if (error) {

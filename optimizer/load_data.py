@@ -1,6 +1,7 @@
 from pathlib import Path
 from datetime import datetime
 import csv
+import secrets
 
 
 # ============================================================
@@ -15,6 +16,9 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 
 VOLUNTEERS_FILE = INPUT_DIR / "volunteers.csv"
 SHIFTS_FILE = INPUT_DIR / "shifts.csv"
+
+VOLUNTEERS_OUTPUT_FILE = OUTPUT_DIR / "volunteers.csv"
+SHIFTS_OUTPUT_FILE = OUTPUT_DIR / "shifts.csv"
 
 
 # ============================================================
@@ -116,6 +120,17 @@ def parse_time(value):
     ).time()
 
 
+def generate_magic_link_token():
+    """
+    A URL-safe random token, unguessable and unrelated to any
+    Tally-assigned ID. This is what volunteers use to access
+    their personal shift page — there is no separate access
+    code.
+    """
+
+    return secrets.token_urlsafe(24)
+
+
 def parse_desired_shifts(value):
     """
     Convert the Tally answer into a value that is easier
@@ -185,10 +200,12 @@ def load_volunteers():
             # VOLUNTEER ID
             # --------------------------------------------
 
-            # Use Tally's Submission ID when available.
+            # Use Tally's Respondent ID when available. This is the
+            # same ID the webapp matches personal links against
+            # (see lib/volunteers.ts), so it must stay in sync.
             # Fallback makes fake/test data robust.
             volunteer_id = (
-                row.get("Submission ID", "").strip()
+                row.get("Respondent ID", "").strip()
                 or f"V{index:03d}"
             )
 
@@ -250,6 +267,22 @@ def load_volunteers():
                 # Backup is NOT a Tally answer.
                 # New volunteers start as non-backup.
                 "is_backup": False,
+
+                # A boolean is enough here: this is only used
+                # later to spot motivated volunteers, not to
+                # store/play the video itself.
+                "uploaded_video": bool(
+                    row.get(
+                        "Introduce yourself! 🎥",
+                        ""
+                    ).strip()
+                ),
+
+                # Admins judge this later; nobody has been
+                # reviewed yet at load time.
+                "approval_status": "unreviewed",
+
+                "magic_link_token": generate_magic_link_token(),
             }
 
             # --------------------------------------------
@@ -553,6 +586,164 @@ def load_all_data():
         "shifts": shifts,
         "time_slots": TIME_SLOTS,
     }
+
+
+# ============================================================
+# EXPORT CLEANED CSVs FOR SUPABASE
+# ============================================================
+#
+# These mirror the `volunteers` / `shifts` tables in README.md,
+# built from the already-parsed data rather than passed through
+# from the raw input files.
+
+def write_volunteers_csv(
+    volunteers,
+    availability,
+    role_preferences,
+    path=VOLUNTEERS_OUTPUT_FILE,
+):
+
+    preferences_by_volunteer = {}
+
+    for volunteer_id, role in role_preferences:
+        preferences_by_volunteer.setdefault(
+            volunteer_id, []
+        ).append(role)
+
+    availability_by_volunteer = {}
+
+    for volunteer_id, date, slot in availability:
+        availability_by_volunteer.setdefault(
+            volunteer_id, []
+        ).append((date, slot))
+
+    fieldnames = [
+        "id",
+        "first_name",
+        "last_name",
+        "email",
+        "phone_number",
+        "association",
+        "wants_responsibility",
+        "is_backup",
+        "approval_status",
+        "uploaded_video",
+        "magic_link_token",
+        "preferences",
+        "availability",
+    ]
+
+    with open(
+        path,
+        "w",
+        newline="",
+        encoding="utf-8",
+    ) as file:
+
+        writer = csv.DictWriter(
+            file,
+            fieldnames=fieldnames,
+        )
+
+        writer.writeheader()
+
+        for volunteer_id, volunteer in volunteers.items():
+
+            preferences = sorted(
+                preferences_by_volunteer.get(volunteer_id, []),
+                key=ROLE_CATEGORIES.index,
+            )
+
+            volunteer_availability = sorted(
+                availability_by_volunteer.get(volunteer_id, [])
+            )
+
+            writer.writerow({
+                "id": volunteer["id"],
+                "first_name": volunteer["first_name"],
+                "last_name": volunteer["last_name"],
+                "email": volunteer["email"],
+                "phone_number": volunteer["phone_number"],
+                "association": volunteer["association"],
+                "wants_responsibility": volunteer[
+                    "wants_responsibility"
+                ],
+                "is_backup": volunteer["is_backup"],
+                "approval_status": volunteer[
+                    "approval_status"
+                ],
+                "uploaded_video": volunteer["uploaded_video"],
+                "magic_link_token": volunteer[
+                    "magic_link_token"
+                ],
+                "preferences": "; ".join(preferences),
+                "availability": "; ".join(
+                    f"{date} {slot}"
+                    for date, slot in volunteer_availability
+                ),
+            })
+
+
+def write_shifts_csv(
+    shifts,
+    path=SHIFTS_OUTPUT_FILE,
+):
+
+    # venue + location merge into one field: the venues are
+    # close together and not something the admin view filters
+    # on separately.
+
+    fieldnames = [
+        "id",
+        "date",
+        "day",
+        "slot",
+        "start_time",
+        "end_time",
+        "hours",
+        "location",
+        "role_category",
+        "volunteers_needed",
+        "event_context",
+    ]
+
+    with open(
+        path,
+        "w",
+        newline="",
+        encoding="utf-8",
+    ) as file:
+
+        writer = csv.DictWriter(
+            file,
+            fieldnames=fieldnames,
+        )
+
+        writer.writeheader()
+
+        for shift in shifts.values():
+
+            writer.writerow({
+                "id": shift["id"],
+                "date": shift["date"],
+                "day": shift["day"],
+                "slot": shift["slot"],
+                "start_time": (
+                    shift["start_time"].strftime("%H:%M")
+                ),
+                "end_time": (
+                    shift["end_time"].strftime("%H:%M")
+                ),
+                "hours": shift["hours"],
+                "location": (
+                    f'{shift["venue"]} - {shift["location"]}'
+                ),
+                "role_category": shift["role_category"],
+                "volunteers_needed": shift[
+                    "volunteers_needed"
+                ],
+                "event_context": shift["event_context"],
+            })
 
 
 # ============================================================

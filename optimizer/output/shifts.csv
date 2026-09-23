@@ -1,0 +1,54 @@
+id,date,day,slot,start_time,end_time,hours,location,role_category,volunteers_needed,event_context
+S001,2026-10-20,Tuesday,Morning,07:00,11:00,4.0,Vooruit - Concertzaal,Setup & Logistics,8,Hackathon setup
+S002,2026-10-20,Tuesday,Morning,08:00,12:00,4.0,Vooruit - Foyer Concertzaal,Info & Welcome,3,Hackathon arrival desk
+S003,2026-10-20,Tuesday,Morning,09:00,13:00,4.0,Vooruit - Concertzaal,Technical Support,3,Hackathon
+S004,2026-10-20,Tuesday,Morning,09:00,13:00,4.0,Vooruit - Concertzaal,Runner & Flexible Support,3,Hackathon
+S005,2026-10-20,Tuesday,Afternoon,12:00,16:00,4.0,Vooruit - Concertzaal,Guest Flow & Stewarding,4,Hackathon
+S006,2026-10-20,Tuesday,Afternoon,12:00,16:00,4.0,Vooruit - Foyer Concertzaal,Food & Drinks,4,Hackathon
+S007,2026-10-20,Tuesday,Afternoon,13:00,17:00,4.0,Vooruit - Concertzaal,Technical Support,3,Hackathon
+S008,2026-10-20,Tuesday,Afternoon,14:00,18:00,4.0,Vooruit - Concertzaal,Runner & Flexible Support,3,Hackathon
+S009,2026-10-20,Tuesday,Afternoon,15:00,19:00,4.0,Wintercircus - Workshop Room 1,Stage & Session Support,2,Hackathon semi-final pitch
+S010,2026-10-20,Tuesday,Afternoon,15:00,19:00,4.0,Wintercircus - Workshop Room 2,Guest Flow & Stewarding,2,Hackathon semi-final pitch
+S011,2026-10-20,Tuesday,Evening,17:00,21:00,4.0,Vooruit - Theaterzaal,Stage & Session Support,3,Hackathon final pitch
+S012,2026-10-20,Tuesday,Evening,17:00,21:00,4.0,Vooruit - Foyer Theaterzaal,Guest Flow & Stewarding,4,Hackathon final pitch
+S013,2026-10-20,Tuesday,Evening,18:00,22:00,4.0,Wintercircus - Club Wintercircus,Food & Drinks,4,Hackathon final reception
+S014,2026-10-20,Tuesday,Evening,18:00,22:00,4.0,Wintercircus - Foyer Club Wintercircus,Info & Welcome,3,Hackathon final reception
+S015,2026-10-20,Tuesday,Evening,20:00,00:00,4.0,Wintercircus - Main Stage / Club,Guest Flow & Stewarding,6,Tecnotonic
+S016,2026-10-20,Tuesday,Evening,20:00,00:00,4.0,Wintercircus - Main Stage / Club,Technical Support,3,Tecnotonic
+S017,2026-10-20,Tuesday,Evening,20:00,00:00,4.0,Wintercircus - Bar Bougie,Food & Drinks,5,Tecnotonic
+S018,2026-10-21,Wednesday,Morning,07:00,11:00,4.0,Wintercircus - Atrium,Setup & Logistics,6,Main event opening setup
+S019,2026-10-21,Wednesday,Morning,07:30,11:30,4.0,Wintercircus - Entrance / Atrium,Info & Welcome,8,Registration & arrival
+S020,2026-10-21,Wednesday,Morning,08:00,12:00,4.0,Wintercircus - Bar Bassie / Tribune,Food & Drinks,4,Breakfast & morning catering
+S021,2026-10-21,Wednesday,Morning,08:00,12:00,4.0,Wintercircus - Main Stage,Stage & Session Support,4,Opening & keynotes
+S022,2026-10-21,Wednesday,Morning,08:00,12:00,4.0,Wintercircus - Innovation Stage,Stage & Session Support,3,Morning sessions
+S023,2026-10-21,Wednesday,Morning,08:00,12:00,4.0,Wintercircus - Main Stage,Technical Support,3,Opening & keynotes
+S024,2026-10-21,Wednesday,Morning,09:00,13:00,4.0,Wintercircus - Atrium / circulation,Guest Flow & Stewarding,8,Main event
+S025,2026-10-21,Wednesday,Morning,09:00,13:00,4.0,Wintercircus - Workshop Rooms 1 & 2,Guest Flow & Stewarding,4,Pitch advice / partner sessions
+S026,2026-10-21,Wednesday,Morning,09:00,13:00,4.0,Wintercircus - All floors,Runner & Flexible Support,5,Main event
+S027,2026-10-21,Wednesday,Morning,10:00,14:00,4.0,Vooruit - Theaterzaal,Stage & Session Support,2,Vertical sessions
+S028,2026-10-21,Wednesday,Morning,10:00,14:00,4.0,Vooruit - Foyer Theaterzaal,Guest Flow & Stewarding,2,Vertical sessions
+S029,2026-10-21,Wednesday,Afternoon,11:30,15:30,4.0,Vooruit - Foyer Concertzaal,Food & Drinks,4,Catering Vooruit
+S030,2026-10-21,Wednesday,Afternoon,12:00,16:00,4.0,Wintercircus - Main Stage,Stage & Session Support,4,Keynotes & panels
+S031,2026-10-21,Wednesday,Afternoon,12:00,16:00,4.0,Wintercircus - Innovation Stage,Stage & Session Support,3,Afternoon sessions
+S032,2026-10-21,Wednesday,Afternoon,12:00,16:00,4.0,Wintercircus - Main Stage,Technical Support,3,Keynotes & panels
+S033,2026-10-21,Wednesday,Afternoon,12:00,16:00,4.0,Wintercircus - Atrium / circulation,Guest Flow & Stewarding,8,Main event
+S034,2026-10-21,Wednesday,Afternoon,12:00,16:00,4.0,Wintercircus - Workshop Rooms 1 & 2,Guest Flow & Stewarding,4,Feedback / partner sessions
+S035,2026-10-21,Wednesday,Afternoon,12:00,16:00,4.0,Wintercircus - All floors,Runner & Flexible Support,5,Main event
+S036,2026-10-21,Wednesday,Afternoon,13:00,17:00,4.0,Wintercircus - Entrance / Atrium,Info & Welcome,5,Afternoon arrivals
+S037,2026-10-21,Wednesday,Afternoon,13:00,17:00,4.0,Wintercircus - Rooftop Lounge,Food & Drinks,4,Partner / networking area
+S038,2026-10-21,Wednesday,Afternoon,14:00,18:00,4.0,Vooruit - Theaterzaal,Stage & Session Support,2,Impact / final pitch
+S039,2026-10-21,Wednesday,Afternoon,14:00,18:00,4.0,Vooruit - Foyer Theaterzaal,Guest Flow & Stewarding,3,Impact / final pitch
+S040,2026-10-21,Wednesday,Afternoon,15:00,19:00,4.0,Wintercircus - Main Stage,Stage & Session Support,4,Panels & closing sessions
+S041,2026-10-21,Wednesday,Afternoon,15:00,19:00,4.0,Wintercircus - Main Stage,Technical Support,3,Panels & closing sessions
+S042,2026-10-21,Wednesday,Afternoon,15:00,19:00,4.0,Wintercircus - Atrium / circulation,Guest Flow & Stewarding,6,Late afternoon / closing
+S043,2026-10-21,Wednesday,Afternoon,15:00,19:00,4.0,Wintercircus - All floors,Runner & Flexible Support,4,Main event
+S044,2026-10-21,Wednesday,Evening,16:00,20:00,4.0,Vooruit - Foyer Concertzaal,Food & Drinks,4,VIP dinner mise-en-place
+S045,2026-10-21,Wednesday,Evening,17:00,21:00,4.0,Vooruit - Concertzaal,Food & Drinks,6,VIP dinner
+S046,2026-10-21,Wednesday,Evening,17:00,21:00,4.0,Vooruit - Concertzaal / Foyer,Guest Flow & Stewarding,4,VIP dinner
+S047,2026-10-21,Wednesday,Evening,17:00,21:00,4.0,Wintercircus - Atrium,Guest Flow & Stewarding,4,Closing / departure
+S048,2026-10-21,Wednesday,Evening,18:00,22:00,4.0,Wintercircus - Rooftop Lounge,Food & Drinks,4,Evening networking
+S049,2026-10-21,Wednesday,Evening,18:00,22:00,4.0,Wintercircus - All floors,Runner & Flexible Support,3,Closing operations
+S050,2026-10-22,Thursday,Morning,07:00,11:00,4.0,Wintercircus - All areas,Setup & Logistics,10,Breakdown / clean-up
+S051,2026-10-22,Thursday,Morning,07:00,11:00,4.0,Vooruit - All areas,Setup & Logistics,8,Breakdown / clean-up
+S052,2026-10-22,Thursday,Morning,08:00,12:00,4.0,Wintercircus - All areas,Runner & Flexible Support,4,Breakdown support
+S053,2026-10-22,Thursday,Morning,08:00,12:00,4.0,Vooruit - All areas,Runner & Flexible Support,3,Breakdown support
