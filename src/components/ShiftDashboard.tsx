@@ -4,28 +4,7 @@ import { useState } from "react";
 import { respondToAssignment } from "@/lib/assignments";
 import type { Shift } from "@/lib/shifts";
 import { ShiftCard } from "@/components/ShiftCard";
-
-function Modal({
-  onClose,
-  children,
-}: {
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-6"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-sm rounded-2xl border border-blue-400/20 bg-[#0a0f35] p-6 text-white shadow-xl"
-        onClick={(event) => event.stopPropagation()}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
+import { Modal } from "@/components/Modal";
 
 export function ShiftDashboard({
   token,
@@ -143,55 +122,62 @@ export function ShiftDashboard({
 
       {declineTarget && (
         <Modal onClose={() => setDeclineTarget(null)}>
-          <h3 className="text-xl font-bold">Sad to see you go 😢</h3>
-          <p className="mt-2 text-sm text-blue-100/70">
-            Are you sure you want to decline this shift? We&apos;ll look for
-            someone to cover it instead.
-          </p>
-          <div className="mt-6 flex gap-3">
-            <button
-              type="button"
-              onClick={() => setDeclineTarget(null)}
-              className="flex-1 rounded-full border border-blue-400/40 py-2 text-sm font-semibold text-blue-100 hover:border-blue-300/70"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              disabled={updatingId === declineTarget.assignmentId}
-              onClick={handleDeclineConfirm}
-              className="flex-1 rounded-full bg-red-500/80 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50"
-            >
-              Yes, decline
-            </button>
+          <div className="w-full max-w-sm rounded-2xl border border-blue-400/20 bg-[#0a0f35] p-6 text-white shadow-xl">
+            <h3 className="text-xl font-bold">Sad to see you go 😢</h3>
+            <p className="mt-2 text-sm text-blue-100/70">
+              Are you sure you want to decline this shift? We&apos;ll look
+              for someone to cover it instead.
+            </p>
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setDeclineTarget(null)}
+                className="flex-1 rounded-full border border-blue-400/40 py-2 text-sm font-semibold text-blue-100 hover:border-blue-300/70"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={updatingId === declineTarget.assignmentId}
+                onClick={handleDeclineConfirm}
+                className="flex-1 rounded-full bg-red-500/80 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50"
+              >
+                Yes, decline
+              </button>
+            </div>
           </div>
         </Modal>
       )}
 
       {feedback && (
         <Modal onClose={() => setFeedback(null)}>
-          {feedback === "accepted" ? (
-            <>
-              <h3 className="text-xl font-bold">You&apos;re confirmed! 🎉</h3>
-              <p className="mt-2 text-sm text-blue-100/70">
-                Thanks for confirming — we&apos;ll see you at Tectonic 2026.
-              </p>
-            </>
-          ) : (
-            <>
-              <h3 className="text-xl font-bold">Shift declined</h3>
-              <p className="mt-2 text-sm text-blue-100/70">
-                No worries — thanks for letting us know in time.
-              </p>
-            </>
-          )}
-          <button
-            type="button"
-            onClick={() => setFeedback(null)}
-            className="mt-6 w-full rounded-full bg-gradient-to-b from-blue-500 to-blue-700 py-2 text-sm font-semibold text-white hover:brightness-110"
-          >
-            Close
-          </button>
+          <div className="w-full max-w-sm rounded-2xl border border-blue-400/20 bg-[#0a0f35] p-6 text-white shadow-xl">
+            {feedback === "accepted" ? (
+              <>
+                <h3 className="text-xl font-bold">
+                  You&apos;re confirmed! 🎉
+                </h3>
+                <p className="mt-2 text-sm text-blue-100/70">
+                  Thanks for confirming — we&apos;ll see you at Tectonic
+                  2026.
+                </p>
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-bold">Shift declined</h3>
+                <p className="mt-2 text-sm text-blue-100/70">
+                  No worries — thanks for letting us know in time.
+                </p>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={() => setFeedback(null)}
+              className="mt-6 w-full rounded-full bg-gradient-to-b from-blue-500 to-blue-700 py-2 text-sm font-semibold text-white hover:brightness-110"
+            >
+              Close
+            </button>
+          </div>
         </Modal>
       )}
     </div>

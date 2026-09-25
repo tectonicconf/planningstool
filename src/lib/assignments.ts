@@ -1,6 +1,8 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase";
+import { getShiftsForToken } from "@/lib/shifts";
+import { sendConfirmationEmail } from "@/lib/email";
 
 export type AssignmentResponse = "accept" | "decline";
 
@@ -18,7 +20,7 @@ export async function respondToAssignment(
 ): Promise<RespondToAssignmentResult> {
   const { data: volunteer, error: volunteerError } = await supabaseAdmin
     .from("volunteers")
-    .select("id")
+    .select("id, first_name, email")
     .eq("magic_link_token", token)
     .maybeSingle();
 
@@ -42,6 +44,30 @@ export async function respondToAssignment(
 
   if (!data || data.length === 0) {
     return { ok: false, error: "This shift is no longer pending." };
+  }
+
+  if (response === "accept" && volunteer.email) {
+    try {
+      const confirmedShifts = (await getShiftsForToken(token)).filter(
+        (shift) => shift.status === "confirmed",
+      );
+
+      const confirmedShift = confirmedShifts.find(
+        (shift) => shift.assignmentId === assignmentId,
+      );
+
+      if (confirmedShift) {
+        await sendConfirmationEmail({
+          to: volunteer.email,
+          firstName: volunteer.first_name,
+          token,
+          confirmedShift,
+          allConfirmedShifts: confirmedShifts,
+        });
+      }
+    } catch (emailError) {
+      console.error("Failed to send confirmation email:", emailError);
+    }
   }
 
   return { ok: true };

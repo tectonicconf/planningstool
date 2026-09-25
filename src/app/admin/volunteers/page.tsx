@@ -1,12 +1,14 @@
-import { VolunteerTable } from "@/components/VolunteerTable";
+import { getVolunteersWithAssignments } from "@/lib/adminVolunteers";
+import { getShiftDirectory } from "@/lib/adminPlanning";
+import { VolunteersBoard } from "@/components/admin/VolunteersBoard";
 
-export default function AdminVolunteersPage() {
+export default async function AdminVolunteersPage() {
+  const [volunteers, shiftDirectory] = await Promise.all([
+    getVolunteersWithAssignments(),
+    getShiftDirectory(),
+  ]);
+
   return (
-    <div className="min-h-screen bg-[#050822] px-6 py-12 text-white">
-      <h1 className="text-3xl font-bold">Volunteers</h1>
-      <div className="mt-8">
-        <VolunteerTable volunteers={[]} />
-      </div>
-    </div>
+    <VolunteersBoard initialVolunteers={volunteers} shiftDirectory={shiftDirectory} />
   );
 }

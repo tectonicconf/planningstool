@@ -2,15 +2,30 @@
 
 import { useState, type SubmitEvent } from "react";
 import { useRouter } from "next/navigation";
+import { getVolunteerByToken } from "@/lib/volunteers";
 
 export default function Home() {
   const router = useRouter();
   const [token, setToken] = useState("");
+  const [checking, setChecking] = useState(false);
+  const [invalid, setInvalid] = useState(false);
 
-  function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmed = token.trim();
     if (!trimmed) return;
+
+    setChecking(true);
+    setInvalid(false);
+
+    const volunteer = await getVolunteerByToken(trimmed);
+
+    if (!volunteer) {
+      setChecking(false);
+      setInvalid(true);
+      return;
+    }
+
     router.push(`/shift/${encodeURIComponent(trimmed)}`);
   }
 
@@ -70,17 +85,26 @@ export default function Home() {
             <input
               type="text"
               value={token}
-              onChange={(event) => setToken(event.target.value)}
+              onChange={(event) => {
+                setToken(event.target.value);
+                setInvalid(false);
+              }}
               placeholder="Enter your unique access token"
-              className="w-full rounded-full border border-blue-400/40 bg-blue-950/30 py-4 px-12 text-center font-mono text-sm text-white placeholder:text-blue-200/40 outline-none transition-colors focus:border-blue-300/70"
+              onAnimationEnd={() => setInvalid(false)}
+              className={`w-full rounded-full border py-4 px-12 text-center font-mono text-sm text-white placeholder:text-blue-200/40 outline-none transition-colors ${
+                invalid
+                  ? "animate-shake border-red-400/70 bg-red-950/20"
+                  : "border-blue-400/40 bg-blue-950/30 focus:border-blue-300/70"
+              }`}
             />
           </div>
 
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-b from-blue-500 to-blue-700 py-4 font-semibold text-white shadow-lg shadow-blue-900/40 transition-transform hover:brightness-110 active:scale-[0.99]"
+            disabled={checking}
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-b from-blue-500 to-blue-700 py-4 font-semibold text-white shadow-lg shadow-blue-900/40 transition-transform hover:brightness-110 active:scale-[0.99] disabled:opacity-60"
           >
-            Continue
+            {checking ? "Checking..." : "Continue"}
             <span aria-hidden="true">&rarr;</span>
           </button>
         </form>
