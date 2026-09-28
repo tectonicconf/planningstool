@@ -5,6 +5,7 @@ import { respondToAssignment } from "@/lib/assignments";
 import type { Shift } from "@/lib/shifts";
 import { ShiftCard } from "@/components/ShiftCard";
 import { Modal } from "@/components/Modal";
+import { AcademyCard } from "@/components/academy/AcademyCard";
 
 export function ShiftDashboard({
   token,
@@ -88,6 +89,10 @@ export function ShiftDashboard({
         <p className="mt-2 text-blue-100/70">
           Here&apos;s your current schedule and important info.
         </p>
+
+        <div className="mt-6">
+          <AcademyCard token={token} />
+        </div>
 
         <div className="mt-8 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Your shifts</h2>
