@@ -1,14 +1,22 @@
 "use client";
 
-import { useState, type SubmitEvent } from "react";
+import { useEffect, useState, type SubmitEvent } from "react";
 import { useRouter } from "next/navigation";
+import { useSavedToken } from "@/lib/clientToken";
 import { getVolunteerByToken } from "@/lib/volunteers";
 
 export default function Home() {
   const router = useRouter();
+  const savedToken = useSavedToken();
   const [token, setToken] = useState("");
   const [checking, setChecking] = useState(false);
   const [invalid, setInvalid] = useState(false);
+
+  useEffect(() => {
+    if (savedToken) {
+      router.replace(`/shift/${encodeURIComponent(savedToken)}`);
+    }
+  }, [savedToken, router]);
 
   async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -22,11 +30,18 @@ export default function Home() {
 
     if (!volunteer) {
       setChecking(false);
+      setToken("");
       setInvalid(true);
       return;
     }
 
     router.push(`/shift/${encodeURIComponent(trimmed)}`);
+  }
+
+  // A volunteer with a saved token is being redirected to their shifts
+  // above — render nothing so the form doesn't flash in the meantime.
+  if (savedToken) {
+    return <div className="min-h-screen bg-[#050822]" />;
   }
 
   return (
@@ -47,23 +62,10 @@ export default function Home() {
       <div className="pointer-events-none absolute -right-64 top-1/3 h-[620px] w-[620px] -rotate-12 rounded-full border-l-2 border-blue-400/20" />
       <div className="pointer-events-none absolute -bottom-72 -left-24 h-[520px] w-[700px] rounded-full border-t-2 border-blue-400/20" />
 
-      {/* header */}
-      <header className="relative z-10 flex items-start justify-between px-8 pt-8 sm:px-14 sm:pt-10">
-        <div className="text-2xl font-bold tracking-tight">
-          <img src="/logo.png" alt="Tectonic" className="w-32"/>
-        </div>
-        <div className="text-right font-mono text-xs tracking-widest text-blue-100/80">
-          <div className="flex items-center justify-end gap-2">
-            <span>OCTOBER 21 2026</span>
-          </div>
-          <div className="mt-1">GHENT, BELGIUM</div>
-        </div>
-      </header>
-
       {/* main */}
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
-        <p className="mb-4 font-mono text-sm tracking-[0.3em] text-blue-200/60">
-          TECTONIC 2026
+        <p className="mb-4 font-mono text-xs tracking-[0.3em] text-blue-200/60">
+          TECTONIC 2026 · OCTOBER 21 2026 · GHENT, BELGIUM
         </p>
 
         <h1 className="text-6xl font-extrabold leading-[1.05] tracking-tight sm:text-7xl">

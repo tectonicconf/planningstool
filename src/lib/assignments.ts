@@ -1,7 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase";
-import { getShiftsForToken } from "@/lib/shifts";
+import { getShiftsForVolunteer } from "@/lib/shifts";
 import { sendConfirmationEmail } from "@/lib/email";
 
 export type AssignmentResponse = "accept" | "decline";
@@ -29,13 +29,17 @@ export async function respondToAssignment(
   }
 
   const newStatus = response === "accept" ? "confirmed" : "cancelled";
+  // Accepting only makes sense from a still-pending invite; declining/cancelling
+  // is allowed from pending (decline an invite) or confirmed (cancel after accepting).
+  const allowedCurrentStatuses =
+    response === "accept" ? ["pending"] : ["pending", "confirmed"];
 
   const { data, error } = await supabaseAdmin
     .from("assignments")
     .update({ status: newStatus })
     .eq("id", assignmentId)
     .eq("volunteer_id", volunteer.id)
-    .eq("status", "pending")
+    .in("status", allowedCurrentStatuses)
     .select("id");
 
   if (error) {
@@ -43,14 +47,14 @@ export async function respondToAssignment(
   }
 
   if (!data || data.length === 0) {
-    return { ok: false, error: "This shift is no longer pending." };
+    return { ok: false, error: "This shift can no longer be updated." };
   }
 
   if (response === "accept" && volunteer.email) {
     try {
-      const confirmedShifts = (await getShiftsForToken(token)).filter(
-        (shift) => shift.status === "confirmed",
-      );
+      const confirmedShifts = (
+        await getShiftsForVolunteer(volunteer.id)
+      ).filter((shift) => shift.status === "confirmed");
 
       const confirmedShift = confirmedShifts.find(
         (shift) => shift.assignmentId === assignmentId,

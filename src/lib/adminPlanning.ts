@@ -23,22 +23,21 @@ export type PlanningShift = {
 };
 
 export async function getPlanningShifts(): Promise<PlanningShift[]> {
-  const { data: shiftRows } = await supabaseAdmin
-    .from("shifts")
-    .select(
-      "id, date, day, slot, start_time, end_time, hours, location, role_category, volunteers_needed, event_context",
-    )
-    .order("date")
-    .order("start_time");
-
-  const { data: assignmentRows } = await supabaseAdmin
-    .from("assignments")
-    .select("id, volunteer_id, shift_id, status")
-    .in("status", ["pending", "confirmed"]);
-
-  const { data: volunteerRows } = await supabaseAdmin
-    .from("volunteers")
-    .select("id, first_name, last_name");
+  const [{ data: shiftRows }, { data: assignmentRows }, { data: volunteerRows }] =
+    await Promise.all([
+      supabaseAdmin
+        .from("shifts")
+        .select(
+          "id, date, day, slot, start_time, end_time, hours, location, role_category, volunteers_needed, event_context",
+        )
+        .order("date")
+        .order("start_time"),
+      supabaseAdmin
+        .from("assignments")
+        .select("id, volunteer_id, shift_id, status")
+        .in("status", ["pending", "confirmed"]),
+      supabaseAdmin.from("volunteers").select("id, first_name, last_name"),
+    ]);
 
   const namesById = new Map(
     (volunteerRows ?? []).map((v) => [

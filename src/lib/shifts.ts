@@ -13,21 +13,13 @@ export type Shift = {
   status: ShiftStatus;
 };
 
-export async function getShiftsForToken(token: string): Promise<Shift[]> {
-  const { data: volunteer, error: volunteerError } = await supabaseAdmin
-    .from("volunteers")
-    .select("id")
-    .eq("magic_link_token", token)
-    .maybeSingle();
-
-  if (volunteerError || !volunteer) {
-    return [];
-  }
-
+export async function getShiftsForVolunteer(
+  volunteerId: string,
+): Promise<Shift[]> {
   const { data: assignments, error: assignmentsError } = await supabaseAdmin
     .from("assignments")
     .select("id, shift_id, status")
-    .eq("volunteer_id", volunteer.id)
+    .eq("volunteer_id", volunteerId)
     .in("status", ["pending", "confirmed"]);
 
   if (assignmentsError || !assignments || assignments.length === 0) {

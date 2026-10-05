@@ -23,12 +23,15 @@ async function nextAssignmentId(): Promise<number> {
 }
 
 async function nextShiftId(): Promise<string> {
-  const { data } = await supabaseAdmin.from("shifts").select("id");
+  // Ids are fixed-width ("S0xx"), so lexicographic order matches numeric order.
+  const { data } = await supabaseAdmin
+    .from("shifts")
+    .select("id")
+    .order("id", { ascending: false })
+    .limit(1);
 
-  const maxNumber = (data ?? []).reduce((max, row) => {
-    const match = /^S(\d+)$/.exec(row.id);
-    return match ? Math.max(max, Number(match[1])) : max;
-  }, 0);
+  const match = /^S(\d+)$/.exec(data?.[0]?.id ?? "");
+  const maxNumber = match ? Number(match[1]) : 0;
 
   return `S${String(maxNumber + 1).padStart(3, "0")}`;
 }
@@ -97,33 +100,43 @@ export async function addVolunteerToShift(
   shiftId: string,
   volunteerId: string,
 ): Promise<ActionResult<{ assignmentId: number }>> {
-  const { data: shift, error: shiftError } = await supabaseAdmin
-    .from("shifts")
-    .select("id, date, slot, start_time, end_time")
-    .eq("id", shiftId)
-    .maybeSingle();
+  const [
+    { data: shift, error: shiftError },
+    { data: existing },
+    { data: volunteer, error: volunteerError },
+    { data: activeAssignments },
+  ] = await Promise.all([
+    supabaseAdmin
+      .from("shifts")
+      .select("id, date, slot, start_time, end_time")
+      .eq("id", shiftId)
+      .maybeSingle(),
+    supabaseAdmin
+      .from("assignments")
+      .select("id")
+      .eq("shift_id", shiftId)
+      .eq("volunteer_id", volunteerId)
+      .in("status", ["pending", "confirmed"])
+      .maybeSingle(),
+    supabaseAdmin
+      .from("volunteers")
+      .select("availability")
+      .eq("id", volunteerId)
+      .maybeSingle(),
+    supabaseAdmin
+      .from("assignments")
+      .select("shift_id")
+      .eq("volunteer_id", volunteerId)
+      .in("status", ["pending", "confirmed"]),
+  ]);
 
   if (shiftError || !shift) {
     return { ok: false, error: "Shift not found." };
   }
 
-  const { data: existing } = await supabaseAdmin
-    .from("assignments")
-    .select("id")
-    .eq("shift_id", shiftId)
-    .eq("volunteer_id", volunteerId)
-    .in("status", ["pending", "confirmed"])
-    .maybeSingle();
-
   if (existing) {
     return { ok: false, error: "This volunteer is already on this shift." };
   }
-
-  const { data: volunteer, error: volunteerError } = await supabaseAdmin
-    .from("volunteers")
-    .select("availability")
-    .eq("id", volunteerId)
-    .maybeSingle();
 
   if (volunteerError || !volunteer) {
     return { ok: false, error: "Volunteer not found." };
@@ -147,12 +160,6 @@ export async function addVolunteerToShift(
       error: "This volunteer is not available for this shift's date/time.",
     };
   }
-
-  const { data: activeAssignments } = await supabaseAdmin
-    .from("assignments")
-    .select("shift_id")
-    .eq("volunteer_id", volunteerId)
-    .in("status", ["pending", "confirmed"]);
 
   const otherShiftIds = (activeAssignments ?? [])
     .map((a) => a.shift_id)

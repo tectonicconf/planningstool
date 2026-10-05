@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getVolunteerByToken } from "@/lib/volunteers";
-import { getShiftsForToken } from "@/lib/shifts";
+import { getShiftsForVolunteer } from "@/lib/shifts";
 import { ShiftDashboard } from "@/components/ShiftDashboard";
 
 export default async function ShiftPage(props: PageProps<"/shift/[token]">) {
@@ -11,13 +11,14 @@ export default async function ShiftPage(props: PageProps<"/shift/[token]">) {
     notFound();
   }
 
-  const shifts = await getShiftsForToken(token);
+  const shifts = await getShiftsForVolunteer(volunteer.id);
 
   return (
     <ShiftDashboard
       token={token}
       firstName={volunteer.firstName}
       initialShifts={shifts}
+      initialQuizCompleted={volunteer.quizCompleted}
     />
   );
 }

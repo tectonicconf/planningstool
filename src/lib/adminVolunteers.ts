@@ -25,18 +25,19 @@ export type VolunteerRow = {
 export async function getVolunteersWithAssignments(): Promise<
   VolunteerRow[]
 > {
-  const { data: volunteerRows } = await supabaseAdmin
-    .from("volunteers")
-    .select("id, first_name, last_name, email, association, availability")
-    .order("first_name");
-
-  const { data: assignmentRows } = await supabaseAdmin
-    .from("assignments")
-    .select("id, volunteer_id, shift_id, status");
-
-  const { data: shiftRows } = await supabaseAdmin
-    .from("shifts")
-    .select("id, date, start_time, end_time, location, role_category");
+  const [{ data: volunteerRows }, { data: assignmentRows }, { data: shiftRows }] =
+    await Promise.all([
+      supabaseAdmin
+        .from("volunteers")
+        .select("id, first_name, last_name, email, association, availability")
+        .order("first_name"),
+      supabaseAdmin
+        .from("assignments")
+        .select("id, volunteer_id, shift_id, status"),
+      supabaseAdmin
+        .from("shifts")
+        .select("id, date, start_time, end_time, location, role_category"),
+    ]);
 
   const shiftsById = new Map((shiftRows ?? []).map((s) => [s.id, s]));
 

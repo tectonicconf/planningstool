@@ -3,8 +3,10 @@
 import { supabaseAdmin } from "@/lib/supabase";
 
 export type Volunteer = {
+  id: string;
   firstName: string;
   lastName: string;
+  quizCompleted: boolean;
 };
 
 export async function getVolunteerByToken(
@@ -12,7 +14,7 @@ export async function getVolunteerByToken(
 ): Promise<Volunteer | null> {
   const { data, error } = await supabaseAdmin
     .from("volunteers")
-    .select("firstName:first_name, lastName:last_name")
+    .select("id, firstName:first_name, lastName:last_name, quizCompleted:quiz")
     .eq("magic_link_token", token)
     .maybeSingle();
 

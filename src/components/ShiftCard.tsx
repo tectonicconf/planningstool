@@ -1,6 +1,6 @@
 import type { Shift } from "@/lib/shifts";
 
-function formatShiftDate(date: string) {
+export function formatShiftDate(date: string) {
   const parsed = new Date(`${date}T00:00:00`);
 
   return parsed.toLocaleDateString("en-GB", {
@@ -10,12 +10,12 @@ function formatShiftDate(date: string) {
   });
 }
 
-const STATUS_STYLES = {
+export const STATUS_STYLES = {
   pending: "bg-blue-500/20 text-blue-200",
   confirmed: "bg-green-500/20 text-green-300",
 };
 
-const STATUS_LABELS = {
+export const STATUS_LABELS = {
   pending: "Pending",
   confirmed: "Confirmed",
 };
@@ -25,23 +25,41 @@ export function ShiftCard({
   isUpdating,
   onAccept,
   onDecline,
+  onOpenDetail,
 }: {
   shift: Shift;
   isUpdating: boolean;
   onAccept: () => void;
   onDecline: () => void;
+  onOpenDetail: () => void;
 }) {
   return (
-    <div className="rounded-2xl border border-blue-400/20 bg-blue-950/20 p-5 text-white">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onOpenDetail}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpenDetail();
+        }
+      }}
+      className="cursor-pointer rounded-2xl border border-blue-400/20 bg-blue-950/20 p-5 text-white transition-colors hover:border-blue-300/40"
+    >
       <div className="flex items-center justify-between gap-3">
         <span className="font-semibold">
           {formatShiftDate(shift.date)} · {shift.startTime} –{" "}
           {shift.endTime} ({shift.hours}h)
         </span>
-        <span
-          className={`shrink-0 rounded-full px-3 py-1 text-xs uppercase tracking-wide ${STATUS_STYLES[shift.status]}`}
-        >
-          {STATUS_LABELS[shift.status]}
+        <span className="flex shrink-0 items-center gap-2">
+          <span
+            className={`rounded-full px-3 py-1 text-xs uppercase tracking-wide ${STATUS_STYLES[shift.status]}`}
+          >
+            {STATUS_LABELS[shift.status]}
+          </span>
+          <span aria-hidden="true" className="text-blue-200/50">
+            &rsaquo;
+          </span>
         </span>
       </div>
       <p className="mt-1 text-sm text-blue-100/70">
@@ -53,7 +71,10 @@ export function ShiftCard({
           <button
             type="button"
             disabled={isUpdating}
-            onClick={onAccept}
+            onClick={(event) => {
+              event.stopPropagation();
+              onAccept();
+            }}
             className="flex-1 rounded-full bg-gradient-to-b from-blue-500 to-blue-700 py-2 text-sm font-semibold text-white transition-transform hover:brightness-110 active:scale-[0.99] disabled:opacity-50"
           >
             Accept
@@ -61,7 +82,10 @@ export function ShiftCard({
           <button
             type="button"
             disabled={isUpdating}
-            onClick={onDecline}
+            onClick={(event) => {
+              event.stopPropagation();
+              onDecline();
+            }}
             className="flex-1 rounded-full border border-blue-400/40 py-2 text-sm font-semibold text-blue-100 transition-colors hover:border-blue-300/70 disabled:opacity-50"
           >
             Decline
