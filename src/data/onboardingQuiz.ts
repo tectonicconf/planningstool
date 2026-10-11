@@ -1,8 +1,9 @@
-// Content for the mandatory onboarding flow shown before a volunteer can see
+// Content for the mandatory Academy flow shown before a volunteer can see
 // their shifts for the first time (src/components/AcademyFlow.tsx).
 // Edit the values below directly — no code changes needed elsewhere.
-// Everything here is made-up placeholder copy: replace it with the real
-// event facts and quiz before the event.
+//
+// Keep this in sync with the Onboarding page: the quiz only asks about rules
+// that are written down in "The essentials" below.
 
 export type EventFact = {
   icon: "calendar" | "location" | "person";
@@ -10,90 +11,199 @@ export type EventFact = {
   subtitle: string;
 };
 
+export const WELCOME = {
+  title: "Welcome to Tectonic",
+  body: "Before your shifts unlock, we go through the essentials: where you go, who to call and how we work. It takes about 5 minutes.",
+};
+
 export const EVENT_FACTS: EventFact[] = [
   {
     icon: "calendar",
-    title: "21–22 October 2026",
+    title: "21 October 2026",
     subtitle: "Ghent, Belgium",
   },
   {
     icon: "location",
-    title: "3 venues",
-    subtitle: "Wintercircus, Vooruit, De Kreun",
+    title: "2 venues",
+    subtitle: "Wintercircus and Vooruit",
   },
   {
     icon: "person",
-    title: "Your team lead",
-    subtitle: "Your on-site contact for questions",
+    title: "Your contacts",
+    subtitle: "Your volunteer lead and one shared number",
   },
 ];
 
-export const ONBOARDING_INFO_PARAGRAPHS: string[] = [
-  "Tectonic brings together founders, investors and the wider startup ecosystem for three days in Ghent.",
-  "As a volunteer, you'll help things run smoothly across our venues — from welcoming guests to supporting speakers and sessions.",
-  "This short quiz just confirms you've got the essentials before your first shift.",
-];
+export const ESSENTIALS = {
+  title: "The essentials",
+  intro:
+    "Seven things to remember. The Onboarding page has the full picture, and the quiz only asks about what is below.",
+  items: [
+    {
+      title: "Arrive 15 minutes early",
+      body: "That gives you time to leave your things and for your lead to take you to your station.",
+    },
+    {
+      title: "Check in at Vooruit",
+      body: "Use the volunteer entrance next to the café, Sint-Pietersnieuwstraat 23. The main entrance is not in use. Pick up your badge there: you cannot enter without it.",
+    },
+    {
+      title: "Running late or sick?",
+      body: "Late: send a message to the shared number. Sick: call it as soon as you know, so we can find a replacement.",
+    },
+    {
+      title: "Focus on your shift",
+      body: "Networking is not allowed during your shift, and neither are alcohol and your private phone. Network after your shift.",
+    },
+    {
+      title: "Ask the right person",
+      body: "Questions about your shift go to your volunteer lead. Everything else goes to the shared number.",
+    },
+    {
+      title: "Know where the rooms are",
+      body: "About 90% of the shifts are in Wintercircus: the Main Stage is in Club Wintercircus and the Innovation Stage in the Auditorium. Vooruit has the Theaterzaal (the Pitching Stage), the Concertzaal (the Meeting Hub) and the volunteer rooms in Studio groot.",
+    },
+    {
+      title: "Keep it discreet",
+      body: "No photos of slides or deal conversations, and nothing on social media about what you overheard. If you find a lost item, tell your lead and leave it where it is.",
+    },
+  ],
+};
 
 export type QuizQuestion = {
   id: string;
   question: string;
+  // The first option must be the correct one. The flow shuffles the options
+  // every time the quiz is shown, so the position never gives it away.
   options: string[];
   correctIndex: number;
+  // Shown after a pass, next to the questions that were missed.
+  explanation: string;
 };
 
 // A volunteer needs at least this many correct (out of QUIZ_QUESTIONS.length)
 // to pass. Failing lets them retake immediately, with no cooldown.
-export const QUIZ_MIN_CORRECT = 4;
+export const QUIZ_MIN_CORRECT = 8;
 
 export const QUIZ_QUESTIONS: QuizQuestion[] = [
   {
     id: "check-in",
-    question: "Where should you check in on your first shift?",
+    question: "Where do you check in on the day?",
     options: [
-      "Main entrance info desk",
-      "Directly at your stage",
-      "Ask on the volunteer Slack",
+      "At the volunteer entrance next to the café at Vooruit",
+      "At the main entrance of Vooruit",
+      "Directly at your station, without checking in",
     ],
     correctIndex: 0,
+    explanation:
+      "The main entrance of Vooruit is not in use. Check in at the volunteer entrance next to the café.",
   },
   {
-    id: "booths",
-    question: "How do I interact with startup booths?",
+    id: "badge",
+    question: "What do you need to get in as a volunteer?",
     options: [
-      "I can show my interest but won't break up conversations",
-      "I go talk to them and ask about internships or job opportunities",
-      "I give them my printed-out CV",
+      "The badge you pick up at check-in",
+      "A ticket you print yourself",
+      "Your confirmation email on your phone",
     ],
     correctIndex: 0,
+    explanation:
+      "Volunteers do not enter with a ticket. Pick up your badge at check-in: without it you cannot enter.",
   },
   {
-    id: "late",
-    question: "Who do you contact if you're running late?",
+    id: "arrival",
+    question: "When should you arrive?",
     options: [
-      "Message your team lead on the volunteer Slack",
-      "Wait until you arrive to explain",
-      "Ask another volunteer to quietly cover for you",
+      "15 minutes before your shift starts",
+      "Exactly when your shift starts",
+      "As soon as the doors open, even hours early",
     ],
     correctIndex: 0,
+    explanation:
+      "Be there 15 minutes before your shift, so you can leave your things and be taken to your station.",
+  },
+  {
+    id: "late-sick",
+    question: "You wake up sick on the day of your shift. What do you do?",
+    options: [
+      "Call the shared number as soon as you know",
+      "Send a message at the end of the day",
+      "Ask another volunteer to take your place quietly",
+    ],
+    correctIndex: 0,
+    explanation:
+      "Call as soon as you know, so we can find a replacement. If you are only running late, a message to the shared number is enough.",
+  },
+  {
+    id: "networking",
+    question: "Are you allowed to network with guests and startups during your shift?",
+    options: [
+      "No, not during your shift. Do it afterwards",
+      "Yes, whenever it is quiet",
+      "Yes, while you guide guests to their place",
+    ],
+    correctIndex: 0,
+    explanation:
+      "Networking is not allowed while you are on shift. Your focus is on your task. Enjoy the event and network once you are done.",
+  },
+  {
+    id: "who-to-ask",
+    question: "You have a question about your own shift. Who do you ask?",
+    options: [
+      "Your volunteer lead",
+      "A speaker or guest nearby",
+      "Nobody, you work it out yourself",
+    ],
+    correctIndex: 0,
+    explanation:
+      "Your volunteer lead is your first contact for your shift. For anything else, use the shared number.",
+  },
+  {
+    id: "discretion",
+    question: "You overhear a conversation about a deal. What do you do?",
+    options: [
+      "Keep it to yourself",
+      "Post about it on social media",
+      "Take a photo of the slides to share with friends",
+    ],
+    correctIndex: 0,
+    explanation:
+      "Discretion is non-negotiable: no photos of slides or deal conversations, and nothing on social media about what you overheard.",
   },
   {
     id: "lost-found",
-    question: "What do you do with a lost & found item?",
+    question: "You find something that someone lost. What do you do?",
     options: [
-      "Bring it to the info desk at Wintercircus",
-      "Keep it until someone asks about it",
-      "Post about it on social media",
+      "Tell your volunteer lead, but leave it where it is",
+      "Take it with you to keep it safe",
+      "Give it to the first person who says it is theirs",
     ],
     correctIndex: 0,
+    explanation:
+      "Report it to your lead and leave it where it is.",
   },
   {
-    id: "dress-code",
-    question: "What should you wear during your shift?",
+    id: "pitching-stage",
+    question: "Where does the Pitching Competition take place?",
     options: [
-      "Comfortable clothing and your volunteer badge",
-      "Business formal attire",
-      "Whatever you like — there's no guideline",
+      "In the Theaterzaal at Vooruit",
+      "On the Main Stage in Wintercircus",
+      "In the Auditorium in Wintercircus",
     ],
     correctIndex: 0,
+    explanation:
+      "The Pitching Stage is the Theaterzaal at Vooruit. The Main Stage is in Club Wintercircus and the Innovation Stage in the Auditorium.",
+  },
+  {
+    id: "leave-things",
+    question: "Where do you leave your things on the day?",
+    options: [
+      "In the volunteer rooms in Studio groot at Vooruit",
+      "At your station",
+      "In the Atrium at Wintercircus",
+    ],
+    correctIndex: 0,
+    explanation:
+      "Leave your things in the volunteer rooms in Studio groot. The door code is shared in the WhatsApp group the day before.",
   },
 ];

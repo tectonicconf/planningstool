@@ -113,10 +113,10 @@ export function ShiftDashboard({
   }
 
   return (
-    <div className="min-h-screen bg-[#050822] px-6 py-12 text-white">
+    <div className="min-h-screen bg-[#050A2B] px-6 py-12 text-white">
       <div className="mx-auto max-w-2xl">
         <h1 className="text-3xl font-bold">Hi {firstName} 👋</h1>
-        <p className="mt-2 text-blue-100/70">
+        <p className="mt-2 text-white/70">
           Here&apos;s your current schedule and important info.
         </p>
 
@@ -131,7 +131,7 @@ export function ShiftDashboard({
 
         <div className="mt-8 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Your shifts</h2>
-          <span className="text-sm text-blue-100/70">
+          <span className="text-sm text-white/70">
             {shifts.length} shift{shifts.length === 1 ? "" : "s"} ·{" "}
             {totalHours} hours
           </span>
@@ -146,7 +146,7 @@ export function ShiftDashboard({
         {quizCompleted ? (
           <div className="mt-4 flex flex-col gap-4">
             {shifts.length === 0 ? (
-              <p className="text-blue-100/70">No shifts assigned yet.</p>
+              <p className="text-white/70">No shifts assigned yet.</p>
             ) : (
               shifts.map((shift) => (
                 <ShiftCard
@@ -161,7 +161,7 @@ export function ShiftDashboard({
             )}
           </div>
         ) : shifts.length === 0 ? (
-          <p className="mt-4 text-blue-100/70">
+          <p className="mt-4 text-white/70">
             No shifts planned for you yet.
           </p>
         ) : (
@@ -169,11 +169,11 @@ export function ShiftDashboard({
             {Array.from({ length: shifts.length }, (_, index) => (
               <div
                 key={index}
-                className="relative rounded-2xl border border-blue-400/20 bg-blue-950/20 p-5"
+                className="relative rounded-3xl border border-white/15 bg-white/[0.06] backdrop-blur-md p-5"
               >
                 <div className="h-4 w-2/3 rounded-full bg-blue-100/10" />
                 <div className="mt-2 h-3 w-1/2 rounded-full bg-blue-100/10" />
-                <span className="absolute right-5 top-5 flex h-7 w-7 items-center justify-center rounded-full bg-blue-950/60 text-blue-200/50">
+                <span className="absolute right-5 top-5 flex h-7 w-7 items-center justify-center rounded-full bg-[#0D1341]/60 text-white/50">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5" aria-hidden="true">
                     <rect x="5" y="11" width="14" height="9" rx="2" />
                     <path d="M8 11V7a4 4 0 0 1 8 0v4" />
@@ -181,7 +181,7 @@ export function ShiftDashboard({
                 </span>
               </div>
             ))}
-            <p className="text-center text-sm text-blue-200/50">
+            <p className="text-center text-sm text-white/50">
               Unlocks after onboarding
             </p>
           </div>
@@ -220,9 +220,9 @@ export function ShiftDashboard({
 
       {declineTarget && (
         <Modal onClose={() => setDeclineTarget(null)}>
-          <div className="w-full max-w-sm rounded-2xl border border-blue-400/20 bg-[#0a0f35] p-6 text-white shadow-xl">
+          <div className="w-full max-w-sm rounded-2xl border border-white/15 bg-[#0a0f35] p-6 text-white shadow-xl">
             <h3 className="text-xl font-bold">Sad to see you go 😢</h3>
-            <p className="mt-2 text-sm text-blue-100/70">
+            <p className="mt-2 text-sm text-white/70">
               {declineTarget.status === "confirmed"
                 ? "Are you sure you want to cancel this shift? We'll look for someone to cover it instead."
                 : "Are you sure you want to decline this shift? We'll look for someone to cover it instead."}
@@ -231,7 +231,7 @@ export function ShiftDashboard({
               <button
                 type="button"
                 onClick={() => setDeclineTarget(null)}
-                className="flex-1 rounded-full border border-blue-400/40 py-2 text-sm font-semibold text-blue-100 hover:border-blue-300/70"
+                className="flex-1 rounded-full border border-white/25 py-2 text-sm font-semibold text-white/90 hover:border-cyan-300/70"
               >
                 Back
               </button>
@@ -252,13 +252,13 @@ export function ShiftDashboard({
 
       {feedback && (
         <Modal onClose={() => setFeedback(null)}>
-          <div className="w-full max-w-sm rounded-2xl border border-blue-400/20 bg-[#0a0f35] p-6 text-white shadow-xl">
+          <div className="w-full max-w-sm rounded-2xl border border-white/15 bg-[#0a0f35] p-6 text-white shadow-xl">
             {feedback === "accepted" ? (
               <>
                 <h3 className="text-xl font-bold">
                   You&apos;re confirmed! 🎉
                 </h3>
-                <p className="mt-2 text-sm text-blue-100/70">
+                <p className="mt-2 text-sm text-white/70">
                   Thanks for confirming — we&apos;ll see you at Tectonic
                   2026.
                 </p>
@@ -266,14 +266,14 @@ export function ShiftDashboard({
             ) : feedback === "cancelled" ? (
               <>
                 <h3 className="text-xl font-bold">Shift cancelled</h3>
-                <p className="mt-2 text-sm text-blue-100/70">
+                <p className="mt-2 text-sm text-white/70">
                   No worries — thanks for letting us know in time.
                 </p>
               </>
             ) : (
               <>
                 <h3 className="text-xl font-bold">Shift declined</h3>
-                <p className="mt-2 text-sm text-blue-100/70">
+                <p className="mt-2 text-sm text-white/70">
                   No worries — thanks for letting us know in time.
                 </p>
               </>
@@ -281,7 +281,7 @@ export function ShiftDashboard({
             <button
               type="button"
               onClick={() => setFeedback(null)}
-              className="mt-6 w-full rounded-full bg-gradient-to-b from-blue-500 to-blue-700 py-2 text-sm font-semibold text-white hover:brightness-110"
+              className="mt-6 w-full rounded-full bg-gradient-to-b from-[#2F5BFF] to-[#1137EA] border border-white/25 shadow-[0_0_28px_-8px_#1141E9] py-2 text-sm font-semibold text-white hover:brightness-110"
             >
               Close
             </button>

@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import {
+  ESSENTIALS,
   EVENT_FACTS,
-  ONBOARDING_INFO_PARAGRAPHS,
   QUIZ_MIN_CORRECT,
   QUIZ_QUESTIONS,
+  WELCOME,
   type EventFact,
+  type QuizQuestion,
 } from "@/data/onboardingQuiz";
 import { completeOnboardingQuiz } from "@/lib/onboardingQuiz";
 
@@ -19,16 +21,36 @@ const STEP_NUMBER: Record<Exclude<FlowStep, "results">, number> = {
 };
 const TOTAL_STEPS = 3;
 
+// The data file always lists the correct option first. Shuffle the options for
+// every attempt so the answer is never in a predictable place, and remember
+// where the correct one ended up.
+type ShuffledQuestion = QuizQuestion & { correctPosition: number };
+
+function shuffleQuiz(): ShuffledQuestion[] {
+  return QUIZ_QUESTIONS.map((question) => {
+    const order = question.options.map((_, index) => index);
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    return {
+      ...question,
+      options: order.map((index) => question.options[index]),
+      correctPosition: order.indexOf(question.correctIndex),
+    };
+  });
+}
+
 function StepDots({ step }: { step: FlowStep }) {
-  const current = step === "results" ? 3 : STEP_NUMBER[step];
+  const current = step === "results" ? TOTAL_STEPS : STEP_NUMBER[step];
 
   return (
-    <div className="flex gap-1.5">
+    <div className="flex flex-1 gap-1.5">
       {Array.from({ length: TOTAL_STEPS }, (_, index) => (
         <div
           key={index}
           className={`h-1 flex-1 rounded-full ${
-            index < current ? "bg-blue-400" : "bg-blue-950/60"
+            index < current ? "bg-cyan-300" : "bg-[#0D1341]/60"
           }`}
         />
       ))}
@@ -37,9 +59,20 @@ function StepDots({ step }: { step: FlowStep }) {
 }
 
 function FactIcon({ icon }: { icon: EventFact["icon"] }) {
+  const common = {
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    className: "h-5 w-5",
+    "aria-hidden": true,
+  };
+
   if (icon === "calendar") {
     return (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
+      <svg {...common}>
         <rect x="3" y="5" width="18" height="16" rx="2" />
         <path d="M16 3v4M8 3v4M3 10h18" />
       </svg>
@@ -47,32 +80,43 @@ function FactIcon({ icon }: { icon: EventFact["icon"] }) {
   }
   if (icon === "location") {
     return (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
+      <svg {...common}>
         <path d="M12 21s-7-5.686-7-11a7 7 0 1 1 14 0c0 5.314-7 11-7 11Z" />
         <circle cx="12" cy="10" r="2.5" />
       </svg>
     );
   }
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
+    <svg {...common}>
       <circle cx="12" cy="8" r="3.5" />
       <path d="M5 20c0-3.314 3.134-6 7-6s7 2.686 7 6" />
     </svg>
   );
 }
 
-function CheckCircleIcon({ ok }: { ok: boolean }) {
+function StatusIcon({ ok }: { ok: boolean }) {
   return (
     <span
-      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] ${
-        ok ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-red-300"
+      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] ${
+        ok ? "bg-cyan-300/15 text-cyan-300" : "bg-amber-400/15 text-amber-300"
       }`}
       aria-hidden="true"
     >
-      {ok ? "✓" : "✕"}
+      {ok ? "✓" : "!"}
     </span>
   );
 }
+
+function Eyebrow({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">
+      {children}
+    </p>
+  );
+}
+
+const PRIMARY_BUTTON =
+  "w-full rounded-full bg-gradient-to-b from-[#2F5BFF] to-[#1137EA] border border-white/25 shadow-[0_0_28px_-8px_#1141E9] py-3 text-sm font-semibold text-white transition-transform hover:brightness-110 active:scale-[0.99] disabled:opacity-40";
 
 export function AcademyFlow({
   token,
@@ -90,27 +134,34 @@ export function AcademyFlow({
   onClose: () => void;
 }) {
   const [step, setStep] = useState<FlowStep>(initialStep);
-  const [answers, setAnswers] = useState<(number | null)[]>(
-    () => QUIZ_QUESTIONS.map(() => null),
+  const [questions, setQuestions] = useState<ShuffledQuestion[]>(shuffleQuiz);
+  const [answers, setAnswers] = useState<(number | null)[]>(() =>
+    QUIZ_QUESTIONS.map(() => null),
   );
   const [score, setScore] = useState(0);
   const [completing, setCompleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const passed = score >= QUIZ_MIN_CORRECT;
-  const allAnswered = answers.every((answer) => answer !== null);
+  const answeredCount = answers.filter((answer) => answer !== null).length;
+  const allAnswered = answeredCount === questions.length;
+  const missed = questions.filter(
+    (question, index) => answers[index] !== question.correctPosition,
+  );
 
   function handleCheckAnswers() {
     const correctCount = answers.reduce<number>(
       (count, answer, index) =>
-        answer === QUIZ_QUESTIONS[index].correctIndex ? count + 1 : count,
+        answer === questions[index].correctPosition ? count + 1 : count,
       0,
     );
     setScore(correctCount);
     setStep("results");
+    window.scrollTo({ top: 0 });
   }
 
   function handleRetake() {
+    setQuestions(shuffleQuiz());
     setAnswers(QUIZ_QUESTIONS.map(() => null));
     setScore(0);
     setStep("quiz");
@@ -131,8 +182,16 @@ export function AcademyFlow({
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col overflow-y-auto bg-[#050822] text-white">
-      <div className="mx-auto w-full max-w-2xl px-6 pt-8">
+    <div className="fixed inset-0 z-40 flex flex-col overflow-y-auto bg-[#050A2B] text-white">
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-[60vh]"
+        style={{
+          background:
+            "radial-gradient(ellipse 60% 60% at 10% 0%, rgba(17,65,233,0.38), transparent 70%)",
+        }}
+      />
+
+      <div className="relative mx-auto w-full max-w-2xl px-6 pt-8">
         <div className="flex items-center gap-4">
           <button
             type="button"
@@ -146,30 +205,29 @@ export function AcademyFlow({
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-2xl flex-1 px-6 pb-16 pt-6">
+      <div className="relative mx-auto w-full max-w-2xl flex-1 px-6 pb-16 pt-8">
         {step === "welcome" && (
           <>
-            <p className="font-mono text-xs tracking-[0.2em] text-blue-200/60">
-              STEP 1 OF {TOTAL_STEPS}
-            </p>
-            <h1 className="mt-2 text-2xl font-bold">Welcome to Tectonic</h1>
-            <p className="mt-2 text-sm text-blue-100/70">
-              Before you can view your shifts, you&apos;ll briefly go through
-              where, when and with whom you&apos;ll work during the festival.
+            <Eyebrow>STEP 1 OF {TOTAL_STEPS}</Eyebrow>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight">
+              {WELCOME.title}
+            </h1>
+            <p className="mt-3 leading-relaxed text-white/75">
+              {WELCOME.body}
             </p>
 
             <div className="mt-6 flex flex-col gap-3">
               {EVENT_FACTS.map((fact) => (
                 <div
                   key={fact.title}
-                  className="flex items-center gap-3 rounded-xl border border-blue-400/20 bg-blue-950/30 p-4"
+                  className="flex items-center gap-3 rounded-3xl border border-white/15 bg-white/[0.06] backdrop-blur-md p-4"
                 >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-300">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-300/10 text-cyan-300">
                     <FactIcon icon={fact.icon} />
                   </span>
                   <div>
-                    <p className="text-sm font-semibold">{fact.title}</p>
-                    <p className="mt-0.5 text-sm text-blue-100/70">
+                    <p className="font-semibold">{fact.title}</p>
+                    <p className="mt-0.5 text-sm text-white/70">
                       {fact.subtitle}
                     </p>
                   </div>
@@ -183,57 +241,78 @@ export function AcademyFlow({
                 onReachInfo();
                 setStep("info");
               }}
-              className="mt-8 w-full rounded-full bg-gradient-to-b from-blue-500 to-blue-700 py-3 text-sm font-semibold text-white transition-transform hover:brightness-110 active:scale-[0.99]"
+              className={`mt-8 ${PRIMARY_BUTTON}`}
             >
-              Start onboarding
+              Start
             </button>
           </>
         )}
 
         {step === "info" && (
           <>
-            <p className="font-mono text-xs tracking-[0.2em] text-blue-200/60">
-              STEP 2 OF {TOTAL_STEPS}
+            <Eyebrow>STEP 2 OF {TOTAL_STEPS}</Eyebrow>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight">
+              {ESSENTIALS.title}
+            </h1>
+            <p className="mt-3 leading-relaxed text-white/75">
+              {ESSENTIALS.intro}
             </p>
-            <h1 className="mt-2 text-2xl font-bold">Onboarding information</h1>
-            <div className="mt-4 flex flex-col gap-3 text-sm text-blue-100/70">
-              {ONBOARDING_INFO_PARAGRAPHS.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
+
+            <ol className="mt-6 flex flex-col gap-3">
+              {ESSENTIALS.items.map((item, index) => (
+                <li
+                  key={item.title}
+                  className="flex gap-3 rounded-3xl border border-white/15 bg-white/[0.06] backdrop-blur-md p-4"
+                >
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-cyan-300/60 bg-cyan-300/10 text-xs font-bold text-cyan-200">
+                    {index + 1}
+                  </span>
+                  <div>
+                    <p className="font-semibold">{item.title}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-white/70">
+                      {item.body}
+                    </p>
+                  </div>
+                </li>
               ))}
-            </div>
+            </ol>
 
             <button
               type="button"
               onClick={() => {
                 onReachQuiz();
                 setStep("quiz");
+                window.scrollTo({ top: 0 });
               }}
-              className="mt-8 w-full rounded-full bg-gradient-to-b from-blue-500 to-blue-700 py-3 text-sm font-semibold text-white transition-transform hover:brightness-110 active:scale-[0.99]"
+              className={`mt-8 ${PRIMARY_BUTTON}`}
             >
-              Start the mini-quiz
+              Start the quiz
             </button>
-            <p className="mt-3 text-center text-xs text-blue-200/50">
-              {QUIZ_QUESTIONS.length} short questions · about 1 minute
+            <p className="mt-3 text-center text-xs text-white/50">
+              {QUIZ_QUESTIONS.length} short questions, about 2 minutes
             </p>
           </>
         )}
 
         {step === "quiz" && (
           <>
-            <p className="font-mono text-xs tracking-[0.2em] text-blue-200/60">
-              STEP 3 OF {TOTAL_STEPS} · QUICK CHECK
-            </p>
-            <h1 className="mt-2 text-2xl font-bold">Quick check</h1>
-            <p className="mt-2 text-sm text-blue-100/70">
-              Just {QUIZ_QUESTIONS.length} short questions to confirm you&apos;re
-              ready.
+            <Eyebrow>STEP 3 OF {TOTAL_STEPS}</Eyebrow>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight">
+              Quick check
+            </h1>
+            <p className="mt-3 leading-relaxed text-white/75">
+              Answer {QUIZ_MIN_CORRECT} of {questions.length} correctly to
+              unlock your shifts. You can retake it as often as you need.
             </p>
 
-            <div className="mt-6 flex flex-col gap-6">
-              {QUIZ_QUESTIONS.map((q, qIndex) => (
+            <div className="mt-8 flex flex-col gap-8">
+              {questions.map((q, qIndex) => (
                 <div key={q.id}>
-                  <p className="text-sm font-semibold">{q.question}</p>
-                  <div className="mt-2 flex flex-col gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/50">
+                    Question {qIndex + 1} of {questions.length}
+                  </p>
+                  <p className="mt-1 font-semibold">{q.question}</p>
+                  <div className="mt-3 flex flex-col gap-2">
                     {q.options.map((option, optionIndex) => {
                       const selected = answers[qIndex] === optionIndex;
 
@@ -248,18 +327,18 @@ export function AcademyFlow({
                               ),
                             )
                           }
-                          className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-colors ${
+                          className={`flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition-colors ${
                             selected
-                              ? "border-blue-300/70 bg-blue-900/40 text-white"
-                              : "border-blue-400/20 bg-blue-950/20 text-blue-100/80 hover:border-blue-300/40"
+                              ? "border-cyan-300/70 bg-cyan-300/10 text-white"
+                              : "border-white/15 bg-white/[0.06] text-white/80 hover:border-blue-300/40"
                           }`}
                         >
                           <span>{option}</span>
                           <span
-                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[11px] ${
                               selected
-                                ? "border-blue-300 bg-blue-400 text-[#050822]"
-                                : "border-blue-400/40"
+                                ? "border-cyan-300 bg-cyan-300 text-[#050A2B]"
+                                : "border-white/25"
                             }`}
                             aria-hidden="true"
                           >
@@ -277,10 +356,15 @@ export function AcademyFlow({
               type="button"
               disabled={!allAnswered}
               onClick={handleCheckAnswers}
-              className="mt-8 w-full rounded-full bg-gradient-to-b from-blue-500 to-blue-700 py-3 text-sm font-semibold text-white transition-transform hover:brightness-110 active:scale-[0.99] disabled:opacity-40"
+              className={`mt-10 ${PRIMARY_BUTTON}`}
             >
               Check answers
             </button>
+            {!allAnswered && (
+              <p className="mt-3 text-center text-xs text-white/50">
+                {answeredCount} of {questions.length} answered
+              </p>
+            )}
           </>
         )}
 
@@ -289,76 +373,65 @@ export function AcademyFlow({
             <div
               className={`flex h-20 w-20 items-center justify-center rounded-full border-4 text-xl font-bold ${
                 passed
-                  ? "border-blue-400 text-blue-200"
+                  ? "border-cyan-300 text-cyan-200"
                   : "border-amber-400 text-amber-300"
               }`}
             >
-              {score}/{QUIZ_QUESTIONS.length}
+              {score}/{questions.length}
             </div>
 
-            <h1 className="mt-4 text-2xl font-bold">
-              {passed ? "Nice work!" : "Let's try that again"}
+            <h1 className="mt-4 text-3xl font-semibold tracking-tight">
+              {passed ? "You're ready" : "Almost there"}
             </h1>
-            <p className="mt-2 max-w-sm text-sm text-blue-100/70">
+            <p className="mt-3 max-w-sm leading-relaxed text-white/75">
               {passed
-                ? "You passed — here's a quick look at the correct answers."
-                : `You need at least ${QUIZ_MIN_CORRECT} out of ${QUIZ_QUESTIONS.length} correct to pass. No worries, you can retake it right away.`}
+                ? "Your shifts are unlocked. See you at Tectonic."
+                : `You need ${QUIZ_MIN_CORRECT} of ${questions.length} correct. Have a look at the questions below, then try again.`}
             </p>
 
-            <div className="mt-6 flex w-full flex-col gap-3 text-left">
-              {!passed && (
-                <p className="font-mono text-xs tracking-[0.2em] text-blue-200/50">
-                  YOUR RESULTS
+            {missed.length > 0 && (
+              <div className="mt-8 flex w-full flex-col gap-3 text-left">
+                <p className="text-xs font-semibold uppercase tracking-wider text-white/50">
+                  {passed ? "Worth knowing" : "To review"}
                 </p>
-              )}
-              {QUIZ_QUESTIONS.map((q, index) => {
-                const isCorrect = answers[index] === q.correctIndex;
-
-                return (
+                {missed.map((q) => (
                   <div
                     key={q.id}
-                    className="rounded-xl border border-blue-400/20 bg-blue-950/20 p-4"
+                    className="flex gap-3 rounded-3xl border border-white/15 bg-white/[0.06] backdrop-blur-md p-4"
                   >
-                    <div className="flex items-start gap-2">
-                      <CheckCircleIcon ok={isCorrect} />
-                      {passed ? (
-                        <div>
-                          <p className="text-sm font-semibold">{q.question}</p>
-                          {isCorrect ? (
-                            <p className="mt-1 text-sm text-green-200/80">
-                              {q.options[q.correctIndex]}
-                            </p>
-                          ) : (
-                            <div className="mt-1 space-y-1 text-sm">
-                              <p className="text-red-200/80">
-                                Your answer:{" "}
-                                {answers[index] !== null
-                                  ? q.options[answers[index] as number]
-                                  : "—"}
-                              </p>
-                              <p className="text-green-200/80">
-                                Correct: {q.options[q.correctIndex]}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-sm">
-                          Question {index + 1} —{" "}
-                          {isCorrect ? "correct" : "incorrect"}
-                        </p>
+                    <StatusIcon ok={false} />
+                    <div>
+                      <p className="font-semibold">{q.question}</p>
+                      {passed && (
+                        <>
+                          <p className="mt-1 text-sm text-cyan-200">
+                            {q.options[q.correctPosition]}
+                          </p>
+                          <p className="mt-1 text-sm leading-relaxed text-white/70">
+                            {q.explanation}
+                          </p>
+                        </>
                       )}
                     </div>
                   </div>
-                );
-              })}
-              {!passed && (
-                <p className="text-xs text-blue-200/50">
-                  Correct answers aren&apos;t shown so the retake stays
-                  meaningful.
-                </p>
-              )}
-            </div>
+                ))}
+                {!passed && (
+                  <p className="text-sm leading-relaxed text-white/60">
+                    The answers are not shown, so the retake stays meaningful.
+                    Everything is on the{" "}
+                    <a
+                      href="/onboarding"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-cyan-300 underline-offset-2 hover:underline"
+                    >
+                      Onboarding page
+                    </a>
+                    .
+                  </p>
+                )}
+              </div>
+            )}
 
             {error && (
               <p className="mt-4 w-full rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
@@ -370,13 +443,13 @@ export function AcademyFlow({
               type="button"
               disabled={completing}
               onClick={passed ? handleContinueToShifts : handleRetake}
-              className="mt-6 w-full rounded-full bg-gradient-to-b from-blue-500 to-blue-700 py-3 text-sm font-semibold text-white transition-transform hover:brightness-110 active:scale-[0.99] disabled:opacity-60"
+              className={`mt-8 ${PRIMARY_BUTTON}`}
             >
               {passed
                 ? completing
                   ? "Saving..."
-                  : "Continue to shifts →"
-                : "Retake quiz →"}
+                  : "Go to my shifts"
+                : "Retake the quiz"}
             </button>
           </div>
         )}
