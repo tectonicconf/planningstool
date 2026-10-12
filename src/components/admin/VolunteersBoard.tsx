@@ -10,7 +10,11 @@ import {
   setAssignmentCheckedIn,
   type ActionResult,
 } from "@/lib/adminActions";
-import { isVolunteerAvailableForShift, hasOverlap } from "@/lib/shiftEligibility";
+import {
+  isVolunteerAvailableForShift,
+  hasOverlap,
+  hasReachedShiftPreference,
+} from "@/lib/shiftEligibility";
 import { Modal } from "@/components/Modal";
 import {
   ROLE_STYLES,
@@ -438,6 +442,10 @@ export function VolunteersBoard({
         <span className="inline-flex items-center gap-1">
           <span className="h-2 w-2 rounded-full bg-blue-400" /> blue = still open
         </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="h-2 w-2 rounded-full bg-orange-400" /> orange = already at
+          their preferred shift count — try not to assign more
+        </span>
       </p>
 
       {/* One card layout at every screen size (avoids a wide table that
@@ -474,6 +482,16 @@ export function VolunteersBoard({
                     </dd>
                     <dt className="text-slate-400">Org</dt>
                     <dd className="text-slate-600">{volunteer.association || "—"}</dd>
+                    <dt className="text-slate-400">Shift preference</dt>
+                    <dd className="flex items-center gap-1.5 text-slate-600">
+                      {volunteer.shiftCountPreference || "—"}
+                      {hasReachedShiftPreference(volunteer) && (
+                        <span
+                          title="Already at their preferred shift count — try not to assign more"
+                          className="h-2 w-2 shrink-0 rounded-full bg-orange-400"
+                        />
+                      )}
+                    </dd>
                   </dl>
 
                   <div className="mt-3">
@@ -515,6 +533,7 @@ export function VolunteersBoard({
                     association: input.association,
                     availability: input.availability,
                     magicLinkToken: result.data.magicLinkToken,
+                    shiftCountPreference: input.shiftCountPreference,
                     assignments: [],
                   },
                 ]);
@@ -552,6 +571,12 @@ export function VolunteersBoard({
               Only shifts this volunteer is available for and doesn&apos;t overlap with are shown.
             </p>
 
+            {hasReachedShiftPreference(assignShiftVolunteer) && (
+              <p className="mt-2 rounded-lg bg-orange-50 px-2 py-1.5 text-xs text-orange-700">
+                Already has their preferred number of shifts ({assignShiftVolunteer.shiftCountPreference}) — try not to assign more unless necessary.
+              </p>
+            )}
+
             <div className="mt-3 max-h-64 overflow-y-auto">
               {shiftDirectory
                 .filter((shift) => {
@@ -585,7 +610,11 @@ export function VolunteersBoard({
                     type="button"
                     onClick={() => handleAssignShift(assignShiftVolunteer.id, shift)}
                     disabled={busyKey === `assign-${assignShiftVolunteer.id}-${shift.id}`}
-                    className="flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm hover:bg-slate-50 disabled:opacity-50"
+                    className={`flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm disabled:opacity-50 ${
+                      hasReachedShiftPreference(assignShiftVolunteer)
+                        ? "bg-orange-50 hover:bg-orange-100"
+                        : "hover:bg-slate-50"
+                    }`}
                   >
                     <span>
                       {formatDate(shift.date)} · {shift.startTime}–{shift.endTime}

@@ -15,11 +15,13 @@ export function ShiftDashboard({
   firstName,
   initialShifts,
   initialQuizCompleted,
+  openAcademyAtQuiz = false,
 }: {
   token: string;
   firstName: string;
   initialShifts: Shift[];
   initialQuizCompleted: boolean;
+  openAcademyAtQuiz?: boolean;
 }) {
   // This component only ever renders after the server has confirmed the
   // token belongs to a real volunteer, so it's safe to remember it here —
@@ -42,9 +44,11 @@ export function ShiftDashboard({
   // column on volunteers) — progress through the welcome/info steps below
   // is kept in memory only, so it resets if the page is reloaded mid-flow.
   const [quizCompleted, setQuizCompleted] = useState(initialQuizCompleted);
-  const [academyProgress, setAcademyProgress] =
-    useState<AcademyProgress>("not-started");
-  const [academyOpen, setAcademyOpen] = useState(false);
+  const jumpToQuiz = openAcademyAtQuiz && !initialQuizCompleted;
+  const [academyProgress, setAcademyProgress] = useState<AcademyProgress>(
+    jumpToQuiz ? "ready-for-quiz" : "not-started",
+  );
+  const [academyOpen, setAcademyOpen] = useState(jumpToQuiz);
 
   const totalHours = shifts.reduce((sum, shift) => sum + shift.hours, 0);
 

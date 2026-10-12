@@ -35,6 +35,7 @@ export type AdminTables = {
     association: string | null;
     availability: string | null;
     magic_link_token: string;
+    shift_count_preference: string | null;
   }[];
 };
 
@@ -54,7 +55,7 @@ export async function getAdminTables(): Promise<AdminTables> {
       supabaseAdmin
         .from("volunteers")
         .select(
-          "id, first_name, last_name, email, phone_number, association, availability, magic_link_token",
+          "id, first_name, last_name, email, phone_number, association, availability, magic_link_token, shift_count_preference",
         )
         .order("first_name"),
     ]);

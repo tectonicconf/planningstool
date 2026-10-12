@@ -5,6 +5,7 @@ import { ShiftDashboard } from "@/components/ShiftDashboard";
 
 export default async function ShiftPage(props: PageProps<"/shift/[token]">) {
   const { token } = await props.params;
+  const searchParams = await props.searchParams;
   const volunteer = await getVolunteerByToken(token);
 
   if (!volunteer) {
@@ -19,6 +20,7 @@ export default async function ShiftPage(props: PageProps<"/shift/[token]">) {
       firstName={volunteer.firstName}
       initialShifts={shifts}
       initialQuizCompleted={volunteer.quizCompleted}
+      openAcademyAtQuiz={searchParams.academy === "quiz"}
     />
   );
 }

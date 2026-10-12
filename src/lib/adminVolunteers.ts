@@ -23,6 +23,7 @@ export type VolunteerRow = {
   association: string;
   availability: string[];
   magicLinkToken: string;
+  shiftCountPreference: string;
   assignments: VolunteerAssignment[];
 };
 
@@ -66,6 +67,7 @@ export async function getVolunteersWithAssignments(
       .map((entry: string) => entry.trim())
       .filter(Boolean),
     magicLinkToken: volunteer.magic_link_token,
+    shiftCountPreference: volunteer.shift_count_preference ?? "",
     assignments: (assignmentsByVolunteer.get(volunteer.id) ?? []).sort(
       (a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`),
     ),

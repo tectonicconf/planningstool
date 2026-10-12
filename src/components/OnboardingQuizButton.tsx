@@ -31,7 +31,7 @@ export function OnboardingQuizButton() {
 
   return (
     <Link
-      href={`/shift/${encodeURIComponent(token)}`}
+      href={`/shift/${encodeURIComponent(token)}?academy=quiz`}
       className="mt-6 block w-full rounded-full bg-gradient-to-b from-blue-500 to-blue-700 py-3 text-center text-sm font-semibold text-white transition-transform hover:brightness-110 active:scale-[0.99]"
     >
       Ready for the mini-quiz

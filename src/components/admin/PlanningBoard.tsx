@@ -10,7 +10,11 @@ import {
   removeAssignment,
   setAssignmentCheckedIn,
 } from "@/lib/adminActions";
-import { isVolunteerAvailableForShift, hasOverlap } from "@/lib/shiftEligibility";
+import {
+  isVolunteerAvailableForShift,
+  hasOverlap,
+  hasReachedShiftPreference,
+} from "@/lib/shiftEligibility";
 import { Modal } from "@/components/Modal";
 import { ROLE_CATEGORIES, ROLE_STYLES, DEFAULT_ROLE_STYLE, TIME_SLOTS } from "@/lib/constants";
 
@@ -312,6 +316,13 @@ export function PlanningBoard({
           {error}
         </p>
       )}
+
+      <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
+        <span className="inline-flex items-center gap-1">
+          <span className="h-2 w-2 rounded-full bg-orange-400" /> orange = already at
+          their preferred shift count — try not to assign more
+        </span>
+      </p>
 
       <div className="mt-6 flex flex-wrap gap-2">
         {dates.map((date) => (
@@ -667,21 +678,33 @@ export function PlanningBoard({
                   );
                 })
                 .slice(0, 30)
-                .map((volunteer) => (
-                  <button
-                    key={volunteer.id}
-                    type="button"
-                    onClick={() => handleAddVolunteer(addVolunteerShift, volunteer)}
-                    disabled={busyKey === `add-${addVolunteerShift.id}-${volunteer.id}`}
-                    className="flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm hover:bg-slate-50 disabled:opacity-50"
-                  >
-                    <span>
-                      {volunteer.name}
-                      <span className="ml-2 text-xs text-slate-400">{volunteer.email}</span>
-                    </span>
-                    <span className="text-indigo-600">+</span>
-                  </button>
-                ))}
+                .map((volunteer) => {
+                  const atLimit = hasReachedShiftPreference(volunteer);
+
+                  return (
+                    <button
+                      key={volunteer.id}
+                      type="button"
+                      onClick={() => handleAddVolunteer(addVolunteerShift, volunteer)}
+                      disabled={busyKey === `add-${addVolunteerShift.id}-${volunteer.id}`}
+                      className={`flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm disabled:opacity-50 ${
+                        atLimit ? "bg-orange-50 hover:bg-orange-100" : "hover:bg-slate-50"
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        {atLimit && (
+                          <span
+                            title="Already at their preferred shift count — try not to assign more"
+                            className="h-2 w-2 shrink-0 rounded-full bg-orange-400"
+                          />
+                        )}
+                        {volunteer.name}
+                        <span className="ml-2 text-xs text-slate-400">{volunteer.email}</span>
+                      </span>
+                      <span className="text-indigo-600">+</span>
+                    </button>
+                  );
+                })}
             </div>
           </div>
         </Modal>
