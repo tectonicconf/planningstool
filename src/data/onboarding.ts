@@ -105,7 +105,7 @@ export const NEXT_STEPS: Step[] = [
   {
     id: "group-chat",
     title: "Join the WhatsApp group",
-    body: "One community channel for everyone, plus one channel per shift with your volunteer lead. We'll add you.",
+    body: "One community channel for everyone, plus one channel per shift with your volunteer lead. You get the link by email.",
   },
   {
     id: "startup-101",
