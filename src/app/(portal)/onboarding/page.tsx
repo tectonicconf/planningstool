@@ -152,13 +152,25 @@ export default function OnboardingPage() {
           </p>
         </header>
 
-        {/* Why it's worth it */}
+        {/* Mission and vision */}
         <section>
-          <SectionTitle eyebrow="THE BIGGER PICTURE" title={WHY_VOLUNTEER.title} />
-          <div className="grid gap-3 sm:grid-cols-3">
-            {WHY_VOLUNTEER.items.map((item) => (
-              <Card key={item.title} title={item.title} body={item.body} />
-            ))}
+          <SectionTitle eyebrow={WHY_VOLUNTEER.eyebrow} title={WHY_VOLUNTEER.title} />
+          <div className="rounded-3xl border border-white/15 bg-white/[0.06] p-6 backdrop-blur-md">
+            <p className="text-xl font-semibold leading-snug sm:text-2xl">
+              {WHY_VOLUNTEER.lead}
+            </p>
+            <div className="mt-5 flex flex-col gap-4">
+              {WHY_VOLUNTEER.paragraphs.map((paragraph) => (
+                <div key={paragraph.label}>
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-cyan-300">
+                    {paragraph.label}
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-white/70">
+                    {paragraph.text}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 

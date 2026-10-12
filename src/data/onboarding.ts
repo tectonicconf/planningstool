@@ -15,19 +15,18 @@ export const ONBOARDING_INTRO = {
 };
 
 export const WHY_VOLUNTEER = {
-  title: "Why it's worth it",
-  items: [
+  eyebrow: "MISSION AND VISION",
+  title: "Why Tectonic exists",
+  // Mission: the big statement at the top.
+  lead: "We want to stimulate innovation and technology, and we want to do it from Europe.",
+  paragraphs: [
     {
-      title: "Behind the scenes",
-      body: "Experience one of Belgium's leading entrepreneurship events from the inside.",
+      label: "Our vision",
+      text: "A Europe that builds the technology it relies on, where founders, investors, companies and policymakers know each other.",
     },
     {
-      title: "Close to the ecosystem",
-      body: "Meet ambitious people from the Belgian and European startup and tech scene.",
-    },
-    {
-      title: "An ambitious crew",
-      body: "Join a high-energy team that makes Tectonic happen.",
+      label: "Why now",
+      text: "AI is reshaping every industry, and technology now sits at the centre of security and politics. Europe wants to depend less on others for what it relies on. That starts with people who build, fund and use technology finding each other. As a volunteer, you help make that meeting happen.",
     },
   ],
 };
