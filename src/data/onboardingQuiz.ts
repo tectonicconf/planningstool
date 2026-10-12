@@ -4,34 +4,18 @@
 // Everything here is made-up placeholder copy: replace it with the real
 // event facts and quiz before the event.
 
-export type EventFact = {
-  icon: "calendar" | "location" | "person";
-  title: string;
-  subtitle: string;
-};
-
-export const EVENT_FACTS: EventFact[] = [
-  {
-    icon: "calendar",
-    title: "21–22 October 2026",
-    subtitle: "Ghent, Belgium",
-  },
-  {
-    icon: "location",
-    title: "3 venues",
-    subtitle: "Wintercircus, Vooruit, De Kreun",
-  },
-  {
-    icon: "person",
-    title: "Your team lead",
-    subtitle: "Your on-site contact for questions",
-  },
+// The 3-step explainer card on the welcome screen.
+export const HOW_IT_WORKS_STEPS: string[] = [
+  "Read the onboarding info",
+  "Take a short quiz to finish onboarding",
+  "Your shifts unlock. Confirm them in the portal",
 ];
 
-export const ONBOARDING_INFO_PARAGRAPHS: string[] = [
-  "Tectonic brings together founders, investors and the wider startup ecosystem for three days in Ghent.",
-  "As a volunteer, you'll help things run smoothly across our venues — from welcoming guests to supporting speakers and sessions.",
-  "This short quiz just confirms you've got the essentials before your first shift.",
+// The "Good to know" tips card on the welcome screen.
+export const GOOD_TO_KNOW_ITEMS: string[] = [
+  "A shift can be cancelled through the portal until the week of the event.",
+  "Last-minute absence? Call us as soon as possible, so we can fill your shift.",
+  "Onboarding info, Academy and FAQ remain available in your portal.",
 ];
 
 export type QuizQuestion = {

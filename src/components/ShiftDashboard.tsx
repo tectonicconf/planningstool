@@ -191,15 +191,8 @@ export function ShiftDashboard({
       {academyOpen && (
         <AcademyFlow
           token={token}
-          initialStep={
-            academyProgress === "info-done"
-              ? "quiz"
-              : academyProgress === "info-in-progress"
-                ? "info"
-                : "welcome"
-          }
-          onReachInfo={() => setAcademyProgress("info-in-progress")}
-          onReachQuiz={() => setAcademyProgress("info-done")}
+          initialStep={academyProgress === "ready-for-quiz" ? "quiz" : "welcome"}
+          onReachQuiz={() => setAcademyProgress("ready-for-quiz")}
           onComplete={() => {
             setQuizCompleted(true);
             setAcademyOpen(false);

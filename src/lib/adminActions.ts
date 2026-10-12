@@ -221,13 +221,57 @@ export async function removeAssignment(
   return { ok: true, data: undefined };
 }
 
+export async function setAssignmentCheckedIn(
+  assignmentId: number,
+  checkedIn: boolean,
+): Promise<ActionResult<{ checkedInAt: string | null }>> {
+  const checkedInAt = checkedIn ? new Date().toISOString() : null;
+
+  const { error } = await supabaseAdmin
+    .from("assignments")
+    .update({ checked_in_at: checkedInAt })
+    .eq("id", assignmentId);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  return { ok: true, data: { checkedInAt } };
+}
+
 export async function createVolunteer(input: {
   firstName: string;
   lastName: string;
   email: string;
   phoneNumber: string;
   association: string;
+  shiftPreferences: string[];
+  availability: string[];
+  shiftCountPreference: string;
 }): Promise<ActionResult<{ id: string; magicLinkToken: string }>> {
+  const normalizedEmail = input.email.trim();
+  // phone_number is a bigint column — it can't hold "" (that's the bug
+  // behind "invalid input syntax for type bigint"), so blank becomes null,
+  // and we strip spaces/"+" to match the digits-only format already in use
+  // for existing volunteers (e.g. "32475641923" for +32 475 64 19 23).
+  const digitsOnlyPhone = input.phoneNumber.replace(/[\s+]/g, "").trim();
+  const phoneNumber =
+    digitsOnlyPhone && /^\d+$/.test(digitsOnlyPhone) ? Number(digitsOnlyPhone) : null;
+
+  const [{ data: emailMatch }, { data: phoneMatch }] = await Promise.all([
+    supabaseAdmin.from("volunteers").select("id").ilike("email", normalizedEmail).limit(1),
+    phoneNumber !== null
+      ? supabaseAdmin.from("volunteers").select("id").eq("phone_number", phoneNumber).limit(1)
+      : Promise.resolve({ data: [] as { id: string }[] }),
+  ]);
+
+  if ((emailMatch && emailMatch.length > 0) || (phoneMatch && phoneMatch.length > 0)) {
+    return {
+      ok: false,
+      error: "A volunteer with this email or phone number already exists.",
+    };
+  }
+
   const id = `manual_${randomUUID().slice(0, 8)}`;
   const magicLinkToken = generateMagicLinkToken();
 
@@ -235,14 +279,17 @@ export async function createVolunteer(input: {
     id,
     first_name: input.firstName,
     last_name: input.lastName,
-    email: input.email,
-    phone_number: input.phoneNumber,
+    email: normalizedEmail,
+    phone_number: phoneNumber,
     association: input.association,
     wants_responsibility: false,
     is_backup: false,
     approval_status: "approved",
     uploaded_video: false,
     magic_link_token: magicLinkToken,
+    preferences: input.shiftPreferences.join("; "),
+    availability: input.availability.join("; "),
+    shift_count_preference: input.shiftCountPreference || null,
   });
 
   if (error) {

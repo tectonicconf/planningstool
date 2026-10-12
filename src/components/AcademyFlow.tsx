@@ -1,26 +1,25 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
-  EVENT_FACTS,
-  ONBOARDING_INFO_PARAGRAPHS,
+  GOOD_TO_KNOW_ITEMS,
+  HOW_IT_WORKS_STEPS,
   QUIZ_MIN_CORRECT,
   QUIZ_QUESTIONS,
-  type EventFact,
 } from "@/data/onboardingQuiz";
 import { completeOnboardingQuiz } from "@/lib/onboardingQuiz";
 
-type FlowStep = "welcome" | "info" | "quiz" | "results";
+type FlowStep = "welcome" | "quiz" | "results";
 
 const STEP_NUMBER: Record<Exclude<FlowStep, "results">, number> = {
   welcome: 1,
-  info: 2,
-  quiz: 3,
+  quiz: 2,
 };
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 2;
 
 function StepDots({ step }: { step: FlowStep }) {
-  const current = step === "results" ? 3 : STEP_NUMBER[step];
+  const current = step === "results" ? TOTAL_STEPS : STEP_NUMBER[step];
 
   return (
     <div className="flex gap-1.5">
@@ -33,31 +32,6 @@ function StepDots({ step }: { step: FlowStep }) {
         />
       ))}
     </div>
-  );
-}
-
-function FactIcon({ icon }: { icon: EventFact["icon"] }) {
-  if (icon === "calendar") {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
-        <rect x="3" y="5" width="18" height="16" rx="2" />
-        <path d="M16 3v4M8 3v4M3 10h18" />
-      </svg>
-    );
-  }
-  if (icon === "location") {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
-        <path d="M12 21s-7-5.686-7-11a7 7 0 1 1 14 0c0 5.314-7 11-7 11Z" />
-        <circle cx="12" cy="10" r="2.5" />
-      </svg>
-    );
-  }
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
-      <circle cx="12" cy="8" r="3.5" />
-      <path d="M5 20c0-3.314 3.134-6 7-6s7 2.686 7 6" />
-    </svg>
   );
 }
 
@@ -77,14 +51,12 @@ function CheckCircleIcon({ ok }: { ok: boolean }) {
 export function AcademyFlow({
   token,
   initialStep = "welcome",
-  onReachInfo,
   onReachQuiz,
   onComplete,
   onClose,
 }: {
   token: string;
-  initialStep?: "welcome" | "info" | "quiz";
-  onReachInfo: () => void;
+  initialStep?: "welcome" | "quiz";
   onReachQuiz: () => void;
   onComplete: () => void;
   onClose: () => void;
@@ -152,54 +124,52 @@ export function AcademyFlow({
             <p className="font-mono text-xs tracking-[0.2em] text-blue-200/60">
               STEP 1 OF {TOTAL_STEPS}
             </p>
-            <h1 className="mt-2 text-2xl font-bold">Welcome to Tectonic</h1>
+            <h1 className="mt-2 flex items-center gap-2 text-2xl font-bold">
+              Welcome to
+              <img src="/logo.png" alt="Tectonic" className="h-7 w-auto" />
+            </h1>
             <p className="mt-2 text-sm text-blue-100/70">
-              Before you can view your shifts, you&apos;ll briefly go through
-              where, when and with whom you&apos;ll work during the festival.
+              Before you can view your shifts, you first have to go through
+              onboarding.
             </p>
 
-            <div className="mt-6 flex flex-col gap-3">
-              {EVENT_FACTS.map((fact) => (
-                <div
-                  key={fact.title}
-                  className="flex items-center gap-3 rounded-xl border border-blue-400/20 bg-blue-950/30 p-4"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-300">
-                    <FactIcon icon={fact.icon} />
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold">{fact.title}</p>
-                    <p className="mt-0.5 text-sm text-blue-100/70">
-                      {fact.subtitle}
-                    </p>
-                  </div>
-                </div>
-              ))}
+            <div className="mt-6 rounded-xl border border-blue-400/20 bg-blue-950/30 p-4">
+              <p className="text-sm font-semibold">How it works</p>
+              <ol className="mt-2 flex flex-col gap-1.5 text-sm text-blue-100/70">
+                {HOW_IT_WORKS_STEPS.map((text, index) => (
+                  <li key={text} className="flex gap-2">
+                    <span className="text-blue-300/70">{index + 1}.</span>
+                    <span>{text}</span>
+                  </li>
+                ))}
+              </ol>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                onReachInfo();
-                setStep("info");
-              }}
-              className="mt-8 w-full rounded-full bg-gradient-to-b from-blue-500 to-blue-700 py-3 text-sm font-semibold text-white transition-transform hover:brightness-110 active:scale-[0.99]"
-            >
-              Start onboarding
-            </button>
-          </>
-        )}
+            <div className="mt-3 rounded-xl border border-blue-400/20 bg-blue-950/20 p-4">
+              <p className="text-sm text-white">
+                Make sure you carefully read the onboarding.
+              </p>
+              <Link
+                href="/onboarding"
+                className="mt-3 inline-flex items-center gap-1 rounded-full border border-cyan-400/60 px-4 py-2 text-sm font-semibold text-cyan-300 transition-colors hover:border-cyan-300 hover:text-cyan-200"
+              >
+                Go to Onboarding
+                <span aria-hidden="true">&rarr;</span>
+              </Link>
+            </div>
 
-        {step === "info" && (
-          <>
-            <p className="font-mono text-xs tracking-[0.2em] text-blue-200/60">
-              STEP 2 OF {TOTAL_STEPS}
-            </p>
-            <h1 className="mt-2 text-2xl font-bold">Onboarding information</h1>
-            <div className="mt-4 flex flex-col gap-3 text-sm text-blue-100/70">
-              {ONBOARDING_INFO_PARAGRAPHS.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
+            <div className="mt-3 rounded-xl border-2 border-blue-400/40 p-4">
+              <p className="font-mono text-xs font-semibold tracking-[0.2em] text-blue-300/70">
+                GOOD TO KNOW
+              </p>
+              <ul className="mt-2 flex flex-col gap-2 text-sm text-blue-100/70">
+                {GOOD_TO_KNOW_ITEMS.map((text) => (
+                  <li key={text} className="flex gap-2">
+                    <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-blue-300/70" />
+                    <span>{text}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
 
             <button
@@ -208,9 +178,9 @@ export function AcademyFlow({
                 onReachQuiz();
                 setStep("quiz");
               }}
-              className="mt-8 w-full rounded-full bg-gradient-to-b from-blue-500 to-blue-700 py-3 text-sm font-semibold text-white transition-transform hover:brightness-110 active:scale-[0.99]"
+              className="mt-6 w-full rounded-full bg-gradient-to-b from-blue-500 to-blue-700 py-3 text-sm font-semibold text-white transition-transform hover:brightness-110 active:scale-[0.99]"
             >
-              Start the mini-quiz
+              I&apos;ve read the onboarding. Ready for the mini-quiz
             </button>
             <p className="mt-3 text-center text-xs text-blue-200/50">
               {QUIZ_QUESTIONS.length} short questions · about 1 minute
@@ -221,7 +191,7 @@ export function AcademyFlow({
         {step === "quiz" && (
           <>
             <p className="font-mono text-xs tracking-[0.2em] text-blue-200/60">
-              STEP 3 OF {TOTAL_STEPS} · QUICK CHECK
+              STEP 2 OF {TOTAL_STEPS} · QUICK CHECK
             </p>
             <h1 className="mt-2 text-2xl font-bold">Quick check</h1>
             <p className="mt-2 text-sm text-blue-100/70">

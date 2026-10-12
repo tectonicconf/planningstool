@@ -162,6 +162,26 @@ def parse_desired_shifts(value):
     )
 
 
+def format_desired_shifts(desired):
+    """
+    Reverse of parse_desired_shifts — formats a volunteer's parsed
+    shift-count preference back into the display strings the
+    webapp's admin UI uses for the `shift_count_preference` column
+    (SHIFT_COUNT_PREFERENCES in src/lib/constants.ts).
+    """
+
+    if isinstance(desired, int):
+        return str(desired)
+
+    if desired == "more":
+        return "4+"
+
+    if desired == "indifferent":
+        return "No preference"
+
+    return ""
+
+
 # ============================================================
 # LOAD VOLUNTEERS FROM RAW TALLY EXPORT
 # ============================================================
@@ -631,6 +651,7 @@ def write_volunteers_csv(
         "magic_link_token",
         "preferences",
         "availability",
+        "shift_count_preference",
     ]
 
     with open(
@@ -680,6 +701,9 @@ def write_volunteers_csv(
                 "availability": "; ".join(
                     f"{date} {slot}"
                     for date, slot in volunteer_availability
+                ),
+                "shift_count_preference": format_desired_shifts(
+                    volunteer["desired_shifts"]
                 ),
             })
 

@@ -1,4 +1,5 @@
 import { ONBOARDING_SECTIONS } from "@/data/onboarding";
+import { OnboardingQuizButton } from "@/components/OnboardingQuizButton";
 
 export default function OnboardingPage() {
   return (
@@ -20,6 +21,8 @@ export default function OnboardingPage() {
             </div>
           ))}
         </div>
+
+        <OnboardingQuizButton />
       </div>
     </div>
   );

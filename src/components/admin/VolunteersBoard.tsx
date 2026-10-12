@@ -3,10 +3,79 @@
 import { useMemo, useState } from "react";
 import type { VolunteerRow, VolunteerAssignmentStatus } from "@/lib/adminVolunteers";
 import type { ShiftDirectoryEntry } from "@/lib/adminPlanning";
-import { addVolunteerToShift, createVolunteer, removeAssignment } from "@/lib/adminActions";
+import {
+  addVolunteerToShift,
+  createVolunteer,
+  removeAssignment,
+  setAssignmentCheckedIn,
+  type ActionResult,
+} from "@/lib/adminActions";
 import { isVolunteerAvailableForShift, hasOverlap } from "@/lib/shiftEligibility";
 import { Modal } from "@/components/Modal";
-import { ROLE_STYLES, DEFAULT_ROLE_STYLE } from "@/lib/constants";
+import {
+  ROLE_STYLES,
+  DEFAULT_ROLE_STYLE,
+  ROLE_CATEGORIES,
+  SHIFT_COUNT_PREFERENCES,
+  AVAILABILITY_OPTIONS,
+  availabilityValue,
+} from "@/lib/constants";
+
+const availabilityLabelByValue = new Map(
+  AVAILABILITY_OPTIONS.map((option) => [
+    availabilityValue(option.date, option.slot),
+    option.label,
+  ]),
+);
+
+function isAvailabilityOccupied(
+  volunteer: VolunteerRow,
+  date: string,
+  slot: string,
+): boolean {
+  return volunteer.assignments.some(
+    (a) => a.status !== "cancelled" && a.date === date && a.slot === slot,
+  );
+}
+
+function volunteerHasOpenAvailability(volunteer: VolunteerRow): boolean {
+  return volunteer.availability.some((raw) => {
+    const option = AVAILABILITY_OPTIONS.find(
+      (o) => availabilityValue(o.date, o.slot) === raw,
+    );
+    return option ? !isAvailabilityOccupied(volunteer, option.date, option.slot) : false;
+  });
+}
+
+function AvailabilityBadges({ volunteer }: { volunteer: VolunteerRow }) {
+  if (volunteer.availability.length === 0) {
+    return <span className="text-slate-400">—</span>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {volunteer.availability.map((raw) => {
+        const label = availabilityLabelByValue.get(raw) ?? raw;
+        const option = AVAILABILITY_OPTIONS.find(
+          (o) => availabilityValue(o.date, o.slot) === raw,
+        );
+        const occupied = option ? isAvailabilityOccupied(volunteer, option.date, option.slot) : false;
+
+        return (
+          <span
+            key={raw}
+            title={occupied ? "Already covered by an assigned shift" : "Still open"}
+            className={`rounded px-1.5 py-0.5 text-xs font-medium ${
+              occupied ? "bg-slate-100 text-slate-400" : "bg-blue-100 text-blue-700"
+            }`}
+          >
+            {label}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
 
 const STATUS_STYLES: Record<VolunteerAssignmentStatus, string> = {
   pending: "bg-blue-100 text-blue-700",
@@ -22,17 +91,123 @@ function formatDate(date: string) {
   });
 }
 
+function VolunteerAssignmentsList({
+  volunteer,
+  busyKey,
+  onToggleCheckedIn,
+  onRemove,
+  onAddToShift,
+  readOnly = false,
+}: {
+  volunteer: VolunteerRow;
+  busyKey: string | null;
+  onToggleCheckedIn: (assignment: VolunteerRow["assignments"][number]) => void;
+  onRemove: (assignmentId: number) => void;
+  onAddToShift: () => void;
+  readOnly?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      {volunteer.assignments.length === 0 && (
+        <span className="text-slate-400">No shifts assigned</span>
+      )}
+
+      {volunteer.assignments.map((assignment) => {
+        const style = ROLE_STYLES[assignment.roleCategory] ?? DEFAULT_ROLE_STYLE;
+
+        return (
+          <div
+            key={assignment.assignmentId}
+            className="flex flex-col gap-2 rounded-lg border border-slate-100 bg-slate-50 px-2 py-1.5"
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-slate-600">
+                {formatDate(assignment.date)} · {assignment.startTime}–
+                {assignment.endTime}
+              </span>
+              <span className="text-slate-400">{assignment.location}</span>
+              <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${style.badgeClassName}`}>
+                {assignment.roleCategory}
+              </span>
+              <span
+                className={`rounded px-1.5 py-0.5 text-xs font-medium ${STATUS_STYLES[assignment.status]}`}
+              >
+                {assignment.status}
+              </span>
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={() => onRemove(assignment.assignmentId)}
+                  disabled={busyKey === `remove-${assignment.assignmentId}`}
+                  className="ml-auto rounded bg-red-50 px-1.5 py-0.5 text-xs text-red-600 hover:bg-red-100 disabled:opacity-50"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+            {assignment.status === "confirmed" &&
+              (readOnly ? (
+                <span
+                  className={`w-full rounded px-2 py-1 text-center text-xs font-medium ${
+                    assignment.checkedInAt
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {assignment.checkedInAt ? "Checked in ✓" : "Not checked in"}
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onToggleCheckedIn(assignment)}
+                  disabled={busyKey === `checkin-${assignment.assignmentId}`}
+                  title={
+                    assignment.checkedInAt
+                      ? `Checked in at ${new Date(assignment.checkedInAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
+                      : "Mark as checked in"
+                  }
+                  className={`w-full rounded px-2 py-1 text-center text-xs font-medium disabled:opacity-50 ${
+                    assignment.checkedInAt
+                      ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {assignment.checkedInAt ? "Checked in ✓" : "Check in"}
+                </button>
+              ))}
+          </div>
+        );
+      })}
+
+      {!readOnly && (
+        <button
+          type="button"
+          onClick={onAddToShift}
+          className="self-start rounded-lg border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+        >
+          + Add to shift
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function VolunteersBoard({
   initialVolunteers,
   shiftDirectory,
+  initialSearch = "",
+  readOnly = false,
 }: {
   initialVolunteers: VolunteerRow[];
   shiftDirectory: ShiftDirectoryEntry[];
+  initialSearch?: string;
+  readOnly?: boolean;
 }) {
   const [volunteers, setVolunteers] = useState(initialVolunteers);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [statusFilter, setStatusFilter] = useState<"all" | VolunteerAssignmentStatus>("all");
   const [orgFilter, setOrgFilter] = useState("all");
+  const [availabilityFilter, setAvailabilityFilter] = useState<"all" | "open">("all");
   const [addVolunteerOpen, setAddVolunteerOpen] = useState(false);
   const [assignShiftVolunteerId, setAssignShiftVolunteerId] = useState<string | null>(null);
   const [assignShiftQuery, setAssignShiftQuery] = useState("");
@@ -65,13 +240,17 @@ export function VolunteersBoard({
       if (statusFilter !== "all" && !volunteer.assignments.some((a) => a.status === statusFilter))
         return false;
 
+      if (availabilityFilter === "open" && !volunteerHasOpenAvailability(volunteer))
+        return false;
+
       return true;
     });
-  }, [volunteers, searchQuery, orgFilter, statusFilter]);
+  }, [volunteers, searchQuery, orgFilter, statusFilter, availabilityFilter]);
 
   function clearFilters() {
     setSearchQuery("");
     setStatusFilter("all");
+    setAvailabilityFilter("all");
     setOrgFilter("all");
   }
 
@@ -89,6 +268,40 @@ export function VolunteersBoard({
       current.map((v) =>
         v.id === volunteerId
           ? { ...v, assignments: v.assignments.filter((a) => a.assignmentId !== assignmentId) }
+          : v,
+      ),
+    );
+  }
+
+  async function handleToggleCheckedIn(
+    volunteerId: string,
+    assignment: VolunteerRow["assignments"][number],
+  ) {
+    const nextCheckedIn = !assignment.checkedInAt;
+
+    setBusyKey(`checkin-${assignment.assignmentId}`);
+    const result = await setAssignmentCheckedIn(
+      assignment.assignmentId,
+      nextCheckedIn,
+    );
+    setBusyKey(null);
+
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+
+    setVolunteers((current) =>
+      current.map((v) =>
+        v.id === volunteerId
+          ? {
+              ...v,
+              assignments: v.assignments.map((a) =>
+                a.assignmentId === assignment.assignmentId
+                  ? { ...a, checkedInAt: result.data.checkedInAt }
+                  : a,
+              ),
+            }
           : v,
       ),
     );
@@ -115,11 +328,13 @@ export function VolunteersBoard({
                   assignmentId: result.data.assignmentId,
                   shiftId: shift.id,
                   date: shift.date,
+                  slot: shift.slot,
                   startTime: shift.startTime,
                   endTime: shift.endTime,
                   location: shift.location,
                   roleCategory: shift.roleCategory,
                   status: "pending" as const,
+                  checkedInAt: null,
                 },
               ],
             }
@@ -142,13 +357,15 @@ export function VolunteersBoard({
             volunteers from shifts.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setAddVolunteerOpen(true)}
-          className="shrink-0 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-        >
-          + Add volunteer
-        </button>
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={() => setAddVolunteerOpen(true)}
+            className="shrink-0 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+          >
+            + Add volunteer
+          </button>
+        )}
       </div>
 
       {error && (
@@ -191,6 +408,15 @@ export function VolunteersBoard({
           ))}
         </select>
 
+        <select
+          value={availabilityFilter}
+          onChange={(e) => setAvailabilityFilter(e.target.value as "all" | "open")}
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+        >
+          <option value="all">Any availability</option>
+          <option value="open">Still available</option>
+        </select>
+
         <button
           type="button"
           onClick={clearFilters}
@@ -204,119 +430,104 @@ export function VolunteersBoard({
         </span>
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-slate-100 bg-slate-50 text-slate-500">
-            <tr>
-              <th className="px-4 py-3 font-medium">ID</th>
-              <th className="px-4 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">Email</th>
-              <th className="px-4 py-3 font-medium">Organization</th>
-              <th className="px-4 py-3 font-medium"># Shifts</th>
-              <th className="px-4 py-3 font-medium">Assigned shifts</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredVolunteers.map((volunteer) => (
-              <tr key={volunteer.id} className="border-b border-slate-50 align-top last:border-b-0">
-                <td className="px-4 py-3 font-mono text-xs text-slate-500">{volunteer.id}</td>
-                <td className="px-4 py-3 font-medium">{volunteer.name}</td>
-                <td className="px-4 py-3 text-slate-500">{volunteer.email}</td>
-                <td className="px-4 py-3 text-slate-500">{volunteer.association || "—"}</td>
-                <td className="px-4 py-3">{volunteer.assignments.length}</td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-col gap-2">
-                    {volunteer.assignments.length === 0 && (
-                      <span className="text-slate-400">No shifts assigned</span>
-                    )}
+      <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
+        Availabilities:
+        <span className="inline-flex items-center gap-1">
+          <span className="h-2 w-2 rounded-full bg-slate-300" /> light grey = already taken
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="h-2 w-2 rounded-full bg-blue-400" /> blue = still open
+        </span>
+      </p>
 
-                    {volunteer.assignments.map((assignment) => {
-                      const style = ROLE_STYLES[assignment.roleCategory] ?? DEFAULT_ROLE_STYLE;
-
-                      return (
-                        <div
-                          key={assignment.assignmentId}
-                          className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-2 py-1.5"
-                        >
-                          <span className="text-slate-600">
-                            {formatDate(assignment.date)} · {assignment.startTime}–
-                            {assignment.endTime}
-                          </span>
-                          <span className="text-slate-400">{assignment.location}</span>
-                          <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${style.badgeClassName}`}>
-                            {assignment.roleCategory}
-                          </span>
-                          <span
-                            className={`rounded px-1.5 py-0.5 text-xs font-medium ${STATUS_STYLES[assignment.status]}`}
-                          >
-                            {assignment.status}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveAssignment(volunteer.id, assignment.assignmentId)}
-                            disabled={busyKey === `remove-${assignment.assignmentId}`}
-                            className="ml-auto rounded bg-red-50 px-1.5 py-0.5 text-xs text-red-600 hover:bg-red-100 disabled:opacity-50"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      );
-                    })}
-
-                    <button
-                      type="button"
-                      onClick={() => setAssignShiftVolunteerId(volunteer.id)}
-                      className="self-start rounded-lg border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
-                    >
-                      + Add to shift
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {filteredVolunteers.length === 0 && (
-          <p className="px-4 py-8 text-center text-slate-500">
+      {/* One card layout at every screen size (avoids a wide table that
+          doesn't fit well on any screen) — info on the left, shifts on the
+          right once there's room for two columns, stacked below that. */}
+      <div className="mt-4 flex flex-col gap-3">
+        {filteredVolunteers.length === 0 ? (
+          <p className="rounded-xl border border-slate-200 bg-white px-4 py-8 text-center text-slate-500">
             No volunteers match the current filters.
           </p>
+        ) : (
+          filteredVolunteers.map((volunteer) => (
+            <div key={volunteer.id} className="rounded-xl border border-slate-200 bg-white p-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-medium text-slate-900">{volunteer.name}</p>
+                      <p className="font-mono text-xs text-slate-400">{volunteer.id}</p>
+                    </div>
+                    <span className="shrink-0 text-xs text-slate-500">
+                      {volunteer.assignments.length} shift{volunteer.assignments.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+
+                  <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+                    <dt className="text-slate-400">Email</dt>
+                    <dd className="truncate text-slate-600">{volunteer.email}</dd>
+                    <dt className="text-slate-400">Phone</dt>
+                    <dd className="text-slate-600">{volunteer.phoneNumber || "—"}</dd>
+                    <dt className="text-slate-400">Token</dt>
+                    <dd className="truncate font-mono text-xs text-slate-400" title={volunteer.magicLinkToken}>
+                      {volunteer.magicLinkToken}
+                    </dd>
+                    <dt className="text-slate-400">Org</dt>
+                    <dd className="text-slate-600">{volunteer.association || "—"}</dd>
+                  </dl>
+
+                  <div className="mt-3">
+                    <AvailabilityBadges volunteer={volunteer} />
+                  </div>
+                </div>
+
+                <div className="min-w-0">
+                  <VolunteerAssignmentsList
+                    volunteer={volunteer}
+                    busyKey={busyKey}
+                    onToggleCheckedIn={(assignment) => handleToggleCheckedIn(volunteer.id, assignment)}
+                    onRemove={(assignmentId) => handleRemoveAssignment(volunteer.id, assignmentId)}
+                    onAddToShift={() => setAssignShiftVolunteerId(volunteer.id)}
+                    readOnly={readOnly}
+                  />
+                </div>
+              </div>
+            </div>
+          ))
         )}
       </div>
 
-      {addVolunteerOpen && (
+      {!readOnly && addVolunteerOpen && (
         <Modal onClose={() => setAddVolunteerOpen(false)}>
           <AddVolunteerForm
             onCancel={() => setAddVolunteerOpen(false)}
-            onCreate={async (input) => {
-              setBusyKey("create-volunteer");
+            onSubmit={async (input) => {
               const result = await createVolunteer(input);
-              setBusyKey(null);
 
-              if (!result.ok) {
-                setError(result.error);
-                return;
+              if (result.ok) {
+                setVolunteers((current) => [
+                  ...current,
+                  {
+                    id: result.data.id,
+                    name: `${input.firstName} ${input.lastName}`.trim(),
+                    email: input.email,
+                    phoneNumber: input.phoneNumber.replace(/[\s+]/g, ""),
+                    association: input.association,
+                    availability: input.availability,
+                    magicLinkToken: result.data.magicLinkToken,
+                    assignments: [],
+                  },
+                ]);
+                setAddVolunteerOpen(false);
               }
 
-              setVolunteers((current) => [
-                ...current,
-                {
-                  id: result.data.id,
-                  name: `${input.firstName} ${input.lastName}`.trim(),
-                  email: input.email,
-                  association: input.association,
-                  availability: [],
-                  assignments: [],
-                },
-              ]);
-              setAddVolunteerOpen(false);
+              return result;
             }}
-            busy={busyKey === "create-volunteer"}
           />
         </Modal>
       )}
 
-      {assignShiftVolunteer && (
+      {!readOnly && assignShiftVolunteer && (
         <Modal
           onClose={() => {
             setAssignShiftVolunteerId(null);
@@ -393,38 +604,93 @@ export function VolunteersBoard({
   );
 }
 
+type CreateVolunteerInput = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  association: string;
+  shiftPreferences: string[];
+  availability: string[];
+  shiftCountPreference: string;
+};
+
+function toggleInArray(list: string[], value: string): string[] {
+  return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
+}
+
 function AddVolunteerForm({
   onCancel,
-  onCreate,
-  busy,
+  onSubmit,
 }: {
   onCancel: () => void;
-  onCreate: (input: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    phoneNumber: string;
-    association: string;
-  }) => void;
-  busy: boolean;
+  onSubmit: (
+    input: CreateVolunteerInput,
+  ) => Promise<ActionResult<{ id: string; magicLinkToken: string }>>;
 }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [association, setAssociation] = useState("");
+  const [shiftPreferences, setShiftPreferences] = useState<string[]>([]);
+  const [availability, setAvailability] = useState<string[]>([]);
+  const [shiftCountPreference, setShiftCountPreference] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const isValid = firstName.trim() && lastName.trim() && email.trim();
 
+  function resetFields() {
+    setFirstName("");
+    setLastName("");
+    setEmail("");
+    setPhoneNumber("");
+    setAssociation("");
+    setShiftPreferences([]);
+    setAvailability([]);
+    setShiftCountPreference("");
+  }
+
+  async function handleSubmit() {
+    setBusy(true);
+    setFormError(null);
+
+    const result = await onSubmit({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim(),
+      phoneNumber: phoneNumber.trim(),
+      association: association.trim(),
+      shiftPreferences,
+      availability,
+      shiftCountPreference,
+    });
+
+    setBusy(false);
+
+    if (!result.ok) {
+      setFormError(result.error);
+      resetFields();
+    }
+  }
+
   return (
-    <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
+    <div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
       <h3 className="text-lg font-bold">Add volunteer</h3>
+
+      {formError && (
+        <p className="mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {formError}
+        </p>
+      )}
 
       <div className="mt-4 flex flex-col gap-3">
         <label className="text-sm">
           First name
           <input
             type="text"
+            placeholder="e.g. Nina"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
@@ -434,6 +700,7 @@ function AddVolunteerForm({
           Last name
           <input
             type="text"
+            placeholder="e.g. Jacobs"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
             className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
@@ -443,6 +710,7 @@ function AddVolunteerForm({
           Email
           <input
             type="email"
+            placeholder="e.g. nina.jacobs@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
@@ -452,6 +720,7 @@ function AddVolunteerForm({
           Phone number
           <input
             type="tel"
+            placeholder="+324XXXXXXXX"
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
             className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
@@ -461,11 +730,64 @@ function AddVolunteerForm({
           Organization (optional)
           <input
             type="text"
+            placeholder="e.g. AIESEC Ghent"
             value={association}
             onChange={(e) => setAssociation(e.target.value)}
             className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
           />
         </label>
+
+        <label className="text-sm">
+          Number of shifts
+          <select
+            value={shiftCountPreference}
+            onChange={(e) => setShiftCountPreference(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+          >
+            <option value="">Select a preference...</option>
+            {SHIFT_COUNT_PREFERENCES.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className="text-sm">
+          <p>Shift preferences (optional)</p>
+          <div className="mt-1 flex flex-col gap-1 rounded-lg border border-slate-200 p-2">
+            {ROLE_CATEGORIES.map((role) => (
+              <label key={role} className="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={shiftPreferences.includes(role)}
+                  onChange={() => setShiftPreferences((current) => toggleInArray(current, role))}
+                />
+                {role}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="text-sm">
+          <p>Availability (optional)</p>
+          <div className="mt-1 flex flex-col gap-1 rounded-lg border border-slate-200 p-2">
+            {AVAILABILITY_OPTIONS.map((option) => {
+              const value = availabilityValue(option.date, option.slot);
+
+              return (
+                <label key={value} className="flex items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={availability.includes(value)}
+                    onChange={() => setAvailability((current) => toggleInArray(current, value))}
+                  />
+                  {option.label}
+                </label>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       <div className="mt-6 flex gap-3">
@@ -479,15 +801,7 @@ function AddVolunteerForm({
         <button
           type="button"
           disabled={!isValid || busy}
-          onClick={() =>
-            onCreate({
-              firstName: firstName.trim(),
-              lastName: lastName.trim(),
-              email: email.trim(),
-              phoneNumber: phoneNumber.trim(),
-              association: association.trim(),
-            })
-          }
+          onClick={handleSubmit}
           className="flex-1 rounded-full bg-indigo-600 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
         >
           Add volunteer

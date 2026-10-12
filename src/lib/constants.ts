@@ -17,6 +17,31 @@ export const TIME_SLOT_WINDOWS: Record<string, { start: string; end: string }> =
   Evening: { start: "18:00", end: "23:59" },
 };
 
+export const SHIFT_COUNT_PREFERENCES = ["1", "2", "3", "4+", "No preference"] as const;
+
+export type AvailabilityOption = {
+  date: string;
+  slot: (typeof TIME_SLOTS)[number];
+  label: string;
+};
+
+// The event's fixed availability windows. `date`+`slot` match how
+// `volunteers.availability` stores each entry (see `availabilityValue`
+// below) and how shifts.slot/date are compared in shiftEligibility.ts.
+export const AVAILABILITY_OPTIONS: AvailabilityOption[] = [
+  { date: "2026-10-20", slot: "Morning", label: "October 20 - Morning (Hackathon or Setup)" },
+  { date: "2026-10-20", slot: "Afternoon", label: "October 20 - Afternoon (Hackathon or Setup)" },
+  { date: "2026-10-20", slot: "Evening", label: "October 20 - Evening (Hackathon or Setup)" },
+  { date: "2026-10-21", slot: "Morning", label: "October 21 - Morning" },
+  { date: "2026-10-21", slot: "Afternoon", label: "October 21 - Afternoon" },
+  { date: "2026-10-21", slot: "Evening", label: "October 21 - Evening" },
+  { date: "2026-10-22", slot: "Morning", label: "October 22 - Morning (Breakdown)" },
+];
+
+export function availabilityValue(date: string, slot: string): string {
+  return `${date} ${slot}`;
+}
+
 type RoleStyle = { emoji: string; badgeClassName: string; cardClassName: string };
 
 export const ROLE_STYLES: Record<string, RoleStyle> = {

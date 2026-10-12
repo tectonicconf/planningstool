@@ -1,10 +1,11 @@
-import { supabaseAdmin } from "@/lib/supabase";
+import { getAdminTables, type AdminTables } from "@/lib/adminData";
 
 export type PlanningAssignment = {
   assignmentId: number;
   volunteerId: string;
   volunteerName: string;
   status: "pending" | "confirmed";
+  checkedInAt: string | null;
 };
 
 export type PlanningShift = {
@@ -22,33 +23,20 @@ export type PlanningShift = {
   assignments: PlanningAssignment[];
 };
 
-export async function getPlanningShifts(): Promise<PlanningShift[]> {
-  const [{ data: shiftRows }, { data: assignmentRows }, { data: volunteerRows }] =
-    await Promise.all([
-      supabaseAdmin
-        .from("shifts")
-        .select(
-          "id, date, day, slot, start_time, end_time, hours, location, role_category, volunteers_needed, event_context",
-        )
-        .order("date")
-        .order("start_time"),
-      supabaseAdmin
-        .from("assignments")
-        .select("id, volunteer_id, shift_id, status")
-        .in("status", ["pending", "confirmed"]),
-      supabaseAdmin.from("volunteers").select("id, first_name, last_name"),
-    ]);
+export async function getPlanningShifts(
+  data?: AdminTables,
+): Promise<PlanningShift[]> {
+  const { shiftRows, assignmentRows, volunteerRows } = data ?? (await getAdminTables());
 
   const namesById = new Map(
-    (volunteerRows ?? []).map((v) => [
-      v.id,
-      `${v.first_name} ${v.last_name}`.trim(),
-    ]),
+    volunteerRows.map((v) => [v.id, `${v.first_name} ${v.last_name}`.trim()]),
   );
 
   const assignmentsByShift = new Map<string, PlanningAssignment[]>();
 
-  for (const assignment of assignmentRows ?? []) {
+  for (const assignment of assignmentRows) {
+    if (assignment.status === "cancelled") continue;
+
     const list = assignmentsByShift.get(assignment.shift_id) ?? [];
     list.push({
       assignmentId: assignment.id,
@@ -56,11 +44,12 @@ export async function getPlanningShifts(): Promise<PlanningShift[]> {
       volunteerName:
         namesById.get(assignment.volunteer_id) ?? "Unknown volunteer",
       status: assignment.status,
+      checkedInAt: assignment.checked_in_at,
     });
     assignmentsByShift.set(assignment.shift_id, list);
   }
 
-  return (shiftRows ?? []).map((shift) => ({
+  return shiftRows.map((shift) => ({
     id: shift.id,
     date: shift.date,
     day: shift.day,
@@ -86,14 +75,12 @@ export type ShiftDirectoryEntry = {
   roleCategory: string;
 };
 
-export async function getShiftDirectory(): Promise<ShiftDirectoryEntry[]> {
-  const { data } = await supabaseAdmin
-    .from("shifts")
-    .select("id, date, slot, start_time, end_time, location, role_category")
-    .order("date")
-    .order("start_time");
+export async function getShiftDirectory(
+  data?: AdminTables,
+): Promise<ShiftDirectoryEntry[]> {
+  const { shiftRows } = data ?? (await getAdminTables());
 
-  return (data ?? []).map((shift) => ({
+  return shiftRows.map((shift) => ({
     id: shift.id,
     date: shift.date,
     slot: shift.slot,

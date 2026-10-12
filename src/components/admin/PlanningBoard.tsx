@@ -1,13 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { PlanningShift } from "@/lib/adminPlanning";
+import type { PlanningShift, PlanningAssignment } from "@/lib/adminPlanning";
 import type { VolunteerRow } from "@/lib/adminVolunteers";
 import {
   addVolunteerToShift,
   createShift,
   deleteShift,
   removeAssignment,
+  setAssignmentCheckedIn,
 } from "@/lib/adminActions";
 import { isVolunteerAvailableForShift, hasOverlap } from "@/lib/shiftEligibility";
 import { Modal } from "@/components/Modal";
@@ -35,6 +36,26 @@ function roleStyle(role: string) {
   return ROLE_STYLES[role] ?? DEFAULT_ROLE_STYLE;
 }
 
+// Rounds to the nearest half hour, matching the existing "Hours" input's
+// step={0.5}. Returns 0 for an empty/invalid/non-positive range rather than
+// throwing, so it's safe to call on every keystroke while the fields fill in.
+function computeHoursBetween(startTime: string, endTime: string): number {
+  const [startHour, startMinute] = startTime.split(":").map(Number);
+  const [endHour, endMinute] = endTime.split(":").map(Number);
+
+  if ([startHour, startMinute, endHour, endMinute].some((n) => Number.isNaN(n))) {
+    return 0;
+  }
+
+  const minutes = endHour * 60 + endMinute - (startHour * 60 + startMinute);
+  return minutes > 0 ? Math.round((minutes / 60) * 2) / 2 : 0;
+}
+
+const ASSIGNMENT_STATUS_STYLES: Record<"pending" | "confirmed", string> = {
+  pending: "bg-blue-100 text-blue-700",
+  confirmed: "bg-emerald-100 text-emerald-700",
+};
+
 function ProgressBar({ assigned, needed }: { assigned: number; needed: number }) {
   const pct = needed > 0 ? Math.min(100, Math.round((assigned / needed) * 100)) : 0;
 
@@ -54,9 +75,11 @@ function ProgressBar({ assigned, needed }: { assigned: number; needed: number })
 export function PlanningBoard({
   initialShifts,
   volunteers: initialVolunteers,
+  readOnly = false,
 }: {
   initialShifts: PlanningShift[];
   volunteers: VolunteerRow[];
+  readOnly?: boolean;
 }) {
   const [shifts, setShifts] = useState(initialShifts);
   const [volunteers, setVolunteers] = useState(initialVolunteers);
@@ -168,6 +191,40 @@ export function PlanningBoard({
     );
   }
 
+  async function handleToggleCheckedIn(
+    shift: PlanningShift,
+    assignment: PlanningAssignment,
+  ) {
+    const nextCheckedIn = !assignment.checkedInAt;
+
+    setBusyKey(`checkin-${assignment.assignmentId}`);
+    const result = await setAssignmentCheckedIn(
+      assignment.assignmentId,
+      nextCheckedIn,
+    );
+    setBusyKey(null);
+
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+
+    setShifts((current) =>
+      current.map((s) =>
+        s.id === shift.id
+          ? {
+              ...s,
+              assignments: s.assignments.map((a) =>
+                a.assignmentId === assignment.assignmentId
+                  ? { ...a, checkedInAt: result.data.checkedInAt }
+                  : a,
+              ),
+            }
+          : s,
+      ),
+    );
+  }
+
   async function handleAddVolunteer(shift: PlanningShift, volunteer: VolunteerRow) {
     setBusyKey(`add-${shift.id}-${volunteer.id}`);
     const result = await addVolunteerToShift(shift.id, volunteer.id);
@@ -190,6 +247,7 @@ export function PlanningBoard({
                   volunteerId: volunteer.id,
                   volunteerName: volunteer.name,
                   status: "pending" as const,
+                  checkedInAt: null,
                 },
               ],
             }
@@ -208,11 +266,13 @@ export function PlanningBoard({
                   assignmentId: result.data.assignmentId,
                   shiftId: shift.id,
                   date: shift.date,
+                  slot: shift.slot,
                   startTime: shift.startTime,
                   endTime: shift.endTime,
                   location: shift.location,
                   roleCategory: shift.roleCategory,
                   status: "pending" as const,
+                  checkedInAt: null,
                 },
               ],
             }
@@ -236,13 +296,15 @@ export function PlanningBoard({
             quickly see where help is still needed.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setCreateOpen(true)}
-          className="shrink-0 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-        >
-          + Create shift
-        </button>
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className="shrink-0 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+          >
+            + Create shift
+          </button>
+        )}
       </div>
 
       {error && (
@@ -398,15 +460,17 @@ export function PlanningBoard({
                                 <span>{style.emoji}</span>
                                 {shift.roleCategory}
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteShift(shift)}
-                                disabled={busyKey === `delete-${shift.id}`}
-                                className="text-xs text-slate-400 hover:text-red-600 disabled:opacity-50"
-                                title="Delete shift"
-                              >
-                                ✕
-                              </button>
+                              {!readOnly && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteShift(shift)}
+                                  disabled={busyKey === `delete-${shift.id}`}
+                                  className="text-xs text-slate-400 hover:text-red-600 disabled:opacity-50"
+                                  title="Delete shift"
+                                >
+                                  ✕
+                                </button>
+                              )}
                             </div>
                             <div className="mt-1 flex items-center justify-between text-xs text-slate-500">
                               <span>{shift.location}</span>
@@ -419,17 +483,58 @@ export function PlanningBoard({
                               {shift.assignments.map((assignment) => (
                                 <div
                                   key={assignment.assignmentId}
-                                  className="flex items-center justify-between rounded-md bg-white px-2 py-1 text-xs"
+                                  className="flex flex-col gap-1 rounded-md bg-white px-2 py-1.5 text-xs"
                                 >
-                                  <span className="truncate">{assignment.volunteerName}</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveVolunteer(shift, assignment.assignmentId)}
-                                    disabled={busyKey === `remove-${assignment.assignmentId}`}
-                                    className="ml-2 shrink-0 rounded bg-red-50 px-1.5 py-0.5 text-red-600 hover:bg-red-100 disabled:opacity-50"
-                                  >
-                                    Remove
-                                  </button>
+                                  <span className="break-words font-medium text-slate-900">
+                                    {assignment.volunteerName}
+                                  </span>
+                                  <div className="flex items-center justify-between gap-1">
+                                    <span
+                                      className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${ASSIGNMENT_STATUS_STYLES[assignment.status]}`}
+                                    >
+                                      {assignment.status === "confirmed" ? "Confirmed" : "Pending"}
+                                    </span>
+                                    {!readOnly && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveVolunteer(shift, assignment.assignmentId)}
+                                        disabled={busyKey === `remove-${assignment.assignmentId}`}
+                                        className="rounded bg-red-50 px-1.5 py-0.5 text-red-600 hover:bg-red-100 disabled:opacity-50"
+                                      >
+                                        Remove
+                                      </button>
+                                    )}
+                                  </div>
+                                  {assignment.status === "confirmed" &&
+                                    (readOnly ? (
+                                      <span
+                                        className={`w-full rounded px-2 py-1 text-center font-medium ${
+                                          assignment.checkedInAt
+                                            ? "bg-emerald-100 text-emerald-700"
+                                            : "bg-slate-100 text-slate-600"
+                                        }`}
+                                      >
+                                        {assignment.checkedInAt ? "Checked in ✓" : "Not checked in"}
+                                      </span>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleToggleCheckedIn(shift, assignment)}
+                                        disabled={busyKey === `checkin-${assignment.assignmentId}`}
+                                        title={
+                                          assignment.checkedInAt
+                                            ? `Checked in at ${new Date(assignment.checkedInAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
+                                            : "Mark as checked in"
+                                        }
+                                        className={`w-full rounded px-2 py-1 text-center font-medium disabled:opacity-50 ${
+                                          assignment.checkedInAt
+                                            ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                        }`}
+                                      >
+                                        {assignment.checkedInAt ? "Checked in ✓" : "Check in"}
+                                      </button>
+                                    ))}
                                 </div>
                               ))}
 
@@ -440,13 +545,15 @@ export function PlanningBoard({
                               )}
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={() => setAddVolunteerShiftId(shift.id)}
-                              className="mt-2 w-full rounded-md border border-slate-200 bg-white py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
-                            >
-                              + Add volunteer
-                            </button>
+                            {!readOnly && (
+                              <button
+                                type="button"
+                                onClick={() => setAddVolunteerShiftId(shift.id)}
+                                className="mt-2 w-full rounded-md border border-slate-200 bg-white py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                              >
+                                + Add volunteer
+                              </button>
+                            )}
                           </div>
                         );
                       })}
@@ -459,7 +566,7 @@ export function PlanningBoard({
         })}
       </div>
 
-      {createOpen && (
+      {!readOnly && createOpen && (
         <Modal onClose={() => setCreateOpen(false)}>
           <CreateShiftForm
             onCancel={() => setCreateOpen(false)}
@@ -502,7 +609,7 @@ export function PlanningBoard({
         </Modal>
       )}
 
-      {addVolunteerShift && (
+      {!readOnly && addVolunteerShift && (
         <Modal
           onClose={() => {
             setAddVolunteerShiftId(null);
@@ -606,11 +713,26 @@ function CreateShiftForm({
   const [slot, setSlot] = useState<string>(TIME_SLOTS[0]);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("13:00");
-  const [hours, setHours] = useState(4);
+  const [hours, setHours] = useState(() => computeHoursBetween("09:00", "13:00"));
   const [location, setLocation] = useState("");
   const [roleCategory, setRoleCategory] = useState<string>(ROLE_CATEGORIES[0]);
   const [volunteersNeeded, setVolunteersNeeded] = useState(1);
   const [eventContext, setEventContext] = useState("");
+
+  // Hours follow start/end time automatically — admins shouldn't have to
+  // compute and re-type it themselves every time either changes. Updated
+  // directly in each time input's own handler (below) rather than an
+  // effect, since the change always originates from one of these two
+  // fields right here.
+  function handleStartTimeChange(value: string) {
+    setStartTime(value);
+    setHours(computeHoursBetween(value, endTime));
+  }
+
+  function handleEndTimeChange(value: string) {
+    setEndTime(value);
+    setHours(computeHoursBetween(startTime, value));
+  }
 
   const isValid = date && location.trim() && startTime && endTime && hours > 0 && volunteersNeeded > 0;
 
@@ -660,7 +782,7 @@ function CreateShiftForm({
           <input
             type="time"
             value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
+            onChange={(e) => handleStartTimeChange(e.target.value)}
             className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
           />
         </label>
@@ -670,7 +792,7 @@ function CreateShiftForm({
           <input
             type="time"
             value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
+            onChange={(e) => handleEndTimeChange(e.target.value)}
             className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
           />
         </label>
@@ -685,6 +807,9 @@ function CreateShiftForm({
             onChange={(e) => setHours(Number(e.target.value))}
             className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
           />
+          <span className="mt-1 block text-xs text-slate-400">
+            Filled in from start/end time — adjust if needed.
+          </span>
         </label>
 
         <label className="text-sm">

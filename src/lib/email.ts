@@ -5,11 +5,19 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Must match a domain verified in the Resend dashboard.
 // temp email untill domain is verified:
-const FROM_ADDRESS = "Tectonic 2026 <onboarding@resend.dev>";
+const FROM_ADDRESS = "Tectonic 2026 <noreply@volunteers.tectonicconf.eu>";
 
 const SITE_URL = process.env.SITE_URL ?? "http://localhost:3000";
 
-function formatShiftLine(shift: Shift) {
+type ShiftLineInfo = {
+  date: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  shiftType: string;
+};
+
+function formatShiftLine(shift: ShiftLineInfo) {
   const date = new Date(`${shift.date}T00:00:00`).toLocaleDateString(
     "en-GB",
     { weekday: "short", day: "numeric", month: "short" },
@@ -59,6 +67,42 @@ export async function sendConfirmationEmail({
     from: FROM_ADDRESS,
     to,
     subject: "You're confirmed for your Tectonic 2026 shift",
+    text,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+export async function sendCancellationEmail({
+  to,
+  firstName,
+  token,
+  cancelledShift,
+}: {
+  to: string;
+  firstName: string;
+  token: string;
+  cancelledShift: ShiftLineInfo;
+}) {
+  const personalLink = `${SITE_URL}/shift/${token}`;
+
+  const text = [
+    `Hi ${firstName},`,
+    "",
+    "You're no longer signed up for the following shift:",
+    formatShiftLine(cancelledShift),
+    "",
+    `View your current schedule: ${personalLink}`,
+    "",
+    "Thanks for letting us know — see you at another shift!",
+  ].join("\n");
+
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: "Your Tectonic 2026 shift was cancelled",
     text,
   });
 

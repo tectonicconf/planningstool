@@ -2,7 +2,7 @@
 
 import { supabaseAdmin } from "@/lib/supabase";
 import { getShiftsForVolunteer } from "@/lib/shifts";
-import { sendConfirmationEmail } from "@/lib/email";
+import { sendConfirmationEmail, sendCancellationEmail } from "@/lib/email";
 
 export type AssignmentResponse = "accept" | "decline";
 
@@ -36,17 +36,18 @@ export async function respondToAssignment(
 
   const { data, error } = await supabaseAdmin
     .from("assignments")
-    .update({ status: newStatus })
+    .update({ status: newStatus, updated_at: new Date().toISOString() })
     .eq("id", assignmentId)
     .eq("volunteer_id", volunteer.id)
     .in("status", allowedCurrentStatuses)
-    .select("id");
+    .select("id, shift_id")
+    .maybeSingle();
 
   if (error) {
     return { ok: false, error: error.message };
   }
 
-  if (!data || data.length === 0) {
+  if (!data) {
     return { ok: false, error: "This shift can no longer be updated." };
   }
 
@@ -71,6 +72,33 @@ export async function respondToAssignment(
       }
     } catch (emailError) {
       console.error("Failed to send confirmation email:", emailError);
+    }
+  }
+
+  if (response === "decline" && volunteer.email) {
+    try {
+      const { data: shift } = await supabaseAdmin
+        .from("shifts")
+        .select("date, start_time, end_time, location, role_category")
+        .eq("id", data.shift_id)
+        .maybeSingle();
+
+      if (shift) {
+        await sendCancellationEmail({
+          to: volunteer.email,
+          firstName: volunteer.first_name,
+          token,
+          cancelledShift: {
+            date: shift.date,
+            startTime: shift.start_time,
+            endTime: shift.end_time,
+            location: shift.location,
+            shiftType: shift.role_category,
+          },
+        });
+      }
+    } catch (emailError) {
+      console.error("Failed to send cancellation email:", emailError);
     }
   }
 

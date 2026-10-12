@@ -1,6 +1,9 @@
 "use client";
 
-export type AcademyProgress = "not-started" | "info-in-progress" | "info-done";
+// Only two real steps now (welcome, then the quiz itself — see
+// AcademyFlow.tsx), so progress is just "haven't started" vs "already saw
+// the welcome screen and can jump straight to the quiz".
+export type AcademyProgress = "not-started" | "ready-for-quiz";
 
 const PROGRESS_COPY: Record<
   AcademyProgress,
@@ -20,18 +23,11 @@ const PROGRESS_COPY: Record<
     progressPercent: null,
     buttonLabel: "Start",
   },
-  "info-in-progress": {
-    badge: "In progress",
-    badgeClass: "bg-blue-500/20 text-blue-200",
-    description: "Step 1 of 2 in progress",
-    progressPercent: 50,
-    buttonLabel: "Continue",
-  },
-  "info-done": {
+  "ready-for-quiz": {
     badge: "Almost done",
     badgeClass: "bg-amber-500/20 text-amber-300",
-    description: "Info step complete · just the quiz left (~2 min)",
-    progressPercent: 90,
+    description: "Just the quiz left (~2 min)",
+    progressPercent: 50,
     buttonLabel: "Finish quiz",
   },
 };

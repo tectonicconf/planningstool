@@ -95,6 +95,24 @@ def get_target_shift_count(volunteer):
     return None
 
 
+def get_shift_count_cap(volunteer):
+    """
+    A hard ceiling on shifts for volunteers who gave a concrete
+    number (1 / 2 / 3) — that's an explicit "at most this many",
+    so the optimizer must never exceed it, even if doing so would
+    fill more positions.
+
+    "4+" and "indifferent" don't set a ceiling: "4+" means "willing
+    to do 4 or more" (a floor, not a cap), and "indifferent" means
+    no stated limit at all. Both still softly steer Phase 2 via
+    get_target_shift_count above.
+    """
+
+    desired = volunteer["desired_shifts"]
+
+    return desired if isinstance(desired, int) else None
+
+
 # ============================================================
 # OPTIMIZER
 # ============================================================
@@ -247,6 +265,30 @@ def optimize():
                 x[volunteer_id, shift_id]
                 for shift_id in shift_ids
             )
+        )
+
+    # ========================================================
+    # HARD CONSTRAINT 4
+    # RESPECT A VOLUNTEER'S STATED SHIFT-COUNT CAP
+    # ========================================================
+    #
+    # This has to be a real ceiling, not just something Phase 2
+    # nudges toward — a volunteer who said "at most 2 shifts" must
+    # never be scheduled for more, even if that would otherwise
+    # fill more positions. It's applied before Phase 1 solves, so
+    # "maximum filled positions" is already computed with this
+    # ceiling respected, not fixed up afterward.
+
+    for volunteer_id in volunteer_ids:
+
+        volunteer = volunteers[volunteer_id]
+        cap = get_shift_count_cap(volunteer)
+
+        if cap is None:
+            continue
+
+        model.Add(
+            shift_count[volunteer_id] <= cap
         )
 
     # ========================================================
