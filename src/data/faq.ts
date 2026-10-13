@@ -97,6 +97,12 @@ export const FAQ_ITEMS: FaqItem[] = [
     answer: "In the **volunteer room**. We provide water.",
   },
   {
+    id: "own-food",
+    category: "shift",
+    question: "Can I bring my own food?",
+    answer: "Yes, but only eat it in the **volunteer room**. The exception is something for your blood sugar or a quick energy boost, which you can have when you need it.",
+  },
+  {
     id: "event-snacks",
     category: "shift",
     question: "Can I take snacks and drinks from the event?",
