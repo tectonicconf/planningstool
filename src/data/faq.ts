@@ -97,6 +97,12 @@ export const FAQ_ITEMS: FaqItem[] = [
     answer: "In the **volunteer room**. We provide water.",
   },
   {
+    id: "event-snacks",
+    category: "shift",
+    question: "Can I take snacks and drinks from the event?",
+    answer: "Not during your shift. We provide food and drinks for volunteers in the morning and afternoon.",
+  },
+  {
     id: "event-access",
     category: "badge",
     question: "Can I attend Tectonic after my shift?",
