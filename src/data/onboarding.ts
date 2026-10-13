@@ -190,7 +190,7 @@ export const ON_THE_DAY = {
   title: "Your day, step by step",
   map: {
     title: "Enter via De Krook and follow the green line",
-    body: "The volunteer room is marked in blue: that is where you check in and pick up your badge. You cannot enter it from the foyer, so follow the five steps below. The lockers are in the foyer. Everyone enters via De Krook. If your case is different, we will message you on WhatsApp.",
+    body: "The volunteer room is marked in blue: that is where you check in and pick up your badge. You cannot enter it from the foyer, so follow the five steps below. The lockers are in the foyer. Everyone enters via De Krook.",
     route: [
       "Enter via De Krook.",
       "Walk west through the foyer, past the lockers.",
@@ -212,12 +212,12 @@ export const ON_THE_DAY = {
     {
       id: "check-in",
       title: "Check in",
-      body: "Enter via **De Krook** and follow the **green line** to the **blue volunteer room**. The room has no door to the foyer: go around the Club Wintercircus hall and follow the corridor. If your case is different, we will message you on WhatsApp. Pick up your badge here: you cannot enter without it.",
+      body: "Follow the route above to the **blue volunteer room**. Pick up your badge here: you cannot enter without it. If your case is different, we will message you on WhatsApp.",
     },
     {
       id: "things",
       title: "Leave your things",
-      body: "Use the **lockers in the foyer**. You can get changed and ready in the **volunteer room**: go around the Club Wintercircus hall and follow the corridor.",
+      body: "Use the **lockers in the foyer**. You can get changed and ready in the **volunteer room**.",
     },
     {
       id: "station",
