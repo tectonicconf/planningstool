@@ -148,6 +148,14 @@ export default function AcademyPage() {
             <p className="mt-2 text-sm leading-relaxed text-white/70">
               {ACADEMY_CV.session.body}
             </p>
+            <a
+              href={ACADEMY_CV.session.meet.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-block text-sm font-medium text-cyan-300 hover:text-cyan-200"
+            >
+              {ACADEMY_CV.session.meet.label} &rarr;
+            </a>
           </div>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">

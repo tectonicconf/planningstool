@@ -171,7 +171,7 @@ export const COMING_UP = {
       title: "CV session",
       meta: "Wednesday · 20:30 · Online · about 30 minutes",
       tag: "Optional",
-      body: "Do's and don'ts for your CV, plus a checklist and an example. Prefer personal feedback? Book a one-on-one with one of the three contact people.",
+      body: "Do's and don'ts for your CV, plus a checklist and an example. Prefer personal feedback? Book a slot of 10 minutes by sending us an email.",
       link: { label: "Open the CV guide", href: "/academy#cv" },
     },
     {
@@ -386,6 +386,11 @@ export const PERKS = {
     },
   ] as Perk[],
 };
+
+export const MISSION_VISION_URL =
+  "https://nextgenbelgium.notion.site/Mission-Vision-30fa632f2064800ca6d4f582f20f27ab";
+export const CODE_OF_CONDUCT_URL =
+  "https://nextgenbelgium.notion.site/Code-of-Conduct-30fa632f2064800f82c1f84c5bdae203";
 
 export const CONDUCT = {
   title: "Code of conduct",

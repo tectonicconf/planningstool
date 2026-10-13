@@ -216,6 +216,7 @@ export const ACADEMY_CV = {
     title: "The online CV session",
     meta: "Wednesday 28 October · 20:30 · Online · about 30 minutes",
     body: "We show what a strong CV looks like, what to cut and how to describe your volunteering. Optional, and open to every volunteer.",
+    meet: { label: "Join on Google Meet", href: "https://meet.google.com/dyg-htfy-fsd" },
   },
   dos: [
     "Keep it to one page. Short is fine when you are early in your career.",
@@ -254,7 +255,7 @@ export const ACADEMY_CV = {
   },
   feedback: {
     title: "Personal feedback",
-    body: "Prefer feedback on your own CV? Book a one-on-one with one of the three contact people: Charlotte, Eveline or Kaat. Send a message to the shared WhatsApp number with the word CV and the moments that suit you. You find the number on the Onboarding page.",
-    cta: { label: "Go to the shared WhatsApp number", href: "/onboarding#contact" },
+    body: "Prefer feedback on your own CV? Book a slot of 10 minutes with one of the three contact people: Charlotte, Eveline or Kaat. Just send us a short email with the moments that suit you.",
+    cta: { label: "Email us to book a slot", href: "mailto:eveline@tectonicconf.eu?subject=CV%20feedback%20slot" },
   },
 };

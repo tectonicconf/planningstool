@@ -120,7 +120,7 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "contact",
     question: "Can I get feedback on my CV?",
     answer:
-      "Yes. The Academy page has a CV guide with do's and don'ts, a checklist and an example. For personal feedback, book a one-on-one with one of the three contact people via the shared WhatsApp number.",
+      "Yes. The Academy page has a CV guide with do's and don'ts, a checklist and an example. For personal feedback, book a slot of 10 minutes by sending us a short email. The online CV session on 28 October (20:30) has a Google Meet link in the Academy.",
   },
   {
     id: "shift-questions",

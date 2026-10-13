@@ -3,6 +3,8 @@ import { RichText } from "@/components/RichText";
 import { ContactNumber } from "@/components/ContactNumber";
 import {
   CONDUCT,
+  CODE_OF_CONDUCT_URL,
+  MISSION_VISION_URL,
   CONTACTS,
   COMING_UP,
   DAY_GLANCE,
@@ -218,6 +220,14 @@ export default function OnboardingPage() {
                 </div>
               ))}
             </div>
+            <a
+              href={MISSION_VISION_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 inline-flex rounded-full border border-cyan-300/50 px-4 py-1.5 text-sm font-semibold text-cyan-300 hover:bg-cyan-300/10"
+            >
+              Read our full mission and vision &rarr;
+            </a>
           </div>
         </section>
 
@@ -509,6 +519,14 @@ export default function OnboardingPage() {
               </li>
             ))}
           </ul>
+          <a
+            href={CODE_OF_CONDUCT_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex rounded-full border border-cyan-300/50 px-4 py-1.5 text-sm font-semibold text-cyan-300 hover:bg-cyan-300/10"
+          >
+            Read the full code of conduct &rarr;
+          </a>
         </section>
 
         {/* Contacts */}
