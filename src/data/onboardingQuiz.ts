@@ -30,7 +30,7 @@ export const EVENT_FACTS: EventFact[] = [
   {
     icon: "person",
     title: "Your contacts",
-    subtitle: "Your volunteer lead and one shared number",
+    subtitle: "Your volunteer lead and one shared WhatsApp number",
   },
 ];
 
@@ -44,12 +44,12 @@ export const ESSENTIALS = {
       body: "That gives you time to leave your things and for your lead to take you to your station.",
     },
     {
-      title: "Check in at Vooruit",
-      body: "Use the volunteer entrance next to the café, Sint-Pietersnieuwstraat 23. The main entrance is not in use. Pick up your badge there: you cannot enter without it.",
+      title: "Check in at Wintercircus",
+      body: "The check-in point is in Wintercircus, Sint-Pietersnieuwstraat 11. Enter via De Krook and follow the arrows. Pick up your badge there: you cannot enter without it.",
     },
     {
       title: "Running late or sick?",
-      body: "Late: send a message to the shared number. Sick: call it as soon as you know, so we can find a replacement.",
+      body: "Late: send a WhatsApp message to the shared WhatsApp number. Sick: call it via WhatsApp as soon as you know, so we can find a replacement.",
     },
     {
       title: "Focus on your shift",
@@ -57,11 +57,11 @@ export const ESSENTIALS = {
     },
     {
       title: "Ask the right person",
-      body: "Questions about your shift go to your volunteer lead. Everything else goes to the shared number.",
+      body: "Questions about your shift go to your volunteer lead. Everything else goes to the shared WhatsApp number.",
     },
     {
       title: "Know where the rooms are",
-      body: "About 90% of the shifts are in Wintercircus: the Main Stage is in Club Wintercircus and the Innovation Stage in the Auditorium. Vooruit has the Theaterzaal (the Pitching Stage), the Concertzaal (the Meeting Hub) and the volunteer rooms in Studio groot.",
+      body: "About 90% of the shifts are in Wintercircus: the Main Stage is in Club Wintercircus and the Innovation Stage in the Auditorium. Vooruit has the Theaterzaal (the Pitching Stage), the Concertzaal (the Meeting Hub). Leave your things in the lockers in Wintercircus.",
     },
     {
       title: "Keep it discreet",
@@ -90,13 +90,13 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     id: "check-in",
     question: "Where do you check in on the day?",
     options: [
-      "At the volunteer entrance next to the café at Vooruit",
+      "At the check-in point in Wintercircus, entering via De Krook",
       "At the main entrance of Vooruit",
       "Directly at your station, without checking in",
     ],
     correctIndex: 0,
     explanation:
-      "The main entrance of Vooruit is not in use. Check in at the volunteer entrance next to the café.",
+      "Check in at the check-in point in Wintercircus. Enter via De Krook and follow the arrows.",
   },
   {
     id: "badge",
@@ -126,13 +126,13 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     id: "late-sick",
     question: "You wake up sick on the day of your shift. What do you do?",
     options: [
-      "Call the shared number as soon as you know",
+      "Call the shared WhatsApp number as soon as you know",
       "Send a message at the end of the day",
       "Ask another volunteer to take your place quietly",
     ],
     correctIndex: 0,
     explanation:
-      "Call as soon as you know, so we can find a replacement. If you are only running late, a message to the shared number is enough.",
+      "Call as soon as you know, so we can find a replacement. If you are only running late, a message to the shared WhatsApp number is enough.",
   },
   {
     id: "networking",
@@ -156,7 +156,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     ],
     correctIndex: 0,
     explanation:
-      "Your volunteer lead is your first contact for your shift. For anything else, use the shared number.",
+      "Your volunteer lead is your first contact for your shift. For anything else, use the shared WhatsApp number.",
   },
   {
     id: "discretion",
@@ -198,12 +198,12 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     id: "leave-things",
     question: "Where do you leave your things on the day?",
     options: [
-      "In the volunteer rooms in Studio groot at Vooruit",
+      "In the lockers in Wintercircus",
       "At your station",
       "In the Atrium at Wintercircus",
     ],
     correctIndex: 0,
     explanation:
-      "Leave your things in the volunteer rooms in Studio groot. The door code is shared in the WhatsApp group the day before.",
+      "Leave your things in the lockers in Wintercircus.",
   },
 ];

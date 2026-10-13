@@ -3,7 +3,7 @@
 import { useSavedToken } from "@/lib/clientToken";
 import { RichText } from "@/components/RichText";
 
-// The shared volunteer number is only shown to volunteers who opened their
+// The shared volunteer WhatsApp number (opens WhatsApp, where you can message or call) is only shown to volunteers who opened their
 // personal link on this device, so it isn't visible to everyone who happens to
 // find this page. During local development it is always shown so the page can
 // be reviewed without a personal link.
@@ -14,7 +14,7 @@ export function ContactNumber({ number }: { number: string }) {
   if (!visible) {
     return (
       <span className="text-base font-medium text-white/70">
-        Open your personal link to see the shared number.
+        Open your personal link to see the shared WhatsApp number.
       </span>
     );
   }
@@ -28,7 +28,12 @@ export function ContactNumber({ number }: { number: string }) {
   }
 
   return (
-    <a href={`tel:${number.replace(/\s+/g, "")}`} className="text-cyan-200 hover:text-cyan-100">
+    <a
+      href={`https://wa.me/${number.replace(/\D/g, "")}`}
+      target="_blank"
+      rel="noreferrer"
+      className="text-cyan-200 hover:text-cyan-100"
+    >
       <RichText>{number}</RichText>
     </a>
   );

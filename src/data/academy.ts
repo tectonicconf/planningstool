@@ -11,7 +11,7 @@ export const ACADEMY_INTRO = {
 export const ACADEMY_PROGRAMME = {
   title: "What Tectonic is",
   intro:
-    "Tectonic brings together founders, investors and large companies. It is not a classic conference: things happen on stage and around it, all day.",
+    "Tectonic brings together founders, investors and large companies. It is a conference about ideas and collaboration, not a job fair. Things happen on stage and around it, all day.",
   items: [
     {
       title: "Pitching competition",
@@ -206,15 +206,15 @@ export const ACADEMY_GLOSSARY = {
 };
 
 // CV session and personal feedback. Shown as the "CV and career" section on the
-// Academy page (anchor #cv). The date of the online session is still open.
+// Academy page (anchor #cv). The online session is on Wednesday 28 October.
 export const ACADEMY_CV = {
   eyebrow: "CAREER",
   title: "CV session and feedback",
   intro:
-    "At Tectonic you stand next to founders, investors and recruiters. A sharp CV helps you make the most of that. We run a short online CV session, and you can book personal feedback on your own CV.",
+    "Tectonic is a conference about ideas and collaboration, not a job fair. A sharp CV still helps you in your career, whether you apply here or elsewhere. We run a short online CV session, and you can book personal feedback on your own CV.",
   session: {
     title: "The online CV session",
-    meta: "Date to be announced · Online",
+    meta: "Wednesday 28 October · 20:30 · Online · about 30 minutes",
     body: "We show what a strong CV looks like, what to cut and how to describe your volunteering. Optional, and open to every volunteer.",
   },
   dos: [
@@ -254,7 +254,7 @@ export const ACADEMY_CV = {
   },
   feedback: {
     title: "Personal feedback",
-    body: "Prefer feedback on your own CV? Book a one-on-one with one of the three contact people: Charlotte, Eveline or Kaat. Send a message to the shared number with the word CV and the moments that suit you. You find the number on the Onboarding page.",
-    cta: { label: "Go to the shared number", href: "/onboarding#contact" },
+    body: "Prefer feedback on your own CV? Book a one-on-one with one of the three contact people: Charlotte, Eveline or Kaat. Send a message to the shared WhatsApp number with the word CV and the moments that suit you. You find the number on the Onboarding page.",
+    cta: { label: "Go to the shared WhatsApp number", href: "/onboarding#contact" },
   },
 };

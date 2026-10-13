@@ -24,14 +24,14 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "on-the-day",
     question: "Where do I check in?",
     answer:
-      "At the **volunteer entrance next to the café** (Sint-Pietersnieuwstraat 23). The main entrance is not in use. Arrive 15 minutes before your shift.",
+      "At the **check-in point in Wintercircus** (Sint-Pietersnieuwstraat 11). Enter via De Krook and follow the arrows. Arrive 15 minutes before your shift.",
   },
   {
     id: "volunteer-rooms",
     category: "on-the-day",
     question: "Where can I leave my things?",
     answer:
-      "In the volunteer rooms in Studio groot. The door code is shared in the WhatsApp group the day before the event.",
+      "In the **lockers in Wintercircus**.",
   },
   {
     id: "wintercircus",
@@ -45,14 +45,14 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "on-the-day",
     question: "How do I get from Vooruit to Wintercircus?",
     answer:
-      "Take the bridge or walk about 100 m. Your lead brings you to your station.",
+      "Take the Tectonic bridge between the two venues or walk about 100 m. Your lead brings you to your station.",
   },
   {
     id: "getting-there",
     category: "on-the-day",
-    question: "How do I get to Vooruit?",
+    question: "How do I get to Wintercircus?",
     answer:
-      "Vooruit is a 25-minute walk from Gent-Sint-Pieters and Gent-Dampoort. From Sint-Pieters, take tram 1 towards Evergem to Plateaustraat. From Dampoort, take a bus to Gent Zuid. Free covered bike parking is under the terrace. By car, Vooruit is in the low-emission zone and the nearby car parks (Zuid, Savaanstraat, Sint-Pietersplein) fill up fast. The Park + Ride at Gent-Sint-Pieters is easier.",
+      "Wintercircus (Sint-Pietersnieuwstraat 11) is in the city centre, within walking distance of De Krook, Vooruit and Gent Zuid. It is about a 25-minute walk from Gent-Sint-Pieters and Gent-Dampoort. From Sint-Pieters, take tram 1 towards Evergem to Plateaustraat. From Dampoort, take a bus to Gent Zuid. By car, Wintercircus is in the low-emission zone: Parking Zuid is about 2 minutes on foot and Parking Sint-Pietersplein about 9. The Park + Ride at Gent-Sint-Pieters is easier.",
   },
   {
     id: "what-to-bring",
@@ -77,7 +77,7 @@ export const FAQ_ITEMS: FaqItem[] = [
     id: "badge",
     category: "on-the-day",
     question: "Do I get a ticket, or do I pick up a badge?",
-    answer: "Volunteers get a **badge**, not a ticket. You must pick it up at check-in, at the volunteer entrance next to the café. You cannot enter with a ticket instead.",
+    answer: "Volunteers get a **badge**, not a ticket. You must pick it up at check-in, in Wintercircus. You cannot enter with a ticket instead.",
   },
   {
     id: "boat",
@@ -103,20 +103,20 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "contact",
     question: "Can I get feedback on my CV?",
     answer:
-      "Yes. The Academy page has a CV guide with do's and don'ts, a checklist and an example. For personal feedback, book a one-on-one with one of the three contact people via the shared number.",
+      "Yes. The Academy page has a CV guide with do's and don'ts, a checklist and an example. For personal feedback, book a one-on-one with one of the three contact people via the shared WhatsApp number.",
   },
   {
     id: "shift-questions",
     category: "contact",
     question: "Who do I ask about my shift?",
     answer:
-      "Your volunteer lead, in your shift's WhatsApp channel. For anything else, use the shared number.",
+      "Your volunteer lead, in your shift's WhatsApp channel. For anything else, use the shared WhatsApp number.",
   },
   {
     id: "running-late",
     category: "contact",
     question: "What if I'm late or sick?",
     answer:
-      "Late: send a message to the shared number. Sick: call it as soon as you know, so we can find a replacement. You'll find the number on the Onboarding page.",
+      "Late: send a WhatsApp message to the shared WhatsApp number. Sick: call it via WhatsApp as soon as you know, so we can find a replacement. You'll find the number on the Onboarding page.",
   },
 ];

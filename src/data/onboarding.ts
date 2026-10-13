@@ -11,7 +11,7 @@
 export const ONBOARDING_INTRO = {
   eyebrow: "Tectonic 2026 · 21 October · Ghent",
   title: "Welcome to the crew",
-  body: "You help build Tectonic from the inside. This page covers what to do before the event, how your day works, what you get, how we work together and who to contact.",
+  body: "You help build Tectonic from the inside. Tectonic is a conference about ideas and collaboration, not a job fair. This page covers what to do before the event, how your day works, what you get, how we work together and who to contact.",
 };
 
 export const WHY_VOLUNTEER = {
@@ -135,16 +135,6 @@ export const COMING_UP = {
     "Everything around the event, in order. The info sessions are the only ones we ask you to join.",
   items: [
     {
-      id: "first-aid",
-      day: "12",
-      month: "Oct",
-      title: "First-aid training",
-      meta: "Monday · 19:00–23:00 · Emile Clauslaan 5, Ghent",
-      tag: "Optional · limited places",
-      body: "Learn what to do if something happens at the event.",
-      link: { label: "Sign up", href: "https://tally.so/r/Y5LeLB" },
-    },
-    {
       id: "info-1",
       day: "18",
       month: "Oct",
@@ -159,17 +149,27 @@ export const COMING_UP = {
       day: "19",
       month: "Oct",
       title: "Info session",
-      meta: "Monday · 20:00 · Online",
+      meta: "Monday · 18:00 · Online",
       tag: "Join one of the two",
       body: "The same session, at a different time.",
       link: { label: "Join the session", href: "https://meet.google.com/udd-jpnk-pva" },
     },
     {
+      id: "first-aid",
+      day: "19",
+      month: "Oct",
+      title: "First-aid training",
+      meta: "Monday · 19:00–21:00 · Emile Clauslaan 5, Ghent",
+      tag: "Optional · limited places",
+      body: "Learn what to do if something happens at the event.",
+      link: { label: "Sign up", href: "https://tally.so/r/jadqK6" },
+    },
+    {
       id: "cv",
-      day: "Soon",
-      month: "",
+      day: "28",
+      month: "Oct",
       title: "CV session",
-      meta: "Date to be announced · Online",
+      meta: "Wednesday · 20:30 · Online · about 30 minutes",
       tag: "Optional",
       body: "Do's and don'ts for your CV, plus a checklist and an example. Prefer personal feedback? Book a one-on-one with one of the three contact people.",
       link: { label: "Open the CV guide", href: "/academy#cv" },
@@ -188,9 +188,12 @@ export const COMING_UP = {
 
 export const ON_THE_DAY = {
   title: "Your day, step by step",
-  mapSrc: "/vooruit-plattegrond.svg",
-  mapAlt:
-    "Side view of Vooruit showing the volunteer entrance next to the café, the closed main entrance and the concert hall entrance on the waterside.",
+  map: {
+    title: "Find Wintercircus",
+    body: "Sint-Pietersnieuwstraat 11, Ghent. Enter via De Krook and follow the arrows to the check-in point.",
+    label: "Open in Google Maps",
+    href: "https://www.google.com/maps/search/?api=1&query=Wintercircus+Sint-Pietersnieuwstraat+11+Gent",
+  },
   steps: [
     {
       id: "arrive",
@@ -200,17 +203,17 @@ export const ON_THE_DAY = {
     {
       id: "check-in",
       title: "Check in",
-      body: "Use the **volunteer entrance next to the café** (Sint-Pietersnieuwstraat 23, Ghent). The main entrance is not in use. Pick up your badge here: you cannot enter without it.",
+      body: "The **check-in point is in Wintercircus**. Enter via De Krook and follow the arrows. Pick up your badge here: you cannot enter without it.",
     },
     {
       id: "things",
       title: "Leave your things",
-      body: "Put them in the volunteer rooms in Studio groot. The door code is shared in the WhatsApp group the day before.",
+      body: "Use the **lockers in Wintercircus**.",
     },
     {
       id: "station",
       title: "Go to your station",
-      body: "Your lead takes you there. About 90% of the shifts are in Wintercircus. Between Vooruit and Wintercircus, take the bridge or walk about 100 m.",
+      body: "Your lead takes you there. About 90% of the shifts are in Wintercircus. Between Wintercircus and Vooruit, take the Tectonic bridge or walk about 100 m.",
     },
     {
       id: "after",
@@ -227,12 +230,12 @@ export type Room = { name: string; where: string; what: string };
 export const VENUE_GUIDE = {
   title: "Where is what",
   intro:
-    "Tectonic takes place in two buildings about 100 m apart, linked by a bridge. About 90% of the shifts are in Wintercircus, so learn those rooms first.",
+    "Tectonic takes place in two buildings about 100 m apart, linked by Tectonic's own bridge. About 90% of the shifts are in Wintercircus, so learn those rooms first.",
   venues: [
     {
       name: "Wintercircus",
       address: "Sint-Pietersnieuwstraat 11",
-      note: "Where most shifts are.",
+      note: "Where most shifts are, and where you check in.",
       rooms: [
         {
           name: "Main Stage",
@@ -269,7 +272,7 @@ export const VENUE_GUIDE = {
     {
       name: "Vooruit",
       address: "Sint-Pietersnieuwstraat 23",
-      note: "Check-in and the volunteer rooms.",
+      note: "The Pitching Stage and the Meeting Hub.",
       rooms: [
         {
           name: "Theaterzaal",
@@ -285,11 +288,6 @@ export const VENUE_GUIDE = {
           name: "Foyer Theaterzaal",
           where: "Vooruit",
           what: "Feedback sessions after the pitches and side events.",
-        },
-        {
-          name: "Studio groot",
-          where: "Vooruit",
-          what: "The volunteer rooms. Leave your things here.",
         },
       ] as Room[],
     },
@@ -401,7 +399,7 @@ export const CONDUCT = {
 
 export const CONTACTS = {
   title: "Who to contact",
-  body: "Questions about your shift go to your volunteer lead. Everything else goes to the shared number, which reaches all three contact people.",
+  body: "Questions about your shift go to your volunteer lead. Everything else goes to the **shared WhatsApp number**, which reaches all three contact people. **Always reach it through WhatsApp**: send a message or call there.",
   number: "+32 451 05 54 92",
   people: [
     { name: "Charlotte Manteleers", photo: "/contacts/charlotte-manteleers.jpg" },
@@ -409,8 +407,8 @@ export const CONTACTS = {
     { name: "Kaat de Jonge", photo: "/contacts/kaat-de-jonge.jpg" },
   ],
   when: [
-    "Running late? Send a message.",
-    "Sick? Call as soon as you know, so we can find a replacement.",
-    "Emergency? Call **112** first, then the shared number.",
+    "Running late? Send a WhatsApp message.",
+    "Sick? Call via WhatsApp as soon as you know, so we can find a replacement.",
+    "Emergency? Call **112** first, then the shared WhatsApp number.",
   ],
 };

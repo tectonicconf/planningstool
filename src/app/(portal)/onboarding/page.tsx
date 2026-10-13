@@ -271,13 +271,19 @@ export default function OnboardingPage() {
         {/* The day itself: map + steps */}
         <section>
           <SectionTitle eyebrow="ON THE DAY" title={ON_THE_DAY.title} />
-          <div className="mb-6 overflow-hidden rounded-3xl border border-white/15 bg-white/[0.06] backdrop-blur-md">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={ON_THE_DAY.mapSrc}
-              alt={ON_THE_DAY.mapAlt}
-              className="w-full"
-            />
+          <div className="mb-6 rounded-3xl border border-cyan-300/30 bg-cyan-300/5 p-5">
+            <p className="font-semibold">{ON_THE_DAY.map.title}</p>
+            <p className="mt-1 text-sm leading-relaxed text-white/70">
+              {ON_THE_DAY.map.body}
+            </p>
+            <a
+              href={ON_THE_DAY.map.href}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 inline-block rounded-full border border-cyan-300/50 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-300/10"
+            >
+              {ON_THE_DAY.map.label} &rarr;
+            </a>
           </div>
           <Steps steps={ON_THE_DAY.steps} />
         </section>
