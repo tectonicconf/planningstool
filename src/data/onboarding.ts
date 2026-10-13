@@ -443,9 +443,32 @@ export const CONTACTS = {
     { name: "Eveline Dioos", photo: "/contacts/eveline-dioos.jpg" },
     { name: "Kaat de Jonge", photo: "/contacts/kaat-de-jonge.jpg" },
   ],
-  when: [
-    "Running late? Send a WhatsApp message.",
-    "Sick? Call via WhatsApp as soon as you know, so we can find a replacement.",
-    "Emergency? Call **112** first, then the shared WhatsApp number.",
+  channels: [
+    {
+      title: "Send a WhatsApp message",
+      items: [
+        "You are running late on the day.",
+        "You have a question about your shift: ask your team lead in your shift channel.",
+        "You need to change or cancel a shift: tell the shared number as early as possible.",
+      ],
+    },
+    {
+      title: "Call via WhatsApp",
+      items: [
+        "You are sick: call the shared number as soon as you know, so we can find a replacement.",
+        "Something is urgent: call, do not only message.",
+      ],
+    },
+    {
+      title: "Send an email",
+      items: [
+        "You want a personal CV feedback slot of 10 minutes (see the Academy).",
+        "You will get your portal link and the WhatsApp invite link from us by email.",
+      ],
+    },
+    {
+      title: "Emergency",
+      items: ["Call **112** first, then tell the shared WhatsApp number."],
+    },
   ],
 };

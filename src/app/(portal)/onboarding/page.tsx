@@ -573,16 +573,25 @@ export default function OnboardingPage() {
             <p className="mt-1 text-xs text-white/55">
               Tap the number to open WhatsApp, then use the message or call button there.
             </p>
-            <ul className="mt-4 flex flex-col gap-2 text-sm leading-relaxed text-white/70">
-              {CONTACTS.when.map((line) => (
-                <li key={line} className="flex gap-2">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300" />
-                  <span>
-                    <Text>{line}</Text>
-                  </span>
-                </li>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {CONTACTS.channels.map((channel) => (
+                <div key={channel.title} className="rounded-2xl border border-white/15 bg-white/[0.04] p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-cyan-300">
+                    {channel.title}
+                  </p>
+                  <ul className="mt-2 flex flex-col gap-2 text-sm leading-relaxed text-white/75">
+                    {channel.items.map((line) => (
+                      <li key={line} className="flex gap-2">
+                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300" />
+                        <span>
+                          <Text>{line}</Text>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         </section>
       </div>
