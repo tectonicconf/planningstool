@@ -190,9 +190,9 @@ export const ON_THE_DAY = {
   title: "Your day, step by step",
   map: {
     title: "Enter via De Krook and follow the green line",
-    body: "The volunteer room is marked in blue: that is where you check in and pick up your badge. The lockers are in the foyer. Everyone enters via De Krook. If your case is different, we will message you on WhatsApp.",
+    body: "The volunteer room is marked in blue: that is where you check in and pick up your badge. You cannot enter it from the foyer, the blue bar on the wall is a screen, not a door. Walk through the foyer, around the Club Wintercircus hall and follow the corridor: the room is at the end, on the right. The lockers are in the foyer. Everyone enters via De Krook. If your case is different, we will message you on WhatsApp.",
     src: "/wintercircus-route-krook.png",
-    alt: "Schematic of level -2 of Wintercircus: the entrance via De Krook on the right, a green line through the foyer past the lockers towards the Club Wintercircus main stage, and the volunteer room marked in blue next to the entrance.",
+    alt: "Schematic of level -2 of Wintercircus: the entrance via De Krook on the right, a green line through the foyer past the lockers, around the Club Wintercircus hall and along the corridor to the volunteer room, marked in blue, which you enter from the east side. The blue bar on the foyer wall is a screen, not a door.",
     label: "Open Wintercircus in Google Maps",
     href: "https://www.google.com/maps/search/?api=1&query=Wintercircus+Sint-Pietersnieuwstraat+11+Gent",
   },
@@ -205,7 +205,7 @@ export const ON_THE_DAY = {
     {
       id: "check-in",
       title: "Check in",
-      body: "Enter via **De Krook** and follow the **green line** to the **blue volunteer room**. If your case is different, we will message you on WhatsApp. Pick up your badge here: you cannot enter without it.",
+      body: "Enter via **De Krook** and follow the **green line** to the **blue volunteer room**. The room has no door to the foyer: go around the Club Wintercircus hall and follow the corridor. If your case is different, we will message you on WhatsApp. Pick up your badge here: you cannot enter without it.",
     },
     {
       id: "things",

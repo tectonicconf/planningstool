@@ -27,7 +27,7 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "arriving",
     question: "Where do I check in?",
     answer:
-      "In the **volunteer room in Wintercircus** (Sint-Pietersnieuwstraat 11), downstairs. Enter via **De Krook** and follow the green line. If you have a special case, we will message you on WhatsApp. Arrive 15 minutes before your shift.",
+      "In the **volunteer room in Wintercircus** (Sint-Pietersnieuwstraat 11), downstairs. Enter via **De Krook** and follow the green line: through the foyer, around the Club Wintercircus hall and along the corridor. The blue screen on the foyer wall is not a door. If you have a special case, we will message you on WhatsApp. Arrive 15 minutes before your shift.",
   },
   {
     id: "volunteer-rooms",

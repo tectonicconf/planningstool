@@ -45,7 +45,7 @@ export const ESSENTIALS = {
     },
     {
       title: "Check in at Wintercircus",
-      body: "The check-in point is in the volunteer room in Wintercircus, downstairs. Enter via De Krook and follow the green line. Pick up your badge there: you cannot enter without it.",
+      body: "The check-in point is in the volunteer room in Wintercircus, downstairs. Enter via De Krook and follow the green line: through the foyer, around the Club Wintercircus hall and along the corridor. The room has no door to the foyer. Pick up your badge there: you cannot enter without it.",
     },
     {
       title: "Running late or sick?",
@@ -96,7 +96,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     ],
     correctIndex: 0,
     explanation:
-      "Check in at the volunteer room in Wintercircus. Enter via De Krook and follow the green line.",
+      "Check in at the volunteer room in Wintercircus. Enter via De Krook and follow the green line around the Club Wintercircus hall and along the corridor.",
   },
   {
     id: "badge",
