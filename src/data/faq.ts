@@ -91,6 +91,12 @@ export const FAQ_ITEMS: FaqItem[] = [
     answer: "Yes, food and drinks in the morning and afternoon.",
   },
   {
+    id: "water",
+    category: "shift",
+    question: "Where can I refill my water bottle?",
+    answer: "In the **volunteer room**. We provide water.",
+  },
+  {
     id: "event-access",
     category: "badge",
     question: "Can I attend Tectonic after my shift?",
