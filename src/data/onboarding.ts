@@ -159,7 +159,7 @@ export const COMING_UP = {
       day: "19",
       month: "Oct",
       title: "First-aid training",
-      meta: "Monday · 19:00–21:00 · Emile Clauslaan 5, Ghent",
+      meta: "Monday · 19:00–21:00 · Ghent, exact location follows asap",
       tag: "Optional · limited places",
       body: "Learn what to do if something happens at the event.",
       link: { label: "Sign up", href: "https://tally.so/r/jadqK6" },

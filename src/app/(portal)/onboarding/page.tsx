@@ -556,6 +556,12 @@ export default function OnboardingPage() {
             </p>
             <p className="mt-3 text-2xl font-bold">
               <ContactNumber number={CONTACTS.number} />
+              <span className="ml-2 inline-block rounded-full border border-cyan-300/50 px-3 py-0.5 align-middle text-xs font-semibold uppercase tracking-wider text-cyan-300">
+                via WhatsApp
+              </span>
+            </p>
+            <p className="mt-1 text-xs text-white/55">
+              Tap the number to open WhatsApp, then use the message or call button there.
             </p>
             <ul className="mt-4 flex flex-col gap-2 text-sm leading-relaxed text-white/70">
               {CONTACTS.when.map((line) => (
