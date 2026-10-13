@@ -19,6 +19,11 @@ export const TIME_SLOT_WINDOWS: Record<string, { start: string; end: string }> =
 
 export const SHIFT_COUNT_PREFERENCES = ["1", "2", "3", "4+", "No preference"] as const;
 
+// The moment shifts become visible/acceptable on a volunteer's dashboard —
+// drives the countdown in AcademyGateCard.tsx. Local wall-clock time (the
+// event itself is in Belgium), not UTC.
+export const SHIFTS_OPEN_AT = "2026-10-15T12:00:00";
+
 export type AvailabilityOption = {
   date: string;
   slot: (typeof TIME_SLOTS)[number];
