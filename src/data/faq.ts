@@ -136,4 +136,40 @@ export const FAQ_ITEMS: FaqItem[] = [
     answer:
       "Late: send a WhatsApp message to the shared WhatsApp number. Sick: call it via WhatsApp as soon as you know, so we can find a replacement. You'll find the number on the Onboarding page.",
   },
+  {
+    id: "where-shifts",
+    category: "shift",
+    question: "Where do I find my shifts?",
+    answer: "In the **Shifts** tab of this portal. Your shifts unlock after you have read the onboarding and passed the quiz. You can accept or decline each shift there.",
+  },
+  {
+    id: "cannot-attend",
+    category: "shift",
+    question: "What if I cannot attend my shift?",
+    answer: "Tell us as early as possible with a message to the shared WhatsApp number, so we can find a replacement. Late or sick on the day itself: see the question above.",
+  },
+  {
+    id: "shift-end",
+    category: "shift",
+    question: "What do I do when my shift ends?",
+    answer: "Check out at the end of your shift and enjoy the rest of Tectonic. Your badge is also your ticket.",
+  },
+  {
+    id: "problem",
+    category: "contact",
+    question: "Who do I contact if there is a problem?",
+    answer: "Your volunteer lead first. For anything else, use the shared WhatsApp number. In an emergency, call **112**.",
+  },
+  {
+    id: "unsure",
+    category: "contact",
+    question: "What if I am unsure about my task, or a guest asks me something I do not know?",
+    answer: "Ask your volunteer lead. You do not have to know everything.",
+  },
+  {
+    id: "lost-item",
+    category: "contact",
+    question: "What do I do with a lost item?",
+    answer: "Tell your volunteer lead and leave the item where it is.",
+  },
 ];
