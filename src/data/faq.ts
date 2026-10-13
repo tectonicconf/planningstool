@@ -103,6 +103,12 @@ export const FAQ_ITEMS: FaqItem[] = [
     answer: "Yes, but only eat it in the **volunteer room**. The exception is something for your blood sugar or a quick energy boost, which you can have when you need it.",
   },
   {
+    id: "bring",
+    category: "shift",
+    question: "Do I need to bring anything?",
+    answer: "Make sure your phone is **fully charged**. You may also bring your own food, see the question about own food.",
+  },
+  {
     id: "wifi",
     category: "shift",
     question: "Is there wifi?",
@@ -112,7 +118,7 @@ export const FAQ_ITEMS: FaqItem[] = [
     id: "charge-phone",
     category: "shift",
     question: "Can I charge my phone?",
-    answer: "Yes, in the **volunteer room**.",
+    answer: "Come with a **fully charged phone**. If you need to charge it during the day, you can do that in the **volunteer room**.",
   },
   {
     id: "event-snacks",
