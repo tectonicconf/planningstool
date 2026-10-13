@@ -103,6 +103,18 @@ export const FAQ_ITEMS: FaqItem[] = [
     answer: "Yes, but only eat it in the **volunteer room**. The exception is something for your blood sugar or a quick energy boost, which you can have when you need it.",
   },
   {
+    id: "wifi",
+    category: "shift",
+    question: "Is there wifi?",
+    answer: "Normally yes, but we do not know how reliable it will be. Use your own 4G if you can.",
+  },
+  {
+    id: "charge-phone",
+    category: "shift",
+    question: "Can I charge my phone?",
+    answer: "Yes, in the **volunteer room**.",
+  },
+  {
     id: "event-snacks",
     category: "shift",
     question: "Can I take snacks and drinks from the event?",
@@ -206,7 +218,7 @@ export const FAQ_ITEMS: FaqItem[] = [
     id: "first-aid",
     category: "contact",
     question: "Where is first aid, and what if someone is injured or unwell?",
-    answer: "The location of first aid follows soon. Tell your team lead if someone is injured or unwell. In an emergency, call **112**.",
+    answer: "First aid is in the **volunteer room**. Tell your team lead if someone is injured or unwell. In an emergency, call **112**.",
   },
   {
     id: "lost-item",
