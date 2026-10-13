@@ -30,7 +30,7 @@ export const EVENT_FACTS: EventFact[] = [
   {
     icon: "person",
     title: "Your contacts",
-    subtitle: "Your volunteer lead and one shared WhatsApp number",
+    subtitle: "Your team lead and one shared WhatsApp number",
   },
 ];
 
@@ -41,7 +41,7 @@ export const ESSENTIALS = {
   items: [
     {
       title: "Arrive 15 minutes early",
-      body: "That gives you time to leave your things and for your lead to take you to your station.",
+      body: "That gives you time to leave your things and for your team lead to take you to your station.",
     },
     {
       title: "Check in at Wintercircus",
@@ -57,7 +57,7 @@ export const ESSENTIALS = {
     },
     {
       title: "Ask the right person",
-      body: "Questions about your shift go to your volunteer lead. Everything else goes to the shared WhatsApp number.",
+      body: "Questions about your shift go to your team lead. Everything else goes to the shared WhatsApp number.",
     },
     {
       title: "Know where the rooms are",
@@ -65,7 +65,7 @@ export const ESSENTIALS = {
     },
     {
       title: "Keep it discreet",
-      body: "No photos of slides or deal conversations, and nothing on social media about what you overheard. If you find a lost item, tell your lead and leave it where it is.",
+      body: "No photos of slides or deal conversations, and nothing on social media about what you overheard. If you find a lost item, tell your team lead and leave it where it is.",
     },
   ],
 };
@@ -150,13 +150,13 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     id: "who-to-ask",
     question: "You have a question about your own shift. Who do you ask?",
     options: [
-      "Your volunteer lead",
+      "Your team lead",
       "A speaker or guest nearby",
       "Nobody, you work it out yourself",
     ],
     correctIndex: 0,
     explanation:
-      "Your volunteer lead is your first contact for your shift. For anything else, use the shared WhatsApp number.",
+      "Your team lead is your first contact for your shift. For anything else, use the shared WhatsApp number.",
   },
   {
     id: "discretion",
@@ -174,13 +174,13 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     id: "lost-found",
     question: "You find something that someone lost. What do you do?",
     options: [
-      "Tell your volunteer lead, but leave it where it is",
+      "Tell your team lead, but leave it where it is",
       "Take it with you to keep it safe",
       "Give it to the first person who says it is theirs",
     ],
     correctIndex: 0,
     explanation:
-      "Report it to your lead and leave it where it is.",
+      "Report it to your team lead and leave it where it is.",
   },
   {
     id: "pitching-stage",

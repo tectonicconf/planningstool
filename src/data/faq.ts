@@ -47,14 +47,14 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "arriving",
     question: "Where will my shift be?",
     answer:
-      "About 90% of the shifts are in Wintercircus (Sint-Pietersnieuwstraat 11), so have a [look around the building](https://www.wintercircus.be/en/practical/explore) beforehand. Your lead brings you to your station.",
+      "About 90% of the shifts are in Wintercircus (Sint-Pietersnieuwstraat 11), so have a [look around the building](https://www.wintercircus.be/en/practical/explore) beforehand. Your team lead brings you to your station.",
   },
   {
     id: "between-venues",
     category: "arriving",
     question: "How do I get from Vooruit to Wintercircus?",
     answer:
-      "Take the Tectonic bridge between the two venues or walk about 100 m. Your lead brings you to your station.",
+      "Take the Tectonic bridge between the two venues or walk about 100 m. Your team lead brings you to your station.",
   },
   {
     id: "getting-there",
@@ -151,7 +151,7 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "contact",
     question: "Who do I ask about my shift?",
     answer:
-      "Your volunteer lead, in your shift's WhatsApp channel. For anything else, use the shared WhatsApp number.",
+      "Your team lead, in your shift's WhatsApp channel. Every type of shift has its own team lead, for example the catering lead if you work in catering. For anything else, use the shared WhatsApp number.",
   },
   {
     id: "running-late",
@@ -182,13 +182,13 @@ export const FAQ_ITEMS: FaqItem[] = [
     id: "problem",
     category: "contact",
     question: "Who do I contact if there is a problem?",
-    answer: "Your volunteer lead first. For anything else, use the shared WhatsApp number. In an emergency, call **112**.",
+    answer: "Your team lead first. For anything else, use the shared WhatsApp number. In an emergency, call **112**.",
   },
   {
     id: "unsure",
     category: "contact",
     question: "What if I am unsure about my task, or a guest asks me something I do not know?",
-    answer: "Ask your volunteer lead. You do not have to know everything.",
+    answer: "Ask your team lead. You do not have to know everything.",
   },
   {
     id: "technical-problem",
@@ -203,9 +203,15 @@ export const FAQ_ITEMS: FaqItem[] = [
     answer: "The details are shared with the volunteers who work that shift, in their shift info. If this is not your shift, ask your team lead.",
   },
   {
+    id: "first-aid",
+    category: "contact",
+    question: "Where is first aid, and what if someone is injured or unwell?",
+    answer: "The location of first aid follows soon. Tell your team lead if someone is injured or unwell. In an emergency, call **112**.",
+  },
+  {
     id: "lost-item",
     category: "contact",
     question: "What do I do with a lost item?",
-    answer: "Tell your volunteer lead and leave the item where it is.",
+    answer: "Tell your team lead and leave the item where it is.",
   },
 ];

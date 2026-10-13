@@ -105,7 +105,7 @@ export const NEXT_STEPS: Step[] = [
   {
     id: "group-chat",
     title: "Join the WhatsApp group",
-    body: "One community channel for everyone, plus one channel per shift with your volunteer lead. You get the link by email.",
+    body: "One community channel for everyone, plus one channel per shift with your team lead. You get the link by email.",
   },
   {
     id: "startup-101",
@@ -215,7 +215,7 @@ export const ON_THE_DAY = {
     {
       id: "station",
       title: "Go to your station",
-      body: "Your lead takes you there. About 90% of the shifts are in Wintercircus. Between Wintercircus and Vooruit, take the Tectonic bridge or walk about 100 m.",
+      body: "Your team lead takes you there. About 90% of the shifts are in Wintercircus. Between Wintercircus and Vooruit, take the Tectonic bridge or walk about 100 m.",
     },
     {
       id: "after",
@@ -414,22 +414,22 @@ export const CONDUCT = {
     },
     {
       title: "Stay at your station",
-      body: "Need to leave? Tell your lead first.",
+      body: "Need to leave? Tell your team lead first.",
     },
     {
       title: "Don't solve problems alone",
-      body: "A complaint or an issue goes to your lead.",
+      body: "A complaint or an issue goes to your team lead.",
     },
     {
       title: "Found a lost item?",
-      body: "Tell your lead and leave it where it is.",
+      body: "Tell your team lead and leave it where it is.",
     },
   ],
 };
 
 export const CONTACTS = {
   title: "Who to contact",
-  body: "Questions about your shift go to your volunteer lead. Everything else goes to the **shared WhatsApp number**, which reaches all three contact people. **Always reach it through WhatsApp**: send a message or call there.",
+  body: "Questions about your shift go to your team lead. Every type of shift has its own team lead, for example the catering lead if you work in catering. Everything else goes to the **shared WhatsApp number**, which reaches all three contact people. **Always reach it through WhatsApp**: send a message or call there.",
   number: "+32 451 05 54 92",
   people: [
     { name: "Charlotte Manteleers", photo: "/contacts/charlotte-manteleers.jpg" },
