@@ -191,6 +191,12 @@ export const FAQ_ITEMS: FaqItem[] = [
     answer: "Contact your team lead and stay discreet.",
   },
   {
+    id: "guest-ticket",
+    category: "contact",
+    question: "What if a guest has the wrong ticket or badge?",
+    answer: "The details are shared with the volunteers who work that shift, in their shift info. If this is not your shift, ask your team lead.",
+  },
+  {
     id: "lost-item",
     category: "contact",
     question: "What do I do with a lost item?",
