@@ -34,7 +34,13 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "arriving",
     question: "Where can I leave my things?",
     answer:
-      "In the **lockers in the foyer**, next to the volunteer room in Wintercircus.",
+      "In the **lockers in the foyer** of Wintercircus.",
+  },
+  {
+    id: "get-ready",
+    category: "arriving",
+    question: "Where can I get changed and ready?",
+    answer: "In the **volunteer room**. Enter via De Krook and follow the green line: through the foyer, around the Club Wintercircus hall and along the corridor. The volunteer room has no door to the foyer.",
   },
   {
     id: "wintercircus",

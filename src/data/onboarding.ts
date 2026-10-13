@@ -210,7 +210,7 @@ export const ON_THE_DAY = {
     {
       id: "things",
       title: "Leave your things",
-      body: "Use the **lockers in the foyer**, on the same level as the volunteer room.",
+      body: "Use the **lockers in the foyer**. You can get changed and ready in the **volunteer room**: go around the Club Wintercircus hall and follow the corridor.",
     },
     {
       id: "station",
