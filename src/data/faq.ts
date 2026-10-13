@@ -88,13 +88,13 @@ export const FAQ_ITEMS: FaqItem[] = [
     id: "event-access",
     category: "badge",
     question: "Can I attend Tectonic after my shift?",
-    answer: "Yes. After your shift we give you a **badge that lets you in as an attendee**, so you can enjoy the rest of Tectonic. A regular ticket costs €149 to €349 (excl. VAT).",
+    answer: "Yes. Your volunteer badge is also your ticket for Tectonic. Check out at the end of your shift and enjoy the rest of the day. A regular ticket costs €149 to €349 (excl. VAT).",
   },
   {
     id: "badge",
     category: "badge",
     question: "Do I get a ticket, or do I pick up a badge?",
-    answer: "During your shift you wear a **volunteer badge**, not a ticket. Pick it up at check-in, in the volunteer room in Wintercircus. After your shift you get an attendee badge, see the next question.",
+    answer: "During your shift you wear a **volunteer badge**, not a ticket. Pick it up at check-in, in the volunteer room in Wintercircus. The same badge is also your ticket for the rest of Tectonic after your shift, see the next question.",
   },
   {
     id: "boat",

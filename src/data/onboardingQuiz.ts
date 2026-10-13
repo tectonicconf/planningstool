@@ -108,7 +108,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     ],
     correctIndex: 0,
     explanation:
-      "Volunteers do not enter with a ticket. Pick up your badge at check-in: without it you cannot enter.",
+      "Volunteers do not enter with a separate ticket. Pick up your badge at check-in: without it you cannot enter. The same badge is your ticket for the rest of Tectonic after your shift.",
   },
   {
     id: "arrival",

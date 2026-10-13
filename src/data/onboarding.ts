@@ -220,7 +220,7 @@ export const ON_THE_DAY = {
     {
       id: "after",
       title: "After your shift",
-      body: "We give you a **badge that lets you in as an attendee**. Enjoy the rest of Tectonic.",
+      body: "**Check out** at the end of your shift and enjoy the rest of Tectonic. Your badge is also your ticket.",
     },
   ] as Step[],
 };
@@ -354,7 +354,7 @@ export const PERKS = {
       icon: "ticket",
       tag: "After your shift",
       title: "Access to Tectonic",
-      body: "After your shift we give you a badge that lets you in as an attendee, so you can enjoy the rest of Tectonic. A regular ticket costs €149 to €349 (excl. VAT).",
+      body: "Your badge is also your ticket: check out at the end of your shift and enjoy the rest of Tectonic. A regular ticket costs €149 to €349 (excl. VAT).",
     },
     {
       id: "boat",
