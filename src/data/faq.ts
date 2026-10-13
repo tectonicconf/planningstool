@@ -27,7 +27,7 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "arriving",
     question: "Where do I check in?",
     answer:
-      "In the **volunteer room in Wintercircus** (Sint-Pietersnieuwstraat 11), downstairs. Enter via **De Krook** and follow the green line. Arriving before 08:30: use the **Main Entrance** and follow the arrows downstairs. Arrive 15 minutes before your shift.",
+      "In the **volunteer room in Wintercircus** (Sint-Pietersnieuwstraat 11), downstairs. Enter via **De Krook** and follow the green line. If you have a special case, we will message you on WhatsApp. Arrive 15 minutes before your shift.",
   },
   {
     id: "volunteer-rooms",
@@ -55,7 +55,14 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "arriving",
     question: "How do I get to Wintercircus?",
     answer:
-      "Wintercircus (Sint-Pietersnieuwstraat 11) is in the city centre, within walking distance of De Krook, Vooruit and Gent Zuid. It is about a 25-minute walk from Gent-Sint-Pieters and Gent-Dampoort. From Sint-Pieters, take tram 1 towards Evergem to Plateaustraat. From Dampoort, take a bus to Gent Zuid. By car, Wintercircus is in the low-emission zone: Parking Zuid is about 2 minutes on foot and Parking Sint-Pietersplein about 9. The Park + Ride at Gent-Sint-Pieters is easier.",
+      "Wintercircus (Sint-Pietersnieuwstraat 11) is in the city centre, within walking distance of De Krook, Vooruit and Gent Zuid. It is about a 25-minute walk from Gent-Sint-Pieters and Gent-Dampoort. From Sint-Pieters, take tram 1 towards Evergem to Plateaustraat. From Dampoort, take a bus to Gent Zuid. Coming by car? See the next question.",
+  },
+  {
+    id: "by-car",
+    category: "arriving",
+    question: "Can I come by car?",
+    answer:
+      "You can, but Wintercircus is in the **low-emission zone** of Ghent. Cars with a Belgian or Dutch plate are fine if they meet the emission rules. A car with another foreign plate must **always be registered** at lez.stad.gent before you drive in. Parking Zuid is about 2 minutes on foot from Wintercircus and Parking Sint-Pietersplein about 9 (paid parking). The easier option is the paid Park + Ride at Gent-Sint-Pieters, outside the zone: park there and continue by tram 1 towards Evergem to Plateaustraat. Allow extra time to find a spot. Not sure? Ask us on the shared WhatsApp number.",
   },
   {
     id: "what-to-bring",
@@ -93,7 +100,7 @@ export const FAQ_ITEMS: FaqItem[] = [
     id: "boat",
     category: "perks",
     question: "What is the Tectonic Boat?",
-    answer: "A crew celebration on 21 October from 18:00 to 22:00, open to all volunteers.",
+    answer: "A crew party on the water on 21 October from 18:00 to 22:00, open to all volunteers. The boat is moored at **Kuiperskaai 24** in Ghent.",
   },
   {
     id: "tecnotonic",

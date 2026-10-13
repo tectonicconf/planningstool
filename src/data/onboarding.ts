@@ -190,7 +190,7 @@ export const ON_THE_DAY = {
   title: "Your day, step by step",
   map: {
     title: "Enter via De Krook and follow the green line",
-    body: "The volunteer room is marked in blue: that is where you check in and pick up your badge. The lockers are in the foyer. Arriving before 08:30: use the Main Entrance and follow the arrows downstairs.",
+    body: "The volunteer room is marked in blue: that is where you check in and pick up your badge. The lockers are in the foyer. Everyone enters via De Krook. If your case is different, we will message you on WhatsApp.",
     src: "/wintercircus-route-krook.png",
     alt: "Schematic of level -2 of Wintercircus: the entrance via De Krook on the right, a green line through the foyer past the lockers towards the Club Wintercircus main stage, and the volunteer room marked in blue next to the entrance.",
     label: "Open Wintercircus in Google Maps",
@@ -205,7 +205,7 @@ export const ON_THE_DAY = {
     {
       id: "check-in",
       title: "Check in",
-      body: "Enter via **De Krook** and follow the **green line** to the **blue volunteer room**. Arriving before 08:30: use the **Main Entrance** and follow the arrows downstairs. Pick up your badge here: you cannot enter without it.",
+      body: "Enter via **De Krook** and follow the **green line** to the **blue volunteer room**. If your case is different, we will message you on WhatsApp. Pick up your badge here: you cannot enter without it.",
     },
     {
       id: "things",
@@ -330,7 +330,7 @@ export const DAY_GLANCE = {
         { time: "09:30–18:00", title: "Partner booths", place: "Wintercircus, Atrium" },
         { time: "10:15–16:45", title: "Workshops and Innovation Challenges", place: "Workshop rooms and Innovation Stage" },
         { time: "10:30–17:15", title: "Pitching Competition, Grand Final at 16:30", place: "Vooruit, Theaterzaal" },
-        { time: "From 17:30", title: "Closing drinks, dinners and the Tectonic Boat", place: "Around Ghent" },
+        { time: "From 17:30", title: "Closing drinks, dinners and the Tectonic Boat", place: "Around Ghent, the boat is at Kuiperskaai 24" },
       ] as GlanceItem[],
     },
   ],
@@ -361,7 +361,7 @@ export const PERKS = {
       icon: "boat",
       tag: "21 Oct · 18:00–22:00",
       title: "Tectonic Boat",
-      body: "Celebrate with the crew on 21 October, 18:00–22:00.",
+      body: "Celebrate with the crew on 21 October, 18:00–22:00. The boat is moored at Kuiperskaai 24 in Ghent.",
     },
     {
       id: "tecnotonic",
