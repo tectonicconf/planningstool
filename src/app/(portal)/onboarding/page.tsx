@@ -340,6 +340,16 @@ export default function OnboardingPage() {
               <p className="mt-1 text-sm leading-relaxed text-white/70">
                 {ON_THE_DAY.map.body}
               </p>
+              <ol className="mt-4 flex flex-col gap-2.5">
+                {ON_THE_DAY.map.route.map((line, index) => (
+                  <li key={line} className="flex gap-3 text-sm leading-relaxed text-white/85">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-cyan-300 text-xs font-bold text-cyan-300">
+                      {index + 1}
+                    </span>
+                    <span>{line}</span>
+                  </li>
+                ))}
+              </ol>
               <a
                 href={ON_THE_DAY.map.href}
                 target="_blank"
