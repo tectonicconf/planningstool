@@ -185,6 +185,12 @@ export const FAQ_ITEMS: FaqItem[] = [
     answer: "Ask your volunteer lead. You do not have to know everything.",
   },
   {
+    id: "technical-problem",
+    category: "contact",
+    question: "What do I do if there is a technical problem?",
+    answer: "Contact your team lead and stay discreet.",
+  },
+  {
     id: "lost-item",
     category: "contact",
     question: "What do I do with a lost item?",
