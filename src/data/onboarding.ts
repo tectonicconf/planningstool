@@ -337,7 +337,7 @@ export const DAY_GLANCE = {
         { time: "09:30–18:00", title: "Partner booths", place: "Wintercircus, Atrium" },
         { time: "10:15–16:45", title: "Workshops and Innovation Challenges", place: "Workshop rooms and Innovation Stage" },
         { time: "10:30–17:15", title: "Pitching Competition, Grand Final at 16:30", place: "Vooruit, Theaterzaal" },
-        { time: "From 17:30", title: "Closing drinks, dinners and the Tectonic Boat", place: "Around Ghent, the boat is at Kuiperskaai 24" },
+        { time: "From 17:30", title: "Closing drinks, dinners and the Tectonic Boat", place: "Around Ghent, the boat is L'Esceau at Kuiperskaai 24" },
       ] as GlanceItem[],
     },
   ],
@@ -368,7 +368,7 @@ export const PERKS = {
       icon: "boat",
       tag: "21 Oct · 18:00–22:00",
       title: "Tectonic Boat",
-      body: "Celebrate with the crew on 21 October, 18:00–22:00. The boat is moored at Kuiperskaai 24 in Ghent.",
+      body: "Celebrate with the crew on 21 October, 18:00–22:00, on **L'Esceau**, a boat on the Schelde at Kuiperskaai 24 in Ghent. [More about L'Esceau](https://lesceau.be/)",
     },
     {
       id: "tecnotonic",

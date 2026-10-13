@@ -167,7 +167,7 @@ export const FAQ_ITEMS: FaqItem[] = [
     id: "boat",
     category: "perks",
     question: "What is the Tectonic Boat?",
-    answer: "A crew party on the water on 21 October from 18:00 to 22:00. The boat is moored at **Kuiperskaai 24** in Ghent. Volunteers on a breakdown shift get a Tecnotonic ticket instead.",
+    answer: "A crew party on the water on 21 October from 18:00 to 22:00. The boat is **L'Esceau** ([lesceau.be](https://lesceau.be/)), moored at **Kuiperskaai 24** in Ghent. Volunteers on a breakdown shift get a Tecnotonic ticket instead.",
   },
   {
     id: "tecnotonic",
