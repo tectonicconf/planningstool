@@ -3,12 +3,15 @@
 // Put **double asterisks** around words that should be bold.
 // Answers are the short lookup version of the Onboarding page: keep them brief.
 
-export type FaqCategory = "on-the-day" | "shifts" | "contact";
+export type FaqCategory = "arriving" | "badge" | "shift" | "perks" | "contact";
 
-export const FAQ_CATEGORIES: { id: FaqCategory; label: string }[] = [
-  { id: "on-the-day", label: "On the day" },
-  { id: "shifts", label: "Shifts" },
-  { id: "contact", label: "Contact" },
+// The FAQ page shows one section per category, in this order.
+export const FAQ_CATEGORIES: { id: FaqCategory; label: string; short: string; description: string }[] = [
+  { id: "arriving", short: "Arriving", label: "Arriving and finding your way", description: "Check-in, lockers, rooms and getting there." },
+  { id: "badge", short: "Badge", label: "Badge and ticket", description: "How you get in, during and after your shift." },
+  { id: "shift", short: "Your shift", label: "Your shift", description: "What to wear, food, and what if something comes up." },
+  { id: "perks", short: "Perks", label: "Perks and parties", description: "What you get and the crew celebrations." },
+  { id: "contact", short: "Questions", label: "Questions and feedback", description: "Who to ask and where to get help." },
 ];
 
 export type FaqItem = {
@@ -21,79 +24,86 @@ export type FaqItem = {
 export const FAQ_ITEMS: FaqItem[] = [
   {
     id: "check-in",
-    category: "on-the-day",
+    category: "arriving",
     question: "Where do I check in?",
     answer:
-      "At the **check-in point in Wintercircus** (Sint-Pietersnieuwstraat 11). Enter via De Krook and follow the arrows. Arrive 15 minutes before your shift.",
+      "In the **volunteer room in Wintercircus** (Sint-Pietersnieuwstraat 11), downstairs. Enter via **De Krook** and follow the green line. Arriving before 08:30: use the **Main Entrance** and follow the arrows downstairs. Arrive 15 minutes before your shift.",
   },
   {
     id: "volunteer-rooms",
-    category: "on-the-day",
+    category: "arriving",
     question: "Where can I leave my things?",
     answer:
-      "In the **lockers in Wintercircus**.",
+      "In the **lockers in the foyer**, next to the volunteer room in Wintercircus.",
   },
   {
     id: "wintercircus",
-    category: "on-the-day",
+    category: "arriving",
     question: "Where will my shift be?",
     answer:
       "About 90% of the shifts are in Wintercircus (Sint-Pietersnieuwstraat 11), so have a [look around the building](https://www.wintercircus.be/en/practical/explore) beforehand. Your lead brings you to your station.",
   },
   {
     id: "between-venues",
-    category: "on-the-day",
+    category: "arriving",
     question: "How do I get from Vooruit to Wintercircus?",
     answer:
       "Take the Tectonic bridge between the two venues or walk about 100 m. Your lead brings you to your station.",
   },
   {
     id: "getting-there",
-    category: "on-the-day",
+    category: "arriving",
     question: "How do I get to Wintercircus?",
     answer:
       "Wintercircus (Sint-Pietersnieuwstraat 11) is in the city centre, within walking distance of De Krook, Vooruit and Gent Zuid. It is about a 25-minute walk from Gent-Sint-Pieters and Gent-Dampoort. From Sint-Pieters, take tram 1 towards Evergem to Plateaustraat. From Dampoort, take a bus to Gent Zuid. By car, Wintercircus is in the low-emission zone: Parking Zuid is about 2 minutes on foot and Parking Sint-Pietersplein about 9. The Park + Ride at Gent-Sint-Pieters is easier.",
   },
   {
     id: "what-to-bring",
-    category: "shifts",
+    category: "shift",
     question: "What should I wear?",
     answer:
       "Casual, with the Tectonic shirt we give you. Catering: white shirt and black trousers if possible. Speaker buddies: business casual.",
   },
   {
+    id: "change-shift",
+    category: "shift",
+    question: "Where can I change my shift?",
+    answer:
+      "Send a message to the shared WhatsApp number. It reaches Kaat, Charlotte and Eveline, who can change your shift. You'll find the number on the Onboarding page.",
+  },
+  {
     id: "food",
-    category: "shifts",
+    category: "shift",
     question: "Is food provided?",
     answer: "Yes, food and drinks in the morning and afternoon.",
   },
   {
     id: "event-access",
-    category: "shifts",
-    question: "Can I attend Tectonic outside my shift?",
-    answer: "Yes. Every volunteer gets access to Tectonic 2026. A regular ticket costs €149 to €349 (excl. VAT).",
+    category: "badge",
+    question: "Can I attend Tectonic after my shift?",
+    answer: "Yes. After your shift we give you a **badge that lets you in as an attendee**, so you can enjoy the rest of Tectonic. A regular ticket costs €149 to €349 (excl. VAT).",
   },
   {
     id: "badge",
-    category: "on-the-day",
+    category: "badge",
     question: "Do I get a ticket, or do I pick up a badge?",
-    answer: "Volunteers get a **badge**, not a ticket. You must pick it up at check-in, in Wintercircus. You cannot enter with a ticket instead.",
+    answer: "During your shift you wear a **volunteer badge**, not a ticket. Pick it up at check-in, in the volunteer room in Wintercircus. After your shift you get an attendee badge, see the next question.",
   },
   {
     id: "boat",
-    category: "shifts",
+    category: "perks",
     question: "What is the Tectonic Boat?",
     answer: "A crew celebration on 21 October from 18:00 to 22:00, open to all volunteers.",
   },
   {
     id: "tecnotonic",
-    category: "shifts",
+    category: "perks",
     question: "How do I get a Tecnotonic ticket?",
     answer: "Take a breakdown shift or an extra shift. You get a ticket to Tecnotonic on the evening of 20 October: the party at Club Wintercircus after the hackathon final, with techno by Helena Lauwaert.",
   },
   {
     id: "reimbursement",
-    category: "shifts",
+    category: "perks",
     question: "Is there a reimbursement for travel or other costs?",
     answer:
       "**No**, there is no reimbursement. We do give you a Tectonic shirt and food and drinks in the morning and afternoon.",
@@ -114,7 +124,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   },
   {
     id: "running-late",
-    category: "contact",
+    category: "shift",
     question: "What if I'm late or sick?",
     answer:
       "Late: send a WhatsApp message to the shared WhatsApp number. Sick: call it via WhatsApp as soon as you know, so we can find a replacement. You'll find the number on the Onboarding page.",

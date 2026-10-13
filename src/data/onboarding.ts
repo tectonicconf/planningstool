@@ -189,9 +189,11 @@ export const COMING_UP = {
 export const ON_THE_DAY = {
   title: "Your day, step by step",
   map: {
-    title: "Find Wintercircus",
-    body: "Sint-Pietersnieuwstraat 11, Ghent. Enter via De Krook and follow the arrows to the check-in point.",
-    label: "Open in Google Maps",
+    title: "Enter via De Krook and follow the green line",
+    body: "The volunteer room is marked in blue: that is where you check in and pick up your badge. The lockers are in the foyer. Arriving before 08:30: use the Main Entrance and follow the arrows downstairs.",
+    src: "/wintercircus-route-krook.png",
+    alt: "Schematic of level -2 of Wintercircus: the entrance via De Krook on the right, a green line through the foyer past the lockers towards the Club Wintercircus main stage, and the volunteer room marked in blue next to the entrance.",
+    label: "Open Wintercircus in Google Maps",
     href: "https://www.google.com/maps/search/?api=1&query=Wintercircus+Sint-Pietersnieuwstraat+11+Gent",
   },
   steps: [
@@ -203,12 +205,12 @@ export const ON_THE_DAY = {
     {
       id: "check-in",
       title: "Check in",
-      body: "The **check-in point is in Wintercircus**. Enter via De Krook and follow the arrows. Pick up your badge here: you cannot enter without it.",
+      body: "Enter via **De Krook** and follow the **green line** to the **blue volunteer room**. Arriving before 08:30: use the **Main Entrance** and follow the arrows downstairs. Pick up your badge here: you cannot enter without it.",
     },
     {
       id: "things",
       title: "Leave your things",
-      body: "Use the **lockers in Wintercircus**.",
+      body: "Use the **lockers in the foyer**, on the same level as the volunteer room.",
     },
     {
       id: "station",
@@ -218,7 +220,7 @@ export const ON_THE_DAY = {
     {
       id: "after",
       title: "After your shift",
-      body: "Enjoy the rest of Tectonic.",
+      body: "We give you a **badge that lets you in as an attendee**. Enjoy the rest of Tectonic.",
     },
   ] as Step[],
 };
@@ -231,6 +233,12 @@ export const VENUE_GUIDE = {
   title: "Where is what",
   intro:
     "Tectonic takes place in two buildings about 100 m apart, linked by Tectonic's own bridge. About 90% of the shifts are in Wintercircus, so learn those rooms first.",
+  plan: {
+    src: "/wintercircus-floorplan.png",
+    alt: "Floor plan of the ground floor of Wintercircus with the main entrance on Sint-Pietersnieuwstraat, the Lammerstraat entrance, the centrepiece, the booths and green arrows showing the walking routes to the stages, the Space Bar, the co-working area and the rooftop.",
+    caption:
+      "The ground floor of Wintercircus, with the walking routes in green. Levels are in brackets, for example Workshops (-1) and Mainstage (-2). The volunteer room with the check-in point is downstairs, see the route above.",
+  },
   venues: [
     {
       name: "Wintercircus",
@@ -329,33 +337,50 @@ export const DAY_GLANCE = {
   note: "Times are from the current planning and can still change.",
 };
 
-export type Perk = { id: string; title: string; body: string };
+export type Perk = {
+  id: string;
+  icon: "ticket" | "boat" | "music" | "people" | "shirt";
+  title: string;
+  body: string;
+  // Small chip, e.g. a date.
+  tag?: string;
+};
 
 export const PERKS = {
   title: "What you get",
   items: [
     {
       id: "access",
+      icon: "ticket",
+      tag: "After your shift",
       title: "Access to Tectonic",
-      body: "Your volunteer badge gives you free access to the whole event, also outside your shift. A regular ticket costs €149 to €349 (excl. VAT).",
+      body: "After your shift we give you a badge that lets you in as an attendee, so you can enjoy the rest of Tectonic. A regular ticket costs €149 to €349 (excl. VAT).",
     },
     {
       id: "boat",
+      icon: "boat",
+      tag: "21 Oct · 18:00–22:00",
       title: "Tectonic Boat",
       body: "Celebrate with the crew on 21 October, 18:00–22:00.",
     },
     {
       id: "tecnotonic",
+      icon: "music",
+      tag: "20 Oct · Breakdown or extra shift",
       title: "Tecnotonic ticket",
       body: "Volunteers on a breakdown shift or an extra shift get a ticket to Tecnotonic, the party at Club Wintercircus after the hackathon final on 20 October, with techno by Helena Lauwaert. Places are normally limited to 600. Breakdown crew get this instead of the boat.",
     },
     {
       id: "activities",
+      icon: "people",
+      tag: "Two weeks after the event",
       title: "Crew activities",
       body: "Meet the rest of the crew and have fun around the event, for example at the big crew event after Tectonic, together with volunteers from previous editions, two weeks after the event. Details follow.",
     },
     {
       id: "basics",
+      icon: "shirt",
+      tag: "On your shift",
       title: "Shirt, food and drinks",
       body: "A Tectonic shirt, plus food and drinks in the morning and in the afternoon.",
     },

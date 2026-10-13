@@ -7,7 +7,7 @@ import { RichText } from "@/components/RichText";
 export default function FaqPage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<FaqCategory | "all">("all");
-  const [openId, setOpenId] = useState<string | null>(FAQ_ITEMS[0]?.id ?? null);
+  const [openId, setOpenId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -28,7 +28,7 @@ export default function FaqPage() {
       <div className="mx-auto max-w-2xl">
         <h1 className="text-3xl font-bold">FAQ</h1>
         <p className="mt-2 text-white/70">
-          Quick answers for during the event.
+          Quick answers, grouped by theme.
         </p>
 
         <div className="relative mt-6">
@@ -70,48 +70,68 @@ export default function FaqPage() {
                   : "bg-[#0D1341]/40 text-white/70 hover:bg-[#0D1341]/60"
               }`}
             >
-              {item.label}
+              {item.short}
             </button>
           ))}
         </div>
 
-        <div className="mt-6 flex flex-col gap-3">
+        <div className="mt-8 flex flex-col gap-10">
           {filtered.length === 0 ? (
             <p className="text-white/70">No matching questions.</p>
           ) : (
-            filtered.map((item) => {
-              const isOpen = openId === item.id;
+            FAQ_CATEGORIES.map((group) => {
+              const items = filtered.filter((item) => item.category === group.id);
+              if (items.length === 0) return null;
 
               return (
-                <div
-                  key={item.id}
-                  className={`rounded-2xl border p-4 transition-colors ${
-                    isOpen
-                      ? "border-blue-300/60 bg-white/[0.06]"
-                      : "border-white/15 bg-white/[0.06]"
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setOpenId(isOpen ? null : item.id)}
-                    className="flex w-full items-center justify-between gap-3 text-left font-semibold"
-                  >
-                    <span>{item.question}</span>
-                    <span
-                      aria-hidden="true"
-                      className={`shrink-0 text-white/60 transition-transform ${
-                        isOpen ? "rotate-90" : ""
-                      }`}
-                    >
-                      &rsaquo;
+                <section key={group.id}>
+                  <div className="mb-3 flex items-end justify-between gap-3 border-b border-white/15 pb-3">
+                    <div>
+                      <h2 className="text-lg font-semibold">{group.label}</h2>
+                      <p className="mt-0.5 text-sm text-white/60">{group.description}</p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-cyan-300/10 px-3 py-1 text-xs font-bold text-cyan-300">
+                      {items.length}
                     </span>
-                  </button>
-                  {isOpen && (
-                    <p className="mt-3 text-sm text-white/70">
-                      <RichText>{item.answer}</RichText>
-                    </p>
-                  )}
-                </div>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {items.map((item) => {
+                      const isOpen = openId === item.id;
+
+                      return (
+                        <div
+                          key={item.id}
+                          className={`rounded-2xl border p-4 transition-colors ${
+                            isOpen
+                              ? "border-blue-300/60 bg-white/[0.06]"
+                              : "border-white/15 bg-white/[0.06]"
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setOpenId(isOpen ? null : item.id)}
+                            className="flex w-full items-center justify-between gap-3 text-left font-semibold"
+                          >
+                            <span>{item.question}</span>
+                            <span
+                              aria-hidden="true"
+                              className={`shrink-0 text-white/60 transition-transform ${
+                                isOpen ? "rotate-90" : ""
+                              }`}
+                            >
+                              &rsaquo;
+                            </span>
+                          </button>
+                          {isOpen && (
+                            <p className="mt-3 text-sm text-white/70">
+                              <RichText>{item.answer}</RichText>
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
               );
             })
           )}

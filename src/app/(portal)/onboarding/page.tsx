@@ -13,6 +13,7 @@ import {
   TIMELINE,
   WHY_VOLUNTEER,
   VENUE_GUIDE,
+  type Perk,
   type Step,
 } from "@/data/onboarding";
 
@@ -103,6 +104,52 @@ function Card({
         <Text>{body}</Text>
       </p>
     </div>
+  );
+}
+
+function PerkIcon({ icon, className }: { icon: Perk["icon"]; className?: string }) {
+  const paths: Record<Perk["icon"], string[]> = {
+    ticket: [
+      "M3 9a2 2 0 0 0 0 6v3a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-3a2 2 0 0 1 0-6V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z",
+      "M13 5v14",
+    ],
+    boat: [
+      "M2 18c2 2 4 2 6 0s4-2 6 0 4 2 6 0",
+      "M5 15l1-6h12l1 6",
+      "M12 9V3l4 3",
+    ],
+    music: [
+      "M9 18V5l11-2v13",
+      "M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0z",
+      "M20 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z",
+    ],
+    people: [
+      "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
+      "M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1",
+      "M17 11a3 3 0 1 0 0-6",
+      "M22 20v-1a5 5 0 0 0-4-4.9",
+    ],
+    shirt: [
+      "M8 3l-6 4 3 4 3-1.5V21h8V9.5L19 11l3-4-6-4a4 4 0 0 1-8 0z",
+    ],
+  };
+  return (
+    <span className={`flex shrink-0 items-center justify-center ${className ?? ""}`}>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-1/2 w-1/2"
+        aria-hidden="true"
+      >
+        {paths[icon].map((d) => (
+          <path key={d} d={d} />
+        ))}
+      </svg>
+    </span>
   );
 }
 
@@ -271,20 +318,28 @@ export default function OnboardingPage() {
         {/* The day itself: map + steps */}
         <section>
           <SectionTitle eyebrow="ON THE DAY" title={ON_THE_DAY.title} />
-          <div className="mb-6 rounded-3xl border border-cyan-300/30 bg-cyan-300/5 p-5">
-            <p className="font-semibold">{ON_THE_DAY.map.title}</p>
-            <p className="mt-1 text-sm leading-relaxed text-white/70">
-              {ON_THE_DAY.map.body}
-            </p>
-            <a
-              href={ON_THE_DAY.map.href}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-3 inline-block rounded-full border border-cyan-300/50 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-300/10"
-            >
-              {ON_THE_DAY.map.label} &rarr;
-            </a>
-          </div>
+          <figure className="mb-6 overflow-hidden rounded-3xl border border-white/15 bg-white/[0.06] backdrop-blur-md">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={ON_THE_DAY.map.src}
+              alt={ON_THE_DAY.map.alt}
+              className="w-full bg-[#f1f0ef]"
+            />
+            <figcaption className="p-5">
+              <p className="font-semibold">{ON_THE_DAY.map.title}</p>
+              <p className="mt-1 text-sm leading-relaxed text-white/70">
+                {ON_THE_DAY.map.body}
+              </p>
+              <a
+                href={ON_THE_DAY.map.href}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 inline-block rounded-full border border-cyan-300/50 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-300/10"
+              >
+                {ON_THE_DAY.map.label} &rarr;
+              </a>
+            </figcaption>
+          </figure>
           <Steps steps={ON_THE_DAY.steps} />
         </section>
 
@@ -294,6 +349,17 @@ export default function OnboardingPage() {
           <p className="mb-4 text-sm leading-relaxed text-white/70">
             <Text>{VENUE_GUIDE.intro}</Text>
           </p>
+          <figure className="mb-4 overflow-hidden rounded-3xl border border-white/15 bg-white/[0.06] backdrop-blur-md">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={VENUE_GUIDE.plan.src}
+              alt={VENUE_GUIDE.plan.alt}
+              className="w-full bg-[#f1f0ef]"
+            />
+            <figcaption className="p-4 text-xs leading-relaxed text-white/60">
+              {VENUE_GUIDE.plan.caption}
+            </figcaption>
+          </figure>
           <div className="flex flex-col gap-4">
             {VENUE_GUIDE.venues.map((venue) => (
               <div
@@ -374,14 +440,50 @@ export default function OnboardingPage() {
         {/* Perks */}
         <section>
           <SectionTitle eyebrow="THANK YOU" title={PERKS.title} />
-          <div className="grid gap-3 sm:grid-cols-2">
-            {PERKS.items.map((perk) => (
-              <Card
+          <div className="flex flex-col gap-3">
+            {PERKS.items.slice(0, 1).map((perk) => (
+              <div
                 key={perk.id}
-                title={perk.title}
-                body={perk.body}
-              />
+                className="relative overflow-hidden rounded-3xl border border-white/20 bg-gradient-to-br from-[#1141E9]/45 via-[#7631DC]/25 to-[#0D1341]/60 p-6 shadow-[0_18px_50px_-24px_#1141E9]"
+              >
+                <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-cyan-300/15 blur-2xl" />
+                <div className="relative flex items-start gap-4">
+                  <PerkIcon icon={perk.icon} className="h-14 w-14 rounded-2xl bg-white/15 text-cyan-200" />
+                  <div>
+                    {perk.tag && (
+                      <span className="inline-block rounded-full border border-cyan-300/40 bg-cyan-300/10 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-cyan-200">
+                        {perk.tag}
+                      </span>
+                    )}
+                    <p className="mt-2 text-xl font-semibold">{perk.title}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-white/80">
+                      <Text>{perk.body}</Text>
+                    </p>
+                  </div>
+                </div>
+              </div>
             ))}
+            <div className="grid gap-3 sm:grid-cols-2">
+              {PERKS.items.slice(1).map((perk) => (
+                <div
+                  key={perk.id}
+                  className="flex flex-col gap-3 rounded-3xl border border-white/15 bg-white/[0.06] p-5 backdrop-blur-md"
+                >
+                  <PerkIcon icon={perk.icon} className="h-11 w-11 rounded-xl bg-cyan-300/10 text-cyan-300" />
+                  <div className="flex-1">
+                    <p className="font-semibold">{perk.title}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-white/70">
+                      <Text>{perk.body}</Text>
+                    </p>
+                  </div>
+                  {perk.tag && (
+                    <span className="self-start rounded-full border border-white/20 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white/60">
+                      {perk.tag}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 

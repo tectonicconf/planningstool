@@ -45,7 +45,7 @@ export const ESSENTIALS = {
     },
     {
       title: "Check in at Wintercircus",
-      body: "The check-in point is in Wintercircus, Sint-Pietersnieuwstraat 11. Enter via De Krook and follow the arrows. Pick up your badge there: you cannot enter without it.",
+      body: "The check-in point is in the volunteer room in Wintercircus, downstairs. Enter via De Krook and follow the green line. Before 08:30 you use the Main Entrance. Pick up your badge there: you cannot enter without it.",
     },
     {
       title: "Running late or sick?",
@@ -90,13 +90,13 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     id: "check-in",
     question: "Where do you check in on the day?",
     options: [
-      "At the check-in point in Wintercircus, entering via De Krook",
+      "At the check-in point in Wintercircus, downstairs",
       "At the main entrance of Vooruit",
       "Directly at your station, without checking in",
     ],
     correctIndex: 0,
     explanation:
-      "Check in at the check-in point in Wintercircus. Enter via De Krook and follow the arrows.",
+      "Check in at the volunteer room in Wintercircus. Enter via De Krook and follow the green line. Before 08:30 you use the Main Entrance, and arrows lead you downstairs.",
   },
   {
     id: "badge",
