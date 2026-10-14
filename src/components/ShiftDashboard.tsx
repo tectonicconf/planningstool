@@ -7,8 +7,14 @@ import { ShiftCard } from "@/components/ShiftCard";
 import { ShiftDetail } from "@/components/ShiftDetail";
 import { Modal } from "@/components/Modal";
 import { saveToken } from "@/lib/clientToken";
-import { AcademyGateCard, type AcademyProgress } from "@/components/AcademyGateCard";
+import {
+  AcademyGateCard,
+  QuizDoneWaitingCard,
+  useCountdown,
+  type AcademyProgress,
+} from "@/components/AcademyGateCard";
 import { AcademyFlow } from "@/components/AcademyFlow";
+import { SHIFTS_OPEN_AT } from "@/lib/constants";
 
 export function ShiftDashboard({
   token,
@@ -40,19 +46,25 @@ export function ShiftDashboard({
   const [error, setError] = useState<string | null>(null);
 
   // Gating: a volunteer must pass the onboarding quiz once before their
-  // shifts are shown. Only the final pass/fail is persisted (the `quiz`
+  // shifts are shown, AND shifts must have opened (see SHIFTS_OPEN_AT) —
+  // both have to be true. Only the quiz pass/fail is persisted (the `quiz`
   // column on volunteers) — progress through the welcome/info steps below
   // is kept in memory only, so it resets if the page is reloaded mid-flow.
-  // `openAcademyFlow` (set from the "Ready for the mini-quiz" button on the
-  // standalone /onboarding page) just pops the overlay open immediately —
-  // since progress always starts at "not-started" on a fresh page load, it
-  // naturally opens at step 1, not partway through.
+  // `openAcademyFlow` (set from the "I've been through onboarding, take me
+  // to the quiz" button on the standalone /onboarding page) pops the
+  // overlay open straight at the quiz step, same as the matching shortcut
+  // button on the gate card below.
   const [quizCompleted, setQuizCompleted] = useState(initialQuizCompleted);
-  const [academyProgress, setAcademyProgress] =
-    useState<AcademyProgress>("not-started");
+  const [academyProgress, setAcademyProgress] = useState<AcademyProgress>(
+    openAcademyFlow ? "info-done" : "not-started",
+  );
   const [academyOpen, setAcademyOpen] = useState(
     openAcademyFlow && !initialQuizCompleted,
   );
+
+  const msUntilShiftsOpen = useCountdown(SHIFTS_OPEN_AT);
+  const shiftsOpen = msUntilShiftsOpen !== null && msUntilShiftsOpen <= 0;
+  const canViewShifts = quizCompleted && shiftsOpen;
 
   const totalHours = shifts.reduce((sum, shift) => sum + shift.hours, 0);
 
@@ -128,13 +140,23 @@ export function ShiftDashboard({
           Here&apos;s your current schedule and important info.
         </p>
 
-        {!quizCompleted && (
+        {!quizCompleted ? (
           <div className="mt-8">
             <AcademyGateCard
               progress={academyProgress}
               onStart={() => setAcademyOpen(true)}
+              onJumpToQuiz={() => {
+                setAcademyProgress("info-done");
+                setAcademyOpen(true);
+              }}
             />
           </div>
+        ) : (
+          !shiftsOpen && (
+            <div className="mt-8">
+              <QuizDoneWaitingCard />
+            </div>
+          )
         )}
 
         <div className="mt-8 flex items-center justify-between">
@@ -151,7 +173,7 @@ export function ShiftDashboard({
           </p>
         )}
 
-        {quizCompleted ? (
+        {canViewShifts ? (
           <div className="mt-4 flex flex-col gap-4">
             {shifts.length === 0 ? (
               <p className="text-white/70">No shifts assigned yet.</p>
@@ -190,7 +212,9 @@ export function ShiftDashboard({
               </div>
             ))}
             <p className="text-center text-sm text-white/50">
-              Unlocks after onboarding
+              {quizCompleted
+                ? "Unlocks once shifts open"
+                : "Unlocks after onboarding"}
             </p>
           </div>
         )}
@@ -216,7 +240,7 @@ export function ShiftDashboard({
         />
       )}
 
-      {quizCompleted && detailTarget && (
+      {canViewShifts && detailTarget && (
         <ShiftDetail
           shift={detailTarget}
           isUpdating={updatingId === detailTarget.assignmentId}

@@ -53,8 +53,10 @@ function formatOpenDate(targetIso: string) {
 
 // Ticks every second once mounted. Starts at `null` (rather than computing
 // immediately) so the server-rendered markup and the first client render
-// match — the real value only exists once this runs in the browser.
-function useCountdown(targetIso: string) {
+// match — the real value only exists once this runs in the browser. Also
+// used by ShiftDashboard.tsx to gate the real shift list behind the same
+// countdown, independently of onboarding-quiz completion.
+export function useCountdown(targetIso: string) {
   const target = new Date(targetIso).getTime();
   const [msLeft, setMsLeft] = useState<number | null>(null);
 
@@ -88,17 +90,67 @@ function ClockIcon() {
   );
 }
 
-function ShiftsOpenCard() {
-  const msLeft = useCountdown(SHIFTS_OPEN_AT);
-  const expired = msLeft !== null && msLeft <= 0;
-
-  const totalSeconds = msLeft !== null ? Math.floor(msLeft / 1000) : 0;
+function CountdownDigits({ msLeft }: { msLeft: number }) {
+  const totalSeconds = Math.floor(msLeft / 1000);
   const countdown = [
     { value: Math.floor(totalSeconds / 86400), label: "Days" },
     { value: Math.floor((totalSeconds % 86400) / 3600), label: "Hours" },
     { value: Math.floor((totalSeconds % 3600) / 60), label: "Minutes" },
     { value: totalSeconds % 60, label: "Seconds" },
   ];
+
+  return (
+    <div className="mt-5 flex gap-2">
+      {countdown.map(({ value, label }, index) => {
+        const isLast = index === countdown.length - 1;
+
+        return (
+          <div
+            key={label}
+            className={`flex-1 rounded-2xl border bg-[#02040f] px-2 py-3 text-center ${
+              isLast
+                ? "border-cyan-300 shadow-[0_0_14px_rgba(103,232,249,0.45)]"
+                : "border-white/10"
+            }`}
+          >
+            <p className="text-3xl font-extrabold tabular-nums">{pad(value)}</p>
+            <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-white/50">
+              {label}
+            </p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Shown once the quiz is passed but the countdown hasn't finished yet — the
+// shift list stays locked until both are true, see ShiftDashboard.tsx.
+export function QuizDoneWaitingCard() {
+  const msLeft = useCountdown(SHIFTS_OPEN_AT);
+
+  if (msLeft === null) return null;
+
+  return (
+    <div className="rounded-3xl border border-white/15 bg-white/[0.06] backdrop-blur-md p-6 text-white">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-cyan-300/10 px-3 py-1.5 text-xs font-bold tracking-wide text-cyan-300">
+        <ClockIcon />
+        ONBOARDING COMPLETE
+      </span>
+      <h3 className="mt-4 text-2xl font-extrabold leading-tight">
+        You&apos;re all set!
+      </h3>
+      <p className="mt-2 text-sm leading-relaxed text-white/70">
+        Your shifts unlock on {formatOpenDate(SHIFTS_OPEN_AT)}.
+      </p>
+      <CountdownDigits msLeft={msLeft} />
+    </div>
+  );
+}
+
+function ShiftsOpenCard({ onJumpToQuiz }: { onJumpToQuiz: () => void }) {
+  const msLeft = useCountdown(SHIFTS_OPEN_AT);
+  const expired = msLeft !== null && msLeft <= 0;
 
   return (
     <div className="rounded-3xl border border-white/15 bg-white/[0.06] backdrop-blur-md p-6 text-white">
@@ -126,41 +178,27 @@ function ShiftsOpenCard() {
             then on, you can view and accept your shifts.
           </p>
 
-          {msLeft !== null && (
-            <div className="mt-5 flex gap-2">
-              {countdown.map(({ value, label }, index) => {
-                const isLast = index === countdown.length - 1;
-
-                return (
-                  <div
-                    key={label}
-                    className={`flex-1 rounded-2xl border bg-[#02040f] px-2 py-3 text-center ${
-                      isLast
-                        ? "border-cyan-300 shadow-[0_0_14px_rgba(103,232,249,0.45)]"
-                        : "border-white/10"
-                    }`}
-                  >
-                    <p className="text-3xl font-extrabold tabular-nums">
-                      {pad(value)}
-                    </p>
-                    <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-white/50">
-                      {label}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          {msLeft !== null && <CountdownDigits msLeft={msLeft} />}
         </>
       )}
 
-      <Link
-        href="/onboarding"
-        className="mt-5 inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-[#2F5BFF] to-[#1137EA] border border-white/25 shadow-[0_0_28px_-8px_#1141E9] px-6 py-3 text-sm font-semibold text-white transition-transform hover:brightness-110 active:scale-[0.99]"
-      >
-        Go to onboarding
-        <span aria-hidden="true">&rarr;</span>
-      </Link>
+      <div className="mt-5 flex flex-wrap gap-3">
+        <Link
+          href="/onboarding"
+          className="inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-[#2F5BFF] to-[#1137EA] border border-white/25 shadow-[0_0_28px_-8px_#1141E9] px-6 py-3 text-sm font-semibold text-white transition-transform hover:brightness-110 active:scale-[0.99]"
+        >
+          Go to onboarding
+          <span aria-hidden="true">&rarr;</span>
+        </Link>
+        <button
+          type="button"
+          onClick={onJumpToQuiz}
+          className="inline-flex items-center gap-2 rounded-full border border-cyan-300/60 px-6 py-3 text-sm font-semibold text-cyan-300 transition-colors hover:border-cyan-200 hover:text-cyan-200"
+        >
+          I&apos;ve been through onboarding, take me to the quiz
+          <span aria-hidden="true">&rarr;</span>
+        </button>
+      </div>
     </div>
   );
 }
@@ -168,12 +206,14 @@ function ShiftsOpenCard() {
 export function AcademyGateCard({
   progress,
   onStart,
+  onJumpToQuiz,
 }: {
   progress: AcademyProgress;
   onStart: () => void;
+  onJumpToQuiz: () => void;
 }) {
   if (progress === "not-started") {
-    return <ShiftsOpenCard />;
+    return <ShiftsOpenCard onJumpToQuiz={onJumpToQuiz} />;
   }
 
   const copy = PROGRESS_COPY[progress];
