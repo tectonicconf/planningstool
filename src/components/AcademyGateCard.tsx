@@ -4,13 +4,15 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { SHIFTS_OPEN_AT } from "@/lib/constants";
 
-// Only two real steps now (welcome, then the quiz itself — see
-// AcademyFlow.tsx), so progress is just "haven't started" vs "already saw
-// the welcome screen and can jump straight to the quiz".
-export type AcademyProgress = "not-started" | "ready-for-quiz";
+// Three real steps in AcademyFlow.tsx (welcome, the essentials, then the
+// quiz). The gate card only tracks the coarser "info phase" vs "quiz phase"
+// distinction: "info-in-progress" covers being on either the welcome or the
+// essentials screen, "info-done" means the essentials are read and only the
+// quiz is left.
+export type AcademyProgress = "not-started" | "info-in-progress" | "info-done";
 
 const PROGRESS_COPY: Record<
-  "ready-for-quiz",
+  "info-in-progress" | "info-done",
   {
     badge: string;
     badgeClass: string;
@@ -19,11 +21,18 @@ const PROGRESS_COPY: Record<
     buttonLabel: string;
   }
 > = {
-  "ready-for-quiz": {
+  "info-in-progress": {
+    badge: "In progress",
+    badgeClass: "bg-blue-500/20 text-blue-200",
+    description: "Step 1 of 2 in progress",
+    progressPercent: 50,
+    buttonLabel: "Continue",
+  },
+  "info-done": {
     badge: "Almost done",
     badgeClass: "bg-amber-500/20 text-amber-300",
-    description: "Just the quiz left (~2 min)",
-    progressPercent: 50,
+    description: "Info step complete · just the quiz left (~2 min)",
+    progressPercent: 90,
     buttonLabel: "Finish quiz",
   },
 };
@@ -92,8 +101,8 @@ function ShiftsOpenCard() {
   ];
 
   return (
-    <div className="rounded-2xl border border-blue-400/20 bg-blue-950/30 p-6 text-white">
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0a0f35] px-3 py-1.5 text-xs font-bold tracking-wide text-blue-200">
+    <div className="rounded-3xl border border-white/15 bg-white/[0.06] backdrop-blur-md p-6 text-white">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-cyan-300/10 px-3 py-1.5 text-xs font-bold tracking-wide text-cyan-300">
         <ClockIcon />
         {expired ? "SHIFTS OPEN" : "SHIFTS OPEN SOON"}
       </span>
@@ -103,7 +112,7 @@ function ShiftsOpenCard() {
           <h3 className="mt-4 text-2xl font-extrabold leading-tight">
             Shifts are now available!
           </h3>
-          <p className="mt-2 text-sm leading-relaxed text-blue-100/70">
+          <p className="mt-2 text-sm leading-relaxed text-white/70">
             Complete onboarding to access your shifts.
           </p>
         </>
@@ -112,7 +121,7 @@ function ShiftsOpenCard() {
           <h3 className="mt-4 text-2xl font-extrabold leading-tight">
             Shifts open on {formatOpenDate(SHIFTS_OPEN_AT)}!
           </h3>
-          <p className="mt-2 text-sm leading-relaxed text-blue-100/70">
+          <p className="mt-2 text-sm leading-relaxed text-white/70">
             In the meantime, you can already complete your onboarding. From
             then on, you can view and accept your shifts.
           </p>
@@ -127,14 +136,14 @@ function ShiftsOpenCard() {
                     key={label}
                     className={`flex-1 rounded-2xl border bg-[#02040f] px-2 py-3 text-center ${
                       isLast
-                        ? "border-blue-400 shadow-[0_0_14px_rgba(96,165,250,0.45)]"
+                        ? "border-cyan-300 shadow-[0_0_14px_rgba(103,232,249,0.45)]"
                         : "border-white/10"
                     }`}
                   >
                     <p className="text-3xl font-extrabold tabular-nums">
                       {pad(value)}
                     </p>
-                    <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-200/60">
+                    <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-white/50">
                       {label}
                     </p>
                   </div>
@@ -147,7 +156,7 @@ function ShiftsOpenCard() {
 
       <Link
         href="/onboarding"
-        className="mt-5 inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-blue-500 to-blue-700 px-6 py-3 text-sm font-bold text-white transition-transform hover:brightness-110 active:scale-[0.99]"
+        className="mt-5 inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-[#2F5BFF] to-[#1137EA] border border-white/25 shadow-[0_0_28px_-8px_#1141E9] px-6 py-3 text-sm font-semibold text-white transition-transform hover:brightness-110 active:scale-[0.99]"
       >
         Go to onboarding
         <span aria-hidden="true">&rarr;</span>
@@ -170,21 +179,21 @@ export function AcademyGateCard({
   const copy = PROGRESS_COPY[progress];
 
   return (
-    <div className="rounded-2xl border border-blue-400/20 bg-blue-950/20 p-5 text-white">
+    <div className="rounded-3xl border border-white/15 bg-white/[0.06] backdrop-blur-md p-5 text-white">
       <div className="flex items-center gap-2">
-        <h3 className="font-semibold">Tectonic Academy</h3>
+        <h3 className="font-semibold">Unlock your shifts</h3>
         <span
           className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${copy.badgeClass}`}
         >
           {copy.badge}
         </span>
       </div>
-      <p className="mt-2 text-sm text-blue-100/70">{copy.description}</p>
+      <p className="mt-2 text-sm text-white/70">{copy.description}</p>
 
       {copy.progressPercent !== null && (
-        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-blue-950/50">
+        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#0D1341]/50">
           <div
-            className="h-full rounded-full bg-blue-400"
+            className="h-full rounded-full bg-cyan-300"
             style={{ width: `${copy.progressPercent}%` }}
           />
         </div>
@@ -193,7 +202,7 @@ export function AcademyGateCard({
       <button
         type="button"
         onClick={onStart}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-b from-blue-500 to-blue-700 py-3 text-sm font-semibold text-white transition-transform hover:brightness-110 active:scale-[0.99]"
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-b from-[#2F5BFF] to-[#1137EA] border border-white/25 shadow-[0_0_28px_-8px_#1141E9] py-3 text-sm font-semibold text-white transition-transform hover:brightness-110 active:scale-[0.99]"
       >
         {copy.buttonLabel}
         <span aria-hidden="true">&rarr;</span>

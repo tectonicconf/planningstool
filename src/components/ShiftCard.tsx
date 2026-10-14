@@ -44,7 +44,7 @@ export function ShiftCard({
           onOpenDetail();
         }
       }}
-      className="cursor-pointer rounded-2xl border border-blue-400/20 bg-blue-950/20 p-5 text-white transition-colors hover:border-blue-300/40"
+      className="cursor-pointer rounded-3xl border border-white/15 bg-white/[0.06] backdrop-blur-md p-5 text-white transition-colors hover:border-blue-300/40"
     >
       <div className="flex items-center justify-between gap-3">
         <span className="font-semibold">
@@ -57,12 +57,12 @@ export function ShiftCard({
           >
             {STATUS_LABELS[shift.status]}
           </span>
-          <span aria-hidden="true" className="text-blue-200/50">
+          <span aria-hidden="true" className="text-white/50">
             &rsaquo;
           </span>
         </span>
       </div>
-      <p className="mt-1 text-sm text-blue-100/70">
+      <p className="mt-1 text-sm text-white/70">
         {shift.location} · {shift.shiftType}
       </p>
 
@@ -75,7 +75,7 @@ export function ShiftCard({
               event.stopPropagation();
               onAccept();
             }}
-            className="flex-1 rounded-full bg-gradient-to-b from-blue-500 to-blue-700 py-2 text-sm font-semibold text-white transition-transform hover:brightness-110 active:scale-[0.99] disabled:opacity-50"
+            className="flex-1 rounded-full bg-gradient-to-b from-[#2F5BFF] to-[#1137EA] border border-white/25 shadow-[0_0_28px_-8px_#1141E9] py-2 text-sm font-semibold text-white transition-transform hover:brightness-110 active:scale-[0.99] disabled:opacity-50"
           >
             Accept
           </button>
@@ -86,7 +86,7 @@ export function ShiftCard({
               event.stopPropagation();
               onDecline();
             }}
-            className="flex-1 rounded-full border border-blue-400/40 py-2 text-sm font-semibold text-blue-100 transition-colors hover:border-blue-300/70 disabled:opacity-50"
+            className="flex-1 rounded-full border border-white/25 py-2 text-sm font-semibold text-white/90 transition-colors hover:border-cyan-300/70 disabled:opacity-50"
           >
             Decline
           </button>

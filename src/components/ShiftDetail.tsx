@@ -104,7 +104,7 @@ export function ShiftDetail({
   const tasks = ROLE_CATEGORY_TASKS[shift.shiftType] ?? [];
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col overflow-y-auto bg-[#050822] text-white">
+    <div className="fixed inset-0 z-40 flex flex-col overflow-y-auto bg-[#050A2B] text-white">
       <div className="mx-auto w-full max-w-2xl px-6 pt-8">
         <button
           type="button"
@@ -124,17 +124,17 @@ export function ShiftDetail({
         </span>
 
         <h1 className="mt-4 text-2xl font-bold">{shift.shiftType}</h1>
-        <p className="mt-1 text-sm text-blue-100/70">
+        <p className="mt-1 text-sm text-white/70">
           {formatShiftDate(shift.date)} · {shift.startTime}–{shift.endTime} ·{" "}
           {shift.location}
         </p>
 
         {tasks.length > 0 && (
           <div className="mt-8">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-blue-200/60">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-white/60">
               What you&apos;ll do
             </h2>
-            <ul className="mt-3 space-y-2 text-sm text-blue-100/80">
+            <ul className="mt-3 space-y-2 text-sm text-white/80">
               {tasks.map((task) => (
                 <li key={task} className="flex gap-2">
                   <span aria-hidden="true">&bull;</span>
@@ -146,28 +146,28 @@ export function ShiftDetail({
         )}
 
         <div className="mt-6 flex flex-col gap-3">
-          <div className="flex items-start gap-3 rounded-xl border border-blue-400/20 bg-blue-950/30 p-4">
+          <div className="flex items-start gap-3 rounded-2xl border border-white/15 bg-white/[0.06] p-4">
             <IconSquare>
               <MapPinIcon />
             </IconSquare>
             <div>
               <p className="text-sm font-semibold">Meeting point</p>
-              <p className="mt-1 text-sm text-blue-100/70">{MEETING_POINT}</p>
+              <p className="mt-1 text-sm text-white/70">{MEETING_POINT}</p>
             </div>
           </div>
-          <div className="flex items-start gap-3 rounded-xl border border-blue-400/20 bg-blue-950/30 p-4">
+          <div className="flex items-start gap-3 rounded-2xl border border-white/15 bg-white/[0.06] p-4">
             <IconSquare>
               <BagIcon />
             </IconSquare>
             <div>
               <p className="text-sm font-semibold">Bring</p>
-              <p className="mt-1 text-sm text-blue-100/70">{BRING_ITEMS}</p>
+              <p className="mt-1 text-sm text-white/70">{BRING_ITEMS}</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 border-t border-blue-400/20 bg-[#050822]">
+      <div className="fixed inset-x-0 bottom-0 border-t border-white/15 bg-[#050A2B]">
         <div className="mx-auto w-full max-w-2xl px-6 py-6">
           {shift.status === "pending" ? (
             <div className="flex gap-3">
@@ -175,7 +175,7 @@ export function ShiftDetail({
                 type="button"
                 disabled={isUpdating}
                 onClick={onAccept}
-                className="flex-1 rounded-full bg-gradient-to-b from-blue-500 to-blue-700 py-3 text-sm font-semibold text-white transition-transform hover:brightness-110 active:scale-[0.99] disabled:opacity-50"
+                className="flex-1 rounded-full bg-gradient-to-b from-[#2F5BFF] to-[#1137EA] border border-white/25 shadow-[0_0_28px_-8px_#1141E9] py-3 text-sm font-semibold text-white transition-transform hover:brightness-110 active:scale-[0.99] disabled:opacity-50"
               >
                 Accept
               </button>
@@ -184,7 +184,7 @@ export function ShiftDetail({
                 disabled={isUpdating}
                 onClick={onDecline}
                 aria-label="Decline shift"
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-blue-400/40 text-blue-100 transition-colors hover:border-blue-300/70 disabled:opacity-50"
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/25 text-white/90 transition-colors hover:border-cyan-300/70 disabled:opacity-50"
               >
                 <span aria-hidden="true">&times;</span>
               </button>
@@ -194,7 +194,7 @@ export function ShiftDetail({
               type="button"
               disabled={isUpdating}
               onClick={onDecline}
-              className="w-full rounded-full border border-blue-400/40 py-3 text-sm font-semibold text-blue-100 transition-colors hover:border-red-300/60 hover:text-red-200 disabled:opacity-50"
+              className="w-full rounded-full border border-white/25 py-3 text-sm font-semibold text-white/90 transition-colors hover:border-red-300/60 hover:text-red-200 disabled:opacity-50"
             >
               Cancel shift
             </button>

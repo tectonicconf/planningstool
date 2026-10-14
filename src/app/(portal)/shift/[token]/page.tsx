@@ -20,7 +20,7 @@ export default async function ShiftPage(props: PageProps<"/shift/[token]">) {
       firstName={volunteer.firstName}
       initialShifts={shifts}
       initialQuizCompleted={volunteer.quizCompleted}
-      openAcademyAtQuiz={searchParams.academy === "quiz"}
+      openAcademyFlow={searchParams.academy === "open"}
     />
   );
 }

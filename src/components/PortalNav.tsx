@@ -47,15 +47,15 @@ export function PortalNav() {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-blue-400/10 bg-[#050822]/90 backdrop-blur">
-      <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-6 py-4">
+    <header className="sticky top-0 z-30 px-4 pt-3">
+      <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 rounded-full border border-white/25 bg-[#0D1341]/45 px-5 py-2 shadow-[0_9px_28px_-12px_rgba(4,16,72,0.8)] backdrop-blur-xl backdrop-saturate-150">
         {/* Dropped below the sm breakpoint so the tabs have room to breathe
             on phone-width screens instead of forcing a horizontal scroll. */}
         <Link href="/" className="hidden shrink-0 sm:block">
           <img src="/logo.png" alt="Tectonic" className="w-24" />
         </Link>
         <div className="flex min-w-0 items-center gap-3">
-          <nav className="flex min-w-0 items-center gap-4 overflow-x-auto text-sm font-medium text-blue-100/60">
+          <nav className="flex min-w-0 items-center gap-1 overflow-x-auto text-sm font-semibold text-white/70">
             {NAV_LINKS.map((link) => {
               const active = link.isActive(pathname);
               const href = link.label === "Shifts" ? shiftsHref : link.href;
@@ -64,10 +64,10 @@ export function PortalNav() {
                 <Link
                   key={link.label}
                   href={href}
-                  className={`shrink-0 whitespace-nowrap border-b-2 pb-1 transition-colors ${
+                  className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 transition-colors ${
                     active
-                      ? "border-blue-400 text-white"
-                      : "border-transparent hover:text-blue-100"
+                      ? "bg-white/12 text-cyan-300"
+                      : "hover:bg-white/8 hover:text-white"
                   }`}
                 >
                   {link.label}
@@ -81,7 +81,7 @@ export function PortalNav() {
               onClick={handleLogout}
               aria-label="Log out"
               title="Log out"
-              className="flex shrink-0 items-center justify-center rounded-full p-2 text-blue-200/50 transition-colors hover:text-red-300"
+              className="flex shrink-0 items-center justify-center rounded-full p-2 text-white/50 transition-colors hover:text-red-300"
             >
               <svg
                 viewBox="0 0 24 24"
