@@ -105,6 +105,7 @@ export function PlanningBoard({
     null,
   );
   const [addVolunteerQuery, setAddVolunteerQuery] = useState("");
+  const [addVolunteerOverride, setAddVolunteerOverride] = useState(false);
 
   const dates = useMemo(
     () => Array.from(new Set(shifts.map((s) => s.date))).sort(),
@@ -255,9 +256,13 @@ export function PlanningBoard({
     );
   }
 
-  async function handleAddVolunteer(shift: PlanningShift, volunteer: VolunteerRow) {
+  async function handleAddVolunteer(
+    shift: PlanningShift,
+    volunteer: VolunteerRow,
+    force: boolean,
+  ) {
     setBusyKey(`add-${shift.id}-${volunteer.id}`);
-    const result = await addVolunteerToShift(shift.id, volunteer.id);
+    const result = await addVolunteerToShift(shift.id, volunteer.id, { force });
     setBusyKey(null);
 
     if (!result.ok) {
@@ -539,8 +544,17 @@ export function PlanningBoard({
                                 </button>
                               )}
                             </div>
+                            {shift.shiftTitle && (
+                              <p className="mt-1 text-xs font-semibold text-slate-700">
+                                {shift.shiftTitle}
+                              </p>
+                            )}
+
                             <div className="mt-1 flex items-center justify-between text-xs text-slate-500">
-                              <span>{shift.location}</span>
+                              <span>
+                                {shift.location}
+                                {shift.room && ` · ${shift.room}`}
+                              </span>
                               <span className="font-semibold text-slate-700">
                                 {shift.assignments.length} / {shift.volunteersNeeded}
                               </span>
@@ -675,6 +689,8 @@ export function PlanningBoard({
                   volunteersNeeded: input.volunteersNeeded,
                   eventContext: input.eventContext,
                   shiftLead: input.shiftLead,
+                  shiftTitle: "",
+                  room: "",
                   assignments: [],
                 },
               ]);
@@ -690,13 +706,29 @@ export function PlanningBoard({
           onClose={() => {
             setAddVolunteerShiftId(null);
             setAddVolunteerQuery("");
+            setAddVolunteerOverride(false);
           }}
         >
           <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-bold">
-              Add volunteer to {addVolunteerShift.roleCategory}
-            </h3>
-            <p className="text-sm text-slate-500">{addVolunteerShift.location}</p>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-bold">
+                  Add volunteer to {addVolunteerShift.roleCategory}
+                </h3>
+                <p className="text-sm text-slate-500">{addVolunteerShift.location}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAddVolunteerOverride((current) => !current)}
+                className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                  addVolunteerOverride
+                    ? "border-red-300 bg-red-50 text-red-700"
+                    : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                {addVolunteerOverride ? "Override: on" : "Override"}
+              </button>
+            </div>
 
             <input
               type="text"
@@ -707,9 +739,16 @@ export function PlanningBoard({
               className="mt-4 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
             />
 
-            <p className="mt-1 text-xs text-slate-400">
-              Only volunteers who are available and have no overlapping shift are shown.
-            </p>
+            {addVolunteerOverride ? (
+              <p className="mt-1 rounded-lg bg-red-50 px-2 py-1.5 text-xs text-red-700">
+                Override is on — every volunteer is shown, including ones who
+                aren&apos;t available or already have an overlapping shift.
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-slate-400">
+                Only volunteers who are available and have no overlapping shift are shown.
+              </p>
+            )}
 
             <div className="mt-3 max-h-64 overflow-y-auto">
               {volunteers
@@ -727,6 +766,8 @@ export function PlanningBoard({
                     !addVolunteerShift.assignments.some((a) => a.volunteerId === v.id),
                 )
                 .filter((v) => {
+                  if (addVolunteerOverride) return true;
+
                   const shiftInfo = {
                     date: addVolunteerShift.date,
                     endDate: addVolunteerShift.endDate,
@@ -756,7 +797,9 @@ export function PlanningBoard({
                     <button
                       key={volunteer.id}
                       type="button"
-                      onClick={() => handleAddVolunteer(addVolunteerShift, volunteer)}
+                      onClick={() =>
+                        handleAddVolunteer(addVolunteerShift, volunteer, addVolunteerOverride)
+                      }
                       disabled={busyKey === `add-${addVolunteerShift.id}-${volunteer.id}`}
                       className={`flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm disabled:opacity-50 ${
                         atLimit ? "bg-orange-50 hover:bg-orange-100" : "hover:bg-slate-50"

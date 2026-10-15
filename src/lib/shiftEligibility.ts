@@ -1,5 +1,34 @@
-import { TIME_SLOT_WINDOWS } from "@/lib/constants";
+import { TIME_SLOT_WINDOWS, AVAILABILITY_OPTIONS } from "@/lib/constants";
 import type { VolunteerRow } from "@/lib/adminVolunteers";
+
+// A volunteer's stored availability entry can be in either of two formats,
+// depending on how that volunteer entered the system:
+// - the short "<date> <slot>" form (e.g. "2026-10-20 Evening") — what the
+//   admin "+ Add volunteer" form stores, and what the optimizer's CSV
+//   pipeline writes (load_data.py);
+// - the human-readable Tally label (e.g. "October 20 - Evening (Hackathon
+//   or Setup)") — what a direct Tally/Supabase import preserves as-is,
+//   bypassing the optimizer pipeline's normalization.
+// This looks a label up against AVAILABILITY_OPTIONS first, falling back
+// to parsing the short form, so either source works.
+const dateSlotByLabel = new Map(
+  AVAILABILITY_OPTIONS.map((option) => [option.label, { date: option.date, slot: option.slot }]),
+);
+
+// Public version of the label-or-short-form resolution described above —
+// also used by VolunteersBoard.tsx's availability badges, which otherwise
+// hit the same mismatch (comparing a raw label against the short-form
+// `availabilityValue()` output always fails for label-formatted data).
+export function resolveAvailabilityEntry(
+  entry: string,
+): { date: string; slot: string } | null {
+  const trimmed = entry.trim();
+  const labelMatch = dateSlotByLabel.get(trimmed);
+  if (labelMatch) return labelMatch;
+
+  const [date, slot] = trimmed.split(" ");
+  return date && slot ? { date, slot } : null;
+}
 
 export type ShiftTimeInfo = {
   date: string;
@@ -34,20 +63,22 @@ function addDays(date: string, days: number): string {
 
 type TimeRange = { start: number; end: number };
 
-// A volunteer's availability is self-reported per "<date> <slot>" (a
-// dagdeel, not exact hours — see AVAILABILITY_OPTIONS), e.g. "2026-10-20
-// Evening". This turns one such entry into the real timestamp range it
-// covers, using Evening's own window (which — being 18:00-04:00 —
-// `crossesMidnight` into the next calendar day).
+// A volunteer's availability is self-reported per dagdeel, not exact hours
+// (see AVAILABILITY_OPTIONS and the format note above `dateSlotByLabel`).
+// This turns one such entry into the real timestamp range it covers, using
+// that slot's own window (Evening's — being 18:00-04:00 — `crossesMidnight`
+// into the next calendar day).
 function availabilityEntryToRange(entry: string): TimeRange | null {
-  const [date, slot] = entry.split(" ");
-  const window = TIME_SLOT_WINDOWS[slot];
-  if (!date || !window) return null;
+  const resolved = resolveAvailabilityEntry(entry);
+  if (!resolved) return null;
 
-  const endDate = window.crossesMidnight ? addDays(date, 1) : date;
+  const window = TIME_SLOT_WINDOWS[resolved.slot];
+  if (!window) return null;
+
+  const endDate = window.crossesMidnight ? addDays(resolved.date, 1) : resolved.date;
 
   return {
-    start: toTimestamp(date, window.start),
+    start: toTimestamp(resolved.date, window.start),
     end: toTimestamp(endDate, window.end),
   };
 }
@@ -107,6 +138,36 @@ export function hasOverlap(shift: ShiftRange, otherShifts: ShiftRange[]): boolea
     const otherStart = toTimestamp(other.date, other.startTime);
     const otherEnd = toTimestamp(other.endDate, other.endTime);
     return start < otherEnd && otherStart < end;
+  });
+}
+
+// Whether a volunteer's ticked "<date> <slot>" availability badge should
+// show as taken — i.e. whether any of their real (non-cancelled)
+// assignments overlaps that slot's actual time window at all. Deliberately
+// time-based rather than comparing `assignment.slot` against `slot` as
+// strings: an assigned shift's own `slot` can be in a different vocabulary
+// (e.g. "Namiddag" from a direct import, vs. the "Afternoon" an admin-
+// created volunteer's availability uses) and would never match, or the
+// assignment can simply run a bit past the slot's nominal end (a 14:00-
+// 18:30 shift still occupies the 13:00-18:00 Afternoon slot) — matching
+// exact strings would miss both cases, where overlapping time ranges
+// doesn't.
+export function isAvailabilitySlotOccupied(
+  assignments: ShiftRange[],
+  date: string,
+  slot: string,
+): boolean {
+  const window = TIME_SLOT_WINDOWS[slot];
+  if (!window) return false;
+
+  const slotEndDate = window.crossesMidnight ? addDays(date, 1) : date;
+  const slotStart = toTimestamp(date, window.start);
+  const slotEnd = toTimestamp(slotEndDate, window.end);
+
+  return assignments.some((assignment) => {
+    const start = toTimestamp(assignment.date, assignment.startTime);
+    const end = toTimestamp(assignment.endDate, assignment.endTime);
+    return start < slotEnd && slotStart < end;
   });
 }
 

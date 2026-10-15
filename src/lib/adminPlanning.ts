@@ -22,6 +22,8 @@ export type PlanningShift = {
   volunteersNeeded: number;
   eventContext: string;
   shiftLead: string;
+  shiftTitle: string;
+  room: string;
   assignments: PlanningAssignment[];
 };
 
@@ -65,6 +67,8 @@ export async function getPlanningShifts(
     volunteersNeeded: shift.volunteers_needed,
     eventContext: shift.event_context ?? "",
     shiftLead: shift.shift_lead ?? "",
+    shiftTitle: shift.shift ?? "",
+    room: shift.room ?? "",
     assignments: assignmentsByShift.get(shift.id) ?? [],
   }));
 }

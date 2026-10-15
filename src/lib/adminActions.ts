@@ -98,6 +98,13 @@ export async function deleteShift(shiftId: string): Promise<ActionResult> {
 export async function addVolunteerToShift(
   shiftId: string,
   volunteerId: string,
+  // Set from the "Override" toggle in the admin pickers — lets an admin
+  // force an assignment past the availability/overlap checks below for a
+  // genuine edge case (e.g. a volunteer who confirmed by phone outside
+  // their stated availability). Being already on this shift is still
+  // checked regardless — overriding that would just create a duplicate
+  // assignment, never something an admin actually wants.
+  options?: { force?: boolean },
 ): Promise<ActionResult<{ assignmentId: number }>> {
   const [
     { data: shift, error: shiftError },
@@ -154,7 +161,7 @@ export async function addVolunteerToShift(
     endTime: shift.end_time,
   };
 
-  if (!isVolunteerAvailableForShift(availabilityEntries, shiftInfo)) {
+  if (!options?.force && !isVolunteerAvailableForShift(availabilityEntries, shiftInfo)) {
     return {
       ok: false,
       error: "This volunteer is not available for this shift's date/time.",
@@ -165,7 +172,7 @@ export async function addVolunteerToShift(
     .map((a) => a.shift_id)
     .filter((id) => id !== shiftId);
 
-  if (otherShiftIds.length > 0) {
+  if (!options?.force && otherShiftIds.length > 0) {
     const { data: otherShifts } = await supabaseAdmin
       .from("shifts")
       .select("date, end_date, start_time, end_time")

@@ -14,6 +14,8 @@ import {
   isVolunteerAvailableForShift,
   hasOverlap,
   hasReachedShiftPreference,
+  resolveAvailabilityEntry,
+  isAvailabilitySlotOccupied,
 } from "@/lib/shiftEligibility";
 import { Modal } from "@/components/Modal";
 import {
@@ -25,11 +27,11 @@ import {
   availabilityValue,
 } from "@/lib/constants";
 
-const availabilityLabelByValue = new Map(
-  AVAILABILITY_OPTIONS.map((option) => [
-    availabilityValue(option.date, option.slot),
-    option.label,
-  ]),
+// AVAILABILITY_OPTIONS already has a nice label for every (date, slot) —
+// used to display a short-form entry ("2026-10-20 Morning", from a
+// manually-added volunteer) the same way as a label-form one.
+const labelByDateSlot = new Map(
+  AVAILABILITY_OPTIONS.map((option) => [`${option.date} ${option.slot}`, option.label]),
 );
 
 function isAvailabilityOccupied(
@@ -37,17 +39,14 @@ function isAvailabilityOccupied(
   date: string,
   slot: string,
 ): boolean {
-  return volunteer.assignments.some(
-    (a) => a.status !== "cancelled" && a.date === date && a.slot === slot,
-  );
+  const activeAssignments = volunteer.assignments.filter((a) => a.status !== "cancelled");
+  return isAvailabilitySlotOccupied(activeAssignments, date, slot);
 }
 
 function volunteerHasOpenAvailability(volunteer: VolunteerRow): boolean {
   return volunteer.availability.some((raw) => {
-    const option = AVAILABILITY_OPTIONS.find(
-      (o) => availabilityValue(o.date, o.slot) === raw,
-    );
-    return option ? !isAvailabilityOccupied(volunteer, option.date, option.slot) : false;
+    const resolved = resolveAvailabilityEntry(raw);
+    return resolved ? !isAvailabilityOccupied(volunteer, resolved.date, resolved.slot) : false;
   });
 }
 
@@ -59,11 +58,13 @@ function AvailabilityBadges({ volunteer }: { volunteer: VolunteerRow }) {
   return (
     <div className="flex flex-wrap gap-1">
       {volunteer.availability.map((raw) => {
-        const label = availabilityLabelByValue.get(raw) ?? raw;
-        const option = AVAILABILITY_OPTIONS.find(
-          (o) => availabilityValue(o.date, o.slot) === raw,
-        );
-        const occupied = option ? isAvailabilityOccupied(volunteer, option.date, option.slot) : false;
+        const resolved = resolveAvailabilityEntry(raw);
+        const label = resolved
+          ? (labelByDateSlot.get(`${resolved.date} ${resolved.slot}`) ?? raw)
+          : raw;
+        const occupied = resolved
+          ? isAvailabilityOccupied(volunteer, resolved.date, resolved.slot)
+          : false;
 
         return (
           <span
@@ -223,6 +224,7 @@ export function VolunteersBoard({
   const [addVolunteerOpen, setAddVolunteerOpen] = useState(false);
   const [assignShiftVolunteerId, setAssignShiftVolunteerId] = useState<string | null>(null);
   const [assignShiftQuery, setAssignShiftQuery] = useState("");
+  const [assignShiftOverride, setAssignShiftOverride] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
 
@@ -319,9 +321,13 @@ export function VolunteersBoard({
     );
   }
 
-  async function handleAssignShift(volunteerId: string, shift: ShiftDirectoryEntry) {
+  async function handleAssignShift(
+    volunteerId: string,
+    shift: ShiftDirectoryEntry,
+    force: boolean,
+  ) {
     setBusyKey(`assign-${volunteerId}-${shift.id}`);
-    const result = await addVolunteerToShift(shift.id, volunteerId);
+    const result = await addVolunteerToShift(shift.id, volunteerId, { force });
     setBusyKey(null);
 
     if (!result.ok) {
@@ -585,12 +591,26 @@ export function VolunteersBoard({
           onClose={() => {
             setAssignShiftVolunteerId(null);
             setAssignShiftQuery("");
+            setAssignShiftOverride(false);
           }}
         >
           <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-bold">
-              Add {assignShiftVolunteer.name} to a shift
-            </h3>
+            <div className="flex items-start justify-between gap-3">
+              <h3 className="text-lg font-bold">
+                Add {assignShiftVolunteer.name} to a shift
+              </h3>
+              <button
+                type="button"
+                onClick={() => setAssignShiftOverride((current) => !current)}
+                className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                  assignShiftOverride
+                    ? "border-red-300 bg-red-50 text-red-700"
+                    : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                {assignShiftOverride ? "Override: on" : "Override"}
+              </button>
+            </div>
 
             <input
               type="text"
@@ -601,9 +621,16 @@ export function VolunteersBoard({
               className="mt-4 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
             />
 
-            <p className="mt-1 text-xs text-slate-400">
-              Only shifts this volunteer is available for and doesn&apos;t overlap with are shown.
-            </p>
+            {assignShiftOverride ? (
+              <p className="mt-1 rounded-lg bg-red-50 px-2 py-1.5 text-xs text-red-700">
+                Override is on — every shift is shown, including ones this
+                volunteer isn&apos;t available for or that overlap another shift.
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-slate-400">
+                Only shifts this volunteer is available for and doesn&apos;t overlap with are shown.
+              </p>
+            )}
 
             {hasReachedShiftPreference(assignShiftVolunteer) && (
               <p className="mt-2 rounded-lg bg-orange-50 px-2 py-1.5 text-xs text-orange-700">
@@ -628,6 +655,8 @@ export function VolunteersBoard({
                     ),
                 )
                 .filter((shift) => {
+                  if (assignShiftOverride) return true;
+
                   const activeShifts = assignShiftVolunteer.assignments
                     .filter((a) => a.status !== "cancelled")
                     .map((a) => ({
@@ -647,7 +676,9 @@ export function VolunteersBoard({
                   <button
                     key={shift.id}
                     type="button"
-                    onClick={() => handleAssignShift(assignShiftVolunteer.id, shift)}
+                    onClick={() =>
+                      handleAssignShift(assignShiftVolunteer.id, shift, assignShiftOverride)
+                    }
                     disabled={busyKey === `assign-${assignShiftVolunteer.id}-${shift.id}`}
                     className={`flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm disabled:opacity-50 ${
                       hasReachedShiftPreference(assignShiftVolunteer)
