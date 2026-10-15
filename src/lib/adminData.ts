@@ -18,6 +18,7 @@ export type AdminTables = {
     role_category: string;
     volunteers_needed: number;
     event_context: string | null;
+    shift_lead: string | null;
   }[];
   assignmentRows: {
     id: number;
@@ -37,6 +38,11 @@ export type AdminTables = {
     availability: string | null;
     magic_link_token: string;
     shift_count_preference: string | null;
+    quiz: boolean | null;
+    size: string | null;
+    emergency_first_name: string | null;
+    emergency_last_name: string | null;
+    emergency_phone: string | null;
   }[];
 };
 
@@ -46,7 +52,7 @@ export async function getAdminTables(): Promise<AdminTables> {
       supabaseAdmin
         .from("shifts")
         .select(
-          "id, date, end_date, day, slot, start_time, end_time, hours, location, role_category, volunteers_needed, event_context",
+          "id, date, end_date, day, slot, start_time, end_time, hours, location, role_category, volunteers_needed, event_context, shift_lead",
         )
         .order("date")
         .order("start_time"),
@@ -56,7 +62,7 @@ export async function getAdminTables(): Promise<AdminTables> {
       supabaseAdmin
         .from("volunteers")
         .select(
-          "id, first_name, last_name, email, phone_number, association, availability, magic_link_token, shift_count_preference",
+          "id, first_name, last_name, email, phone_number, association, availability, magic_link_token, shift_count_preference, quiz, size, emergency_first_name, emergency_last_name, emergency_phone",
         )
         .order("first_name"),
     ]);

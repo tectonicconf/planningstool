@@ -21,6 +21,7 @@ export type PlanningShift = {
   roleCategory: string;
   volunteersNeeded: number;
   eventContext: string;
+  shiftLead: string;
   assignments: PlanningAssignment[];
 };
 
@@ -63,6 +64,7 @@ export async function getPlanningShifts(
     roleCategory: shift.role_category,
     volunteersNeeded: shift.volunteers_needed,
     eventContext: shift.event_context ?? "",
+    shiftLead: shift.shift_lead ?? "",
     assignments: assignmentsByShift.get(shift.id) ?? [],
   }));
 }

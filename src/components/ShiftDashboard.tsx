@@ -51,13 +51,12 @@ export function ShiftDashboard({
   // column on volunteers) — progress through the welcome/info steps below
   // is kept in memory only, so it resets if the page is reloaded mid-flow.
   // `openAcademyFlow` (set from the "I've been through onboarding, take me
-  // to the quiz" button on the standalone /onboarding page) pops the
-  // overlay open straight at the quiz step, same as the matching shortcut
-  // button on the gate card below.
+  // to the quiz" button on the standalone /onboarding page) just pops the
+  // overlay open immediately, always starting at step 1 (welcome) — same
+  // as the matching shortcut button on the gate card below.
   const [quizCompleted, setQuizCompleted] = useState(initialQuizCompleted);
-  const [academyProgress, setAcademyProgress] = useState<AcademyProgress>(
-    openAcademyFlow ? "info-done" : "not-started",
-  );
+  const [academyProgress, setAcademyProgress] =
+    useState<AcademyProgress>("not-started");
   const [academyOpen, setAcademyOpen] = useState(
     openAcademyFlow && !initialQuizCompleted,
   );
@@ -145,10 +144,7 @@ export function ShiftDashboard({
             <AcademyGateCard
               progress={academyProgress}
               onStart={() => setAcademyOpen(true)}
-              onJumpToQuiz={() => {
-                setAcademyProgress("info-done");
-                setAcademyOpen(true);
-              }}
+              onJumpToQuiz={() => setAcademyOpen(true)}
             />
           </div>
         ) : (

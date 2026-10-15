@@ -501,6 +501,27 @@ export function VolunteersBoard({
                         />
                       )}
                     </dd>
+                    <dt className="text-slate-400">T-shirt size</dt>
+                    <dd className="text-slate-600">{volunteer.shirtSize || "—"}</dd>
+                    <dt className="text-slate-400">Quiz</dt>
+                    <dd>
+                      {volunteer.quizCompleted ? (
+                        <span className="text-emerald-600">✓ Completed</span>
+                      ) : (
+                        <span className="text-red-500">✕ Not completed</span>
+                      )}
+                    </dd>
+                    <dt className="text-slate-400">Emergency contact</dt>
+                    <dd className="text-slate-600">
+                      {volunteer.emergencyContactName || volunteer.emergencyPhone ? (
+                        <div className="flex flex-col">
+                          <span>{volunteer.emergencyContactName || "—"}</span>
+                          <span className="text-slate-500">{volunteer.emergencyPhone || "—"}</span>
+                        </div>
+                      ) : (
+                        "—"
+                      )}
+                    </dd>
                   </dl>
 
                   <div className="mt-3">
@@ -543,6 +564,10 @@ export function VolunteersBoard({
                     availability: input.availability,
                     magicLinkToken: result.data.magicLinkToken,
                     shiftCountPreference: input.shiftCountPreference,
+                    quizCompleted: false,
+                    shirtSize: "",
+                    emergencyContactName: "",
+                    emergencyPhone: "",
                     assignments: [],
                   },
                 ]);

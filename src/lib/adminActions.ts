@@ -42,6 +42,7 @@ export async function createShift(input: {
   roleCategory: string;
   volunteersNeeded: number;
   eventContext: string;
+  shiftLead: string;
 }): Promise<ActionResult<{ id: string }>> {
   const id = generateShiftId();
 
@@ -60,6 +61,7 @@ export async function createShift(input: {
     hours: input.hours,
     location: input.location,
     role_category: input.roleCategory,
+    shift_lead: input.shiftLead || null,
     volunteers_needed: input.volunteersNeeded,
     event_context: input.eventContext,
   });

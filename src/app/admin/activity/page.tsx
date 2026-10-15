@@ -1,13 +1,22 @@
 import { getAdminTables } from "@/lib/adminData";
-import { getRecentAssignmentUpdates, getShiftCoverageStats } from "@/lib/adminActivity";
+import {
+  getRecentAssignmentUpdates,
+  getShiftCoverageStats,
+  getQuizCompletionStats,
+  getTshirtSizeStats,
+} from "@/lib/adminActivity";
 import { ActivityFeed } from "@/components/admin/ActivityFeed";
 import { ShiftCoverageBar } from "@/components/admin/ShiftCoverageBar";
+import { QuizCompletionBar } from "@/components/admin/QuizCompletionBar";
+import { TshirtSizeBar } from "@/components/admin/TshirtSizeBar";
 
 export default async function AdminActivityPage() {
   const data = await getAdminTables();
-  const [updates, coverage] = await Promise.all([
+  const [updates, coverage, quizStats, tshirtStats] = await Promise.all([
     getRecentAssignmentUpdates(200, data),
     getShiftCoverageStats(data),
+    getQuizCompletionStats(data),
+    getTshirtSizeStats(data),
   ]);
 
   return (
@@ -20,6 +29,11 @@ export default async function AdminActivityPage() {
 
       <div className="mt-6">
         <ShiftCoverageBar stats={coverage} />
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <QuizCompletionBar stats={quizStats} />
+        <TshirtSizeBar stats={tshirtStats} />
       </div>
 
       <div className="mt-6">

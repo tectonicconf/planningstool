@@ -25,6 +25,10 @@ export type VolunteerRow = {
   availability: string[];
   magicLinkToken: string;
   shiftCountPreference: string;
+  quizCompleted: boolean;
+  shirtSize: string;
+  emergencyContactName: string;
+  emergencyPhone: string;
   assignments: VolunteerAssignment[];
 };
 
@@ -70,6 +74,12 @@ export async function getVolunteersWithAssignments(
       .filter(Boolean),
     magicLinkToken: volunteer.magic_link_token,
     shiftCountPreference: volunteer.shift_count_preference ?? "",
+    quizCompleted: volunteer.quiz ?? false,
+    shirtSize: volunteer.size ?? "",
+    emergencyContactName: [volunteer.emergency_first_name, volunteer.emergency_last_name]
+      .filter(Boolean)
+      .join(" "),
+    emergencyPhone: volunteer.emergency_phone ?? "",
     assignments: (assignmentsByVolunteer.get(volunteer.id) ?? []).sort(
       (a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`),
     ),

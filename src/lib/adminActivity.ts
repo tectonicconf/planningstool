@@ -1,4 +1,5 @@
 import { getAdminTables, type AdminTables } from "@/lib/adminData";
+import { SHIRT_SIZES } from "@/lib/constants";
 
 export type AssignmentUpdate = {
   assignmentId: number;
@@ -26,6 +27,17 @@ export type ShiftCoverageStats = {
   open: number;
 };
 
+export type QuizCompletionStats = {
+  total: number;
+  completed: number;
+  notCompleted: number;
+};
+
+export type TshirtSizeStats = {
+  total: number;
+  sizes: { size: string; count: number }[];
+};
+
 // Event-wide staffing snapshot across every shift (not just one day), used
 // for the coverage bar at the top of the Activity page. Cancelled
 // assignments don't occupy a position (see README's capacity rules), so
@@ -41,6 +53,43 @@ export async function getShiftCoverageStats(
   const open = Math.max(0, totalNeeded - confirmed - pending);
 
   return { totalNeeded, confirmed, pending, open };
+}
+
+// Same idea as the coverage bar above, but for onboarding-quiz completion
+// across every volunteer, not just ones with a shift.
+export async function getQuizCompletionStats(
+  data?: AdminTables,
+): Promise<QuizCompletionStats> {
+  const { volunteerRows } = data ?? (await getAdminTables());
+
+  const total = volunteerRows.length;
+  const completed = volunteerRows.filter((v) => v.quiz).length;
+
+  return { total, completed, notCompleted: total - completed };
+}
+
+// T-shirt size distribution across every volunteer, in a fixed size order
+// (constants.ts) so the bar's segments and legend line up the same way run
+// to run — an empty/unset size is grouped as "Not specified".
+export async function getTshirtSizeStats(data?: AdminTables): Promise<TshirtSizeStats> {
+  const { volunteerRows } = data ?? (await getAdminTables());
+
+  const counts = new Map<string, number>();
+  for (const volunteer of volunteerRows) {
+    const size = volunteer.size || "Not specified";
+    counts.set(size, (counts.get(size) ?? 0) + 1);
+  }
+
+  const orderedSizes = SHIRT_SIZES.filter((size) => counts.has(size));
+  const otherSizes = Array.from(counts.keys())
+    .filter((size) => !SHIRT_SIZES.includes(size as (typeof SHIRT_SIZES)[number]) && size !== "Not specified")
+    .sort();
+
+  const sizes = [...orderedSizes, ...otherSizes, ...(counts.has("Not specified") ? ["Not specified"] : [])].map(
+    (size) => ({ size, count: counts.get(size) ?? 0 }),
+  );
+
+  return { total: volunteerRows.length, sizes };
 }
 
 // A lightweight activity feed built from the assignments' own current state

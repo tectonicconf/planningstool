@@ -17,7 +17,20 @@ export const TIME_SLOT_WINDOWS: Record<string, { start: string; end: string }> =
   Evening: { start: "18:00", end: "23:59" },
 };
 
+// `slot` is load-bearing (isVolunteerAvailableForShift matches it against a
+// volunteer's self-reported "<date> <slot>" availability), so it can't be
+// dropped — but there's no reason to make an admin pick it by hand when it
+// follows directly from the start time they just entered.
+export function deriveSlotFromStartTime(startTime: string): (typeof TIME_SLOTS)[number] {
+  if (startTime < TIME_SLOT_WINDOWS.Afternoon.start) return "Morning";
+  if (startTime < TIME_SLOT_WINDOWS.Evening.start) return "Afternoon";
+  return "Evening";
+}
+
 export const SHIFT_COUNT_PREFERENCES = ["1", "2", "3", "4+", "No preference"] as const;
+
+// Fixed display order for the t-shirt size breakdown on the Activity page.
+export const SHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 
 // The moment shifts become visible/acceptable on a volunteer's dashboard —
 // drives the countdown in AcademyGateCard.tsx. Local wall-clock time (the
