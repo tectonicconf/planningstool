@@ -128,6 +128,14 @@ function VolunteerAssignmentsList({
               <span className="text-slate-600">
                 {formatDate(assignment.date)} · {assignment.startTime}–
                 {assignment.endTime}
+                {assignment.endDate !== assignment.date && (
+                  <span
+                    title={`Ends ${assignment.endDate}`}
+                    className="ml-1 align-top text-[10px] font-semibold text-amber-600"
+                  >
+                    +1d
+                  </span>
+                )}
               </span>
               <span className="text-slate-400">{assignment.location}</span>
               <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${style.badgeClassName}`}>
@@ -332,6 +340,7 @@ export function VolunteersBoard({
                   assignmentId: result.data.assignmentId,
                   shiftId: shift.id,
                   date: shift.date,
+                  endDate: shift.endDate,
                   slot: shift.slot,
                   startTime: shift.startTime,
                   endTime: shift.endTime,
@@ -596,7 +605,12 @@ export function VolunteersBoard({
                 .filter((shift) => {
                   const activeShifts = assignShiftVolunteer.assignments
                     .filter((a) => a.status !== "cancelled")
-                    .map((a) => ({ date: a.date, startTime: a.startTime, endTime: a.endTime }));
+                    .map((a) => ({
+                      date: a.date,
+                      endDate: a.endDate,
+                      startTime: a.startTime,
+                      endTime: a.endTime,
+                    }));
 
                   return (
                     isVolunteerAvailableForShift(assignShiftVolunteer.availability, shift) &&

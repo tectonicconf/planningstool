@@ -8,6 +8,7 @@ export type AdminTables = {
   shiftRows: {
     id: string;
     date: string;
+    end_date: string;
     day: string;
     slot: string;
     start_time: string;
@@ -45,7 +46,7 @@ export async function getAdminTables(): Promise<AdminTables> {
       supabaseAdmin
         .from("shifts")
         .select(
-          "id, date, day, slot, start_time, end_time, hours, location, role_category, volunteers_needed, event_context",
+          "id, date, end_date, day, slot, start_time, end_time, hours, location, role_category, volunteers_needed, event_context",
         )
         .order("date")
         .order("start_time"),

@@ -6,6 +6,7 @@ export type VolunteerAssignment = {
   assignmentId: number;
   shiftId: string;
   date: string;
+  endDate: string;
   slot: string;
   startTime: string;
   endTime: string;
@@ -45,6 +46,7 @@ export async function getVolunteersWithAssignments(
       assignmentId: assignment.id,
       shiftId: shift.id,
       date: shift.date,
+      endDate: shift.end_date,
       slot: shift.slot,
       startTime: shift.start_time,
       endTime: shift.end_time,

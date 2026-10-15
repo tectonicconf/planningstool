@@ -3,6 +3,7 @@ import type { VolunteerRow } from "@/lib/adminVolunteers";
 
 export type ShiftTimeInfo = {
   date: string;
+  endDate: string;
   slot: string;
   startTime: string;
   endTime: string;
@@ -21,16 +22,27 @@ export function isVolunteerAvailableForShift(
   return availabilityEntries.includes(`${shift.date} ${shift.slot}`) && fitsWindow;
 }
 
-export function hasOverlap(
-  shift: { date: string; startTime: string; endTime: string },
-  otherShifts: { date: string; startTime: string; endTime: string }[],
-): boolean {
-  return otherShifts.some(
-    (other) =>
-      other.date === shift.date &&
-      shift.startTime < other.endTime &&
-      other.startTime < shift.endTime,
-  );
+type ShiftRange = { date: string; endDate: string; startTime: string; endTime: string };
+
+// Combines each shift's own start/end date with its start/end time into
+// real timestamps, so a shift that runs past midnight (date !== endDate)
+// compares correctly against same-evening shifts — comparing bare "HH:MM"
+// strings instead would treat "00:00" as the earliest possible time rather
+// than the latest, making a midnight-crossing shift look like it never
+// overlaps with anything later that evening.
+function toTimestamp(date: string, time: string): number {
+  return new Date(`${date}T${time}`).getTime();
+}
+
+export function hasOverlap(shift: ShiftRange, otherShifts: ShiftRange[]): boolean {
+  const start = toTimestamp(shift.date, shift.startTime);
+  const end = toTimestamp(shift.endDate, shift.endTime);
+
+  return otherShifts.some((other) => {
+    const otherStart = toTimestamp(other.date, other.startTime);
+    const otherEnd = toTimestamp(other.endDate, other.endTime);
+    return start < otherEnd && otherStart < end;
+  });
 }
 
 // Only "1"/"2"/"3" are a concrete self-reported cap — "4+" and "No

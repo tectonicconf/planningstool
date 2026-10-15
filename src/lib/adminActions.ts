@@ -22,22 +22,18 @@ async function nextAssignmentId(): Promise<number> {
   return (data?.[0]?.id ?? 0) + 1;
 }
 
-async function nextShiftId(): Promise<string> {
-  // Ids are fixed-width ("S0xx"), so lexicographic order matches numeric order.
-  const { data } = await supabaseAdmin
-    .from("shifts")
-    .select("id")
-    .order("id", { ascending: false })
-    .limit(1);
-
-  const match = /^S(\d+)$/.exec(data?.[0]?.id ?? "");
-  const maxNumber = match ? Number(match[1]) : 0;
-
-  return `S${String(maxNumber + 1).padStart(3, "0")}`;
+// Shifts created here (as opposed to the optimizer's "S0xx"-numbered CSV
+// import) get a random id, same pattern as manually-added volunteers
+// (`manual_${randomUUID()...}` below) — no need to scan existing rows for
+// the highest number, and nothing to break if other ids don't follow a
+// fixed pattern.
+function generateShiftId(): string {
+  return `manualshift_${randomUUID().slice(0, 8)}`;
 }
 
 export async function createShift(input: {
   date: string;
+  endDate: string;
   slot: string;
   startTime: string;
   endTime: string;
@@ -47,7 +43,7 @@ export async function createShift(input: {
   volunteersNeeded: number;
   eventContext: string;
 }): Promise<ActionResult<{ id: string }>> {
-  const id = await nextShiftId();
+  const id = generateShiftId();
 
   const day = new Date(`${input.date}T00:00:00`).toLocaleDateString("en-US", {
     weekday: "long",
@@ -56,6 +52,7 @@ export async function createShift(input: {
   const { error } = await supabaseAdmin.from("shifts").insert({
     id,
     date: input.date,
+    end_date: input.endDate,
     day,
     slot: input.slot,
     start_time: input.startTime,
@@ -108,7 +105,7 @@ export async function addVolunteerToShift(
   ] = await Promise.all([
     supabaseAdmin
       .from("shifts")
-      .select("id, date, slot, start_time, end_time")
+      .select("id, date, end_date, slot, start_time, end_time")
       .eq("id", shiftId)
       .maybeSingle(),
     supabaseAdmin
@@ -149,6 +146,7 @@ export async function addVolunteerToShift(
 
   const shiftInfo = {
     date: shift.date,
+    endDate: shift.end_date,
     slot: shift.slot,
     startTime: shift.start_time,
     endTime: shift.end_time,
@@ -168,13 +166,19 @@ export async function addVolunteerToShift(
   if (otherShiftIds.length > 0) {
     const { data: otherShifts } = await supabaseAdmin
       .from("shifts")
-      .select("date, start_time, end_time")
+      .select("date, end_date, start_time, end_time")
       .in("id", otherShiftIds);
 
     const overlaps = hasOverlap(
-      { date: shiftInfo.date, startTime: shiftInfo.startTime, endTime: shiftInfo.endTime },
+      {
+        date: shiftInfo.date,
+        endDate: shiftInfo.endDate,
+        startTime: shiftInfo.startTime,
+        endTime: shiftInfo.endTime,
+      },
       (otherShifts ?? []).map((s) => ({
         date: s.date,
+        endDate: s.end_date,
         startTime: s.start_time,
         endTime: s.end_time,
       })),

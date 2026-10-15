@@ -11,6 +11,7 @@ export type PlanningAssignment = {
 export type PlanningShift = {
   id: string;
   date: string;
+  endDate: string;
   day: string;
   slot: string;
   startTime: string;
@@ -52,6 +53,7 @@ export async function getPlanningShifts(
   return shiftRows.map((shift) => ({
     id: shift.id,
     date: shift.date,
+    endDate: shift.end_date,
     day: shift.day,
     slot: shift.slot,
     startTime: shift.start_time,
@@ -68,6 +70,7 @@ export async function getPlanningShifts(
 export type ShiftDirectoryEntry = {
   id: string;
   date: string;
+  endDate: string;
   slot: string;
   startTime: string;
   endTime: string;
@@ -83,6 +86,7 @@ export async function getShiftDirectory(
   return shiftRows.map((shift) => ({
     id: shift.id,
     date: shift.date,
+    endDate: shift.end_date,
     slot: shift.slot,
     startTime: shift.start_time,
     endTime: shift.end_time,

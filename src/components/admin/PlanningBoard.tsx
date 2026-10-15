@@ -42,16 +42,21 @@ function roleStyle(role: string) {
 
 // Rounds to the nearest half hour, matching the existing "Hours" input's
 // step={0.5}. Returns 0 for an empty/invalid/non-positive range rather than
-// throwing, so it's safe to call on every keystroke while the fields fill in.
-function computeHoursBetween(startTime: string, endTime: string): number {
-  const [startHour, startMinute] = startTime.split(":").map(Number);
-  const [endHour, endMinute] = endTime.split(":").map(Number);
+// throwing, so it's safe to call on every keystroke while the fields fill
+// in. Takes the full start/end date so a shift that runs past midnight
+// (endDate !== date) still gets a correct, positive duration.
+function computeHoursBetween(
+  date: string,
+  startTime: string,
+  endDate: string,
+  endTime: string,
+): number {
+  const start = new Date(`${date}T${startTime}`).getTime();
+  const end = new Date(`${endDate}T${endTime}`).getTime();
 
-  if ([startHour, startMinute, endHour, endMinute].some((n) => Number.isNaN(n))) {
-    return 0;
-  }
+  if (Number.isNaN(start) || Number.isNaN(end)) return 0;
 
-  const minutes = endHour * 60 + endMinute - (startHour * 60 + startMinute);
+  const minutes = (end - start) / 60000;
   return minutes > 0 ? Math.round((minutes / 60) * 2) / 2 : 0;
 }
 
@@ -270,6 +275,7 @@ export function PlanningBoard({
                   assignmentId: result.data.assignmentId,
                   shiftId: shift.id,
                   date: shift.date,
+                  endDate: shift.endDate,
                   slot: shift.slot,
                   startTime: shift.startTime,
                   endTime: shift.endTime,
@@ -452,6 +458,14 @@ export function PlanningBoard({
                     <div className="w-24 shrink-0 text-sm text-slate-500">
                       <div className="font-medium text-slate-700">
                         {startTime} – {endTime}
+                        {blockShifts[0].endDate !== blockShifts[0].date && (
+                          <span
+                            title={`Ends ${blockShifts[0].endDate}`}
+                            className="ml-1 align-top text-[10px] font-semibold text-amber-600"
+                          >
+                            +1d
+                          </span>
+                        )}
                       </div>
                       <div>({blockShifts[0].hours}h)</div>
                     </div>
@@ -601,6 +615,7 @@ export function PlanningBoard({
                 {
                   id: result.data.id,
                   date: input.date,
+                  endDate: input.endDate,
                   day,
                   slot: input.slot,
                   startTime: input.startTime,
@@ -664,13 +679,19 @@ export function PlanningBoard({
                 .filter((v) => {
                   const shiftInfo = {
                     date: addVolunteerShift.date,
+                    endDate: addVolunteerShift.endDate,
                     slot: addVolunteerShift.slot,
                     startTime: addVolunteerShift.startTime,
                     endTime: addVolunteerShift.endTime,
                   };
                   const activeShifts = v.assignments
                     .filter((a) => a.status !== "cancelled")
-                    .map((a) => ({ date: a.date, startTime: a.startTime, endTime: a.endTime }));
+                    .map((a) => ({
+                      date: a.date,
+                      endDate: a.endDate,
+                      startTime: a.startTime,
+                      endTime: a.endTime,
+                    }));
 
                   return (
                     isVolunteerAvailableForShift(v.availability, shiftInfo) &&
@@ -721,6 +742,7 @@ function CreateShiftForm({
   onCancel: () => void;
   onCreate: (input: {
     date: string;
+    endDate: string;
     slot: string;
     startTime: string;
     endTime: string;
@@ -733,43 +755,93 @@ function CreateShiftForm({
   busy: boolean;
 }) {
   const [date, setDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [slot, setSlot] = useState<string>(TIME_SLOTS[0]);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("13:00");
-  const [hours, setHours] = useState(() => computeHoursBetween("09:00", "13:00"));
+  const [hours, setHours] = useState(0);
   const [location, setLocation] = useState("");
   const [roleCategory, setRoleCategory] = useState<string>(ROLE_CATEGORIES[0]);
   const [volunteersNeeded, setVolunteersNeeded] = useState(1);
   const [eventContext, setEventContext] = useState("");
 
-  // Hours follow start/end time automatically — admins shouldn't have to
-  // compute and re-type it themselves every time either changes. Updated
-  // directly in each time input's own handler (below) rather than an
-  // effect, since the change always originates from one of these two
-  // fields right here.
+  // Hours follow start/end date+time automatically — admins shouldn't have
+  // to compute and re-type it themselves every time either changes. Updated
+  // directly in each field's own handler (below) rather than an effect,
+  // since the change always originates from one of these fields right here.
+  function handleDateChange(value: string) {
+    // End date mirrors the start date until the admin deliberately picks a
+    // different one (for a shift that runs past midnight) — once it does,
+    // further start-date edits stop overwriting that choice.
+    const endDateWasLinked = endDate === date;
+    setDate(value);
+    if (endDateWasLinked) {
+      setEndDate(value);
+      setHours(computeHoursBetween(value, startTime, value, endTime));
+    } else {
+      setHours(computeHoursBetween(value, startTime, endDate, endTime));
+    }
+  }
+
+  function handleEndDateChange(value: string) {
+    setEndDate(value);
+    setHours(computeHoursBetween(date, startTime, value, endTime));
+  }
+
   function handleStartTimeChange(value: string) {
     setStartTime(value);
-    setHours(computeHoursBetween(value, endTime));
+    setHours(computeHoursBetween(date, value, endDate, endTime));
   }
 
   function handleEndTimeChange(value: string) {
     setEndTime(value);
-    setHours(computeHoursBetween(startTime, value));
+    setHours(computeHoursBetween(date, startTime, endDate, value));
   }
 
-  const isValid = date && location.trim() && startTime && endTime && hours > 0 && volunteersNeeded > 0;
+  const isValid =
+    date && endDate && location.trim() && startTime && endTime && hours > 0 && volunteersNeeded > 0;
 
   return (
     <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
       <h3 className="text-lg font-bold">Create shift</h3>
 
       <div className="mt-4 grid grid-cols-2 gap-3">
-        <label className="col-span-2 text-sm">
-          Date
+        <label className="text-sm">
+          Start date
           <input
             type="date"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={(e) => handleDateChange(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+          />
+        </label>
+
+        <label className="text-sm">
+          Start time
+          <input
+            type="time"
+            value={startTime}
+            onChange={(e) => handleStartTimeChange(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+          />
+        </label>
+
+        <label className="text-sm">
+          End date
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => handleEndDateChange(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+          />
+        </label>
+
+        <label className="text-sm">
+          End time
+          <input
+            type="time"
+            value={endTime}
+            onChange={(e) => handleEndTimeChange(e.target.value)}
             className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
           />
         </label>
@@ -796,26 +868,6 @@ function CreateShiftForm({
             min={1}
             value={volunteersNeeded}
             onChange={(e) => setVolunteersNeeded(Number(e.target.value))}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
-          />
-        </label>
-
-        <label className="text-sm">
-          Start time
-          <input
-            type="time"
-            value={startTime}
-            onChange={(e) => handleStartTimeChange(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
-          />
-        </label>
-
-        <label className="text-sm">
-          End time
-          <input
-            type="time"
-            value={endTime}
-            onChange={(e) => handleEndTimeChange(e.target.value)}
             className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
           />
         </label>
@@ -887,6 +939,7 @@ function CreateShiftForm({
           onClick={() =>
             onCreate({
               date,
+              endDate,
               slot,
               startTime,
               endTime,
