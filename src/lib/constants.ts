@@ -45,7 +45,7 @@ export const SHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 // The moment shifts become visible/acceptable on a volunteer's dashboard —
 // drives the countdown in AcademyGateCard.tsx. Local wall-clock time (the
 // event itself is in Belgium), not UTC.
-export const SHIFTS_OPEN_AT = "2026-10-15T14:00:00";
+export const SHIFTS_OPEN_AT = "2026-10-15T15:00:00";
 
 export type AvailabilityOption = {
   date: string;
