@@ -11,20 +11,30 @@ export const ROLE_CATEGORIES = [
 
 export const TIME_SLOTS = ["Morning", "Afternoon", "Evening"] as const;
 
-export const TIME_SLOT_WINDOWS: Record<string, { start: string; end: string }> = {
-  Morning: { start: "07:00", end: "13:00" },
+// Evening's `end` is earlier than its `start` on purpose — it means the
+// window runs past midnight, into the next calendar day (see
+// `crossesMidnight`). shiftEligibility.ts is the only place that reads
+// `crossesMidnight`; everything else just uses start/end as plain "HH:MM".
+export const TIME_SLOT_WINDOWS: Record<
+  string,
+  { start: string; end: string; crossesMidnight?: boolean }
+> = {
+  Morning: { start: "06:00", end: "13:00" },
   Afternoon: { start: "13:00", end: "18:00" },
-  Evening: { start: "18:00", end: "23:59" },
+  Evening: { start: "18:00", end: "04:00", crossesMidnight: true },
 };
 
-// `slot` is load-bearing (isVolunteerAvailableForShift matches it against a
-// volunteer's self-reported "<date> <slot>" availability), so it can't be
-// dropped — but there's no reason to make an admin pick it by hand when it
-// follows directly from the start time they just entered.
+// `slot` still matters for filtering/display (see constants.ts usages), but
+// no longer gates assignment eligibility — isVolunteerAvailableForShift now
+// compares actual timestamps instead. There's no reason to make an admin
+// pick it by hand when it follows directly from the start time they just
+// entered, so it's derived instead of selected.
 export function deriveSlotFromStartTime(startTime: string): (typeof TIME_SLOTS)[number] {
+  if (startTime >= TIME_SLOT_WINDOWS.Evening.start || startTime < TIME_SLOT_WINDOWS.Morning.start) {
+    return "Evening";
+  }
   if (startTime < TIME_SLOT_WINDOWS.Afternoon.start) return "Morning";
-  if (startTime < TIME_SLOT_WINDOWS.Evening.start) return "Afternoon";
-  return "Evening";
+  return "Afternoon";
 }
 
 export const SHIFT_COUNT_PREFERENCES = ["1", "2", "3", "4+", "No preference"] as const;
