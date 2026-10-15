@@ -67,7 +67,6 @@ export async function respondToAssignment(
           firstName: volunteer.first_name,
           token,
           confirmedShift,
-          allConfirmedShifts: confirmedShifts,
         });
       }
     } catch (emailError) {

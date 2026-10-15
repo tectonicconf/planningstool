@@ -31,33 +31,24 @@ export async function sendConfirmationEmail({
   firstName,
   token,
   confirmedShift,
-  allConfirmedShifts,
 }: {
   to: string;
   firstName: string;
   token: string;
   confirmedShift: Shift;
-  allConfirmedShifts: Shift[];
 }) {
   const personalLink = `${SITE_URL}/shift/${token}`;
 
-  const otherShifts = allConfirmedShifts.filter(
-    (shift) => shift.assignmentId !== confirmedShift.assignmentId,
-  );
-
+  // Plain text, so a listed shift here is just a line, not the clickable
+  // card the app itself renders — always pointing to the real schedule
+  // (where every shift does open up) is more useful than a second,
+  // non-interactive copy of the list in the email body.
   const text = [
     `Hi ${firstName},`,
     "",
     "You're confirmed for the following shift:",
     formatShiftLine(confirmedShift),
     "",
-    ...(otherShifts.length > 0
-      ? [
-          "Your other confirmed shifts:",
-          ...otherShifts.map(formatShiftLine),
-          "",
-        ]
-      : []),
     `View your full schedule: ${personalLink}`,
     "",
     "Thanks for volunteering at Tectonic 2026!",

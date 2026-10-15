@@ -38,6 +38,13 @@ export type TshirtSizeStats = {
   sizes: { size: string; count: number }[];
 };
 
+export type UnassignedVolunteer = {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+};
+
 // Event-wide staffing snapshot across every shift (not just one day), used
 // for the coverage bar at the top of the Activity page. Cancelled
 // assignments don't occupy a position (see README's capacity rules), so
@@ -90,6 +97,32 @@ export async function getTshirtSizeStats(data?: AdminTables): Promise<TshirtSize
   );
 
   return { total: volunteerRows.length, sizes };
+}
+
+// Volunteers with no active (pending/confirmed) assignment at all — distinct
+// from the coverage bar's "open" count above, which counts unfilled shift
+// slots rather than un-slotted people. A volunteer whose only assignment was
+// cancelled still counts as unassigned.
+export async function getUnassignedVolunteers(
+  data?: AdminTables,
+): Promise<UnassignedVolunteer[]> {
+  const { volunteerRows, assignmentRows } = data ?? (await getAdminTables());
+
+  const assignedVolunteerIds = new Set(
+    assignmentRows
+      .filter((a) => a.status === "pending" || a.status === "confirmed")
+      .map((a) => a.volunteer_id),
+  );
+
+  return volunteerRows
+    .filter((v) => !assignedVolunteerIds.has(v.id))
+    .map((v) => ({
+      id: v.id,
+      name: `${v.first_name} ${v.last_name}`.trim(),
+      phone: v.phone_number ?? "",
+      email: v.email,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 // A lightweight activity feed built from the assignments' own current state

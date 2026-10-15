@@ -4,19 +4,22 @@ import {
   getShiftCoverageStats,
   getQuizCompletionStats,
   getTshirtSizeStats,
+  getUnassignedVolunteers,
 } from "@/lib/adminActivity";
 import { ActivityFeed } from "@/components/admin/ActivityFeed";
 import { ShiftCoverageBar } from "@/components/admin/ShiftCoverageBar";
 import { QuizCompletionBar } from "@/components/admin/QuizCompletionBar";
 import { TshirtSizeBar } from "@/components/admin/TshirtSizeBar";
+import { UnassignedVolunteers } from "@/components/admin/UnassignedVolunteers";
 
 export default async function AdminActivityPage() {
   const data = await getAdminTables();
-  const [updates, coverage, quizStats, tshirtStats] = await Promise.all([
+  const [updates, coverage, quizStats, tshirtStats, unassignedVolunteers] = await Promise.all([
     getRecentAssignmentUpdates(200, data),
     getShiftCoverageStats(data),
     getQuizCompletionStats(data),
     getTshirtSizeStats(data),
+    getUnassignedVolunteers(data),
   ]);
 
   return (
@@ -34,6 +37,10 @@ export default async function AdminActivityPage() {
       <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
         <QuizCompletionBar stats={quizStats} />
         <TshirtSizeBar stats={tshirtStats} />
+      </div>
+
+      <div className="mt-6">
+        <UnassignedVolunteers volunteers={unassignedVolunteers} />
       </div>
 
       <div className="mt-6">
