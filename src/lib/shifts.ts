@@ -23,6 +23,11 @@ export type Shift = {
   extraInfo: string;
   status: ShiftStatus;
   crew: ShiftCrewMember[];
+  // Shifts that were split into smaller back-to-back blocks so they could be
+  // combined into one worthwhile shift for a volunteer — the `shifts.volunteer`
+  // column holds the same exact string on every block of the same combined
+  // shift (a "template"). Empty string when this shift isn't part of one.
+  templateKey: string;
 };
 
 export async function getShiftsForVolunteer(
@@ -43,7 +48,7 @@ export async function getShiftsForVolunteer(
   const { data: shiftRows, error: shiftsError } = await supabaseAdmin
     .from("shifts")
     .select(
-      "id, date, start_time, end_time, hours, location, role_category, room, shift, shift_lead, extra_info",
+      "id, date, start_time, end_time, hours, location, role_category, room, shift, shift_lead, extra_info, volunteer",
     )
     .in("id", shiftIds);
 
@@ -112,6 +117,7 @@ export async function getShiftsForVolunteer(
         extraInfo: shift.extra_info ?? "",
         status: assignment.status as ShiftStatus,
         crew: crewByShiftId.get(shift.id) ?? [],
+        templateKey: shift.volunteer ?? "",
       };
     })
     .filter((shift): shift is Shift => shift !== null)

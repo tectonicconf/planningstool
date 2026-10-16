@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { respondToAssignment } from "@/lib/assignments";
+import { useEffect, useMemo, useState } from "react";
+import { respondToAssignment, respondToAssignments } from "@/lib/assignments";
 import type { Shift } from "@/lib/shifts";
 import { ShiftCard } from "@/components/ShiftCard";
 import { ShiftDetail } from "@/components/ShiftDetail";
+import { TemplateCard } from "@/components/TemplateCard";
+import { TemplateDetail } from "@/components/TemplateDetail";
+import { pendingBlocks } from "@/lib/templateShift";
 import { Modal } from "@/components/Modal";
 import { saveToken } from "@/lib/clientToken";
 import {
@@ -16,6 +19,10 @@ import {
 import { AcademyFlow } from "@/components/AcademyFlow";
 import { SHIFTS_OPEN_AT } from "@/lib/constants";
 import { CREW_PARTNERS } from "@/data/crewPartners";
+
+type ScheduleEntry =
+  | { type: "single"; shift: Shift }
+  | { type: "template"; key: string; blocks: Shift[] };
 
 export function ShiftDashboard({
   token,
@@ -41,10 +48,46 @@ export function ShiftDashboard({
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [detailTarget, setDetailTarget] = useState<Shift | null>(null);
   const [declineTarget, setDeclineTarget] = useState<Shift | null>(null);
+  const [templateDetailTarget, setTemplateDetailTarget] = useState<Shift[] | null>(null);
+  const [templateDeclineTarget, setTemplateDeclineTarget] = useState<Shift[] | null>(null);
+  const [bulkUpdating, setBulkUpdating] = useState(false);
   const [feedback, setFeedback] = useState<
     "accepted" | "declined" | "cancelled" | null
   >(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Shifts split into smaller back-to-back blocks (see Shift.templateKey)
+  // are grouped here so they render — and get accepted/declined — as one
+  // combined "template", not as separate cards a volunteer could pick
+  // between. A key only counts as a template when 2+ of THIS volunteer's own
+  // current shifts share it; `shifts` is already sorted by date/time, so the
+  // group lands wherever its first block would have.
+  const entries = useMemo<ScheduleEntry[]>(() => {
+    const byKey = new Map<string, Shift[]>();
+    for (const shift of shifts) {
+      if (!shift.templateKey) continue;
+      const list = byKey.get(shift.templateKey) ?? [];
+      list.push(shift);
+      byKey.set(shift.templateKey, list);
+    }
+
+    const seenKeys = new Set<string>();
+    const result: ScheduleEntry[] = [];
+
+    for (const shift of shifts) {
+      const blocks = shift.templateKey ? byKey.get(shift.templateKey) : undefined;
+
+      if (blocks && blocks.length > 1) {
+        if (seenKeys.has(shift.templateKey)) continue;
+        seenKeys.add(shift.templateKey);
+        result.push({ type: "template", key: shift.templateKey, blocks });
+      } else {
+        result.push({ type: "single", shift });
+      }
+    }
+
+    return result;
+  }, [shifts]);
 
   // Gating: a volunteer must pass the onboarding quiz once before their
   // shifts are shown, AND shifts must have opened (see SHIFTS_OPEN_AT) —
@@ -132,6 +175,84 @@ export function ShiftDashboard({
     setFeedback(wasConfirmed ? "cancelled" : "declined");
   }
 
+  // Only the still-pending blocks are actually sent to "accept" — a block
+  // that's already confirmed isn't re-acceptable, and silently excluding it
+  // here keeps "Accept remaining block(s)" accurate on a partially-accepted
+  // template.
+  async function handleAcceptBlocks(blocks: Shift[]) {
+    const targets = pendingBlocks(blocks);
+    if (targets.length === 0) return;
+
+    setError(null);
+    setBulkUpdating(true);
+
+    const result = await respondToAssignments(
+      token,
+      targets.map((block) => block.assignmentId),
+      "accept",
+    );
+
+    setBulkUpdating(false);
+
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+
+    const acceptedIds = new Set(targets.map((block) => block.assignmentId));
+    setShifts((current) =>
+      current.map((item) =>
+        acceptedIds.has(item.assignmentId) ? { ...item, status: "confirmed" } : item,
+      ),
+    );
+    setTemplateDetailTarget((current) =>
+      current?.some((block) => acceptedIds.has(block.assignmentId))
+        ? current.map((block) =>
+            acceptedIds.has(block.assignmentId) ? { ...block, status: "confirmed" } : block,
+          )
+        : current,
+    );
+    setFeedback("accepted");
+  }
+
+  // `templateDeclineTarget` is pre-filtered to exactly what should be
+  // declined — the remaining pending blocks for a partially-accepted
+  // template (confirmed ones stay untouched), or every block when the whole
+  // template is being cancelled after being fully confirmed.
+  async function handleDeclineBlocksConfirm() {
+    if (!templateDeclineTarget || templateDeclineTarget.length === 0) return;
+
+    const wasConfirmed = templateDeclineTarget.every((block) => block.status === "confirmed");
+    const declinedIds = new Set(templateDeclineTarget.map((block) => block.assignmentId));
+
+    setError(null);
+    setBulkUpdating(true);
+
+    const result = await respondToAssignments(
+      token,
+      templateDeclineTarget.map((block) => block.assignmentId),
+      "decline",
+    );
+
+    setBulkUpdating(false);
+
+    if (!result.ok) {
+      setError(result.error);
+      setTemplateDeclineTarget(null);
+      return;
+    }
+
+    setShifts((current) => current.filter((item) => !declinedIds.has(item.assignmentId)));
+    setTemplateDetailTarget((current) =>
+      current?.some((block) => declinedIds.has(block.assignmentId))
+        ? current.filter((block) => !declinedIds.has(block.assignmentId))
+        : current,
+    );
+    setTemplateDetailTarget((current) => (current && current.length === 0 ? null : current));
+    setTemplateDeclineTarget(null);
+    setFeedback(wasConfirmed ? "cancelled" : "declined");
+  }
+
   return (
     <div className="min-h-screen bg-[#050A2B] px-6 pt-20 pb-12 text-white">
       <div className="mx-auto max-w-2xl">
@@ -175,16 +296,29 @@ export function ShiftDashboard({
             {shifts.length === 0 ? (
               <p className="text-white/70">No shifts assigned yet.</p>
             ) : (
-              shifts.map((shift) => (
-                <ShiftCard
-                  key={shift.assignmentId}
-                  shift={shift}
-                  isUpdating={updatingId === shift.assignmentId}
-                  onAccept={() => handleAccept(shift)}
-                  onDecline={() => setDeclineTarget(shift)}
-                  onOpenDetail={() => setDetailTarget(shift)}
-                />
-              ))
+              entries.map((entry) =>
+                entry.type === "single" ? (
+                  <ShiftCard
+                    key={entry.shift.assignmentId}
+                    shift={entry.shift}
+                    isUpdating={updatingId === entry.shift.assignmentId}
+                    onAccept={() => handleAccept(entry.shift)}
+                    onDecline={() => setDeclineTarget(entry.shift)}
+                    onOpenDetail={() => setDetailTarget(entry.shift)}
+                  />
+                ) : (
+                  <TemplateCard
+                    key={entry.key}
+                    blocks={entry.blocks}
+                    isUpdating={bulkUpdating}
+                    onAcceptAll={() => handleAcceptBlocks(entry.blocks)}
+                    onDeclinePending={() =>
+                      setTemplateDeclineTarget(pendingBlocks(entry.blocks))
+                    }
+                    onOpenDetail={() => setTemplateDetailTarget(entry.blocks)}
+                  />
+                ),
+              )
             )}
           </div>
         ) : shifts.length === 0 ? (
@@ -263,6 +397,54 @@ export function ShiftDashboard({
           onDecline={() => setDeclineTarget(detailTarget)}
           onClose={() => setDetailTarget(null)}
         />
+      )}
+
+      {canViewShifts && templateDetailTarget && (
+        <TemplateDetail
+          blocks={templateDetailTarget}
+          isUpdating={bulkUpdating}
+          onAcceptAll={() => handleAcceptBlocks(templateDetailTarget)}
+          onDeclinePending={() =>
+            setTemplateDeclineTarget(
+              pendingBlocks(templateDetailTarget).length > 0
+                ? pendingBlocks(templateDetailTarget)
+                : templateDetailTarget,
+            )
+          }
+          onClose={() => setTemplateDetailTarget(null)}
+        />
+      )}
+
+      {templateDeclineTarget && (
+        <Modal onClose={() => setTemplateDeclineTarget(null)}>
+          <div className="w-full max-w-sm rounded-2xl border border-white/15 bg-[#0a0f35] p-6 text-white shadow-xl">
+            <h3 className="text-xl font-bold">Sad to see you go 😢</h3>
+            <p className="mt-2 text-sm text-white/70">
+              {templateDeclineTarget.every((block) => block.status === "confirmed")
+                ? `Are you sure you want to cancel all ${templateDeclineTarget.length} blocks of this template? We'll look for someone to cover them instead.`
+                : `Are you sure you want to decline the remaining ${templateDeclineTarget.length} block${templateDeclineTarget.length === 1 ? "" : "s"} of this template? Blocks you already accepted stay as they are.`}
+            </p>
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setTemplateDeclineTarget(null)}
+                className="flex-1 rounded-full border border-white/25 py-2 text-sm font-semibold text-white/90 hover:border-cyan-300/70"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                disabled={bulkUpdating}
+                onClick={handleDeclineBlocksConfirm}
+                className="flex-1 rounded-full bg-red-500/80 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50"
+              >
+                {templateDeclineTarget.every((block) => block.status === "confirmed")
+                  ? "Yes, cancel"
+                  : "Yes, decline"}
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
 
       {declineTarget && (

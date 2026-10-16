@@ -171,6 +171,29 @@ export function TimelineBoard({
     return ((minutes - gridStartHour * 60) / (totalHours * 60)) * 100;
   }
 
+  // pending + confirmed
+  const hourlyHeadcount = useMemo(() => {
+    const counts: { hour: number; total: number }[] = [];
+
+    for (let hour = gridStartHour; hour < gridEndHour; hour++) {
+      const bucketStart = hour * 60;
+      const bucketEnd = bucketStart + 60;
+      let total = 0;
+
+      for (const shift of filteredShifts) {
+        const start = minutesFromDayStart(activeDate, shift.date, shift.startTime);
+        const end = minutesFromDayStart(activeDate, shift.endDate, shift.endTime);
+        if (start < bucketEnd && bucketStart < end) {
+          total += shift.assignments.length;
+        }
+      }
+
+      counts.push({ hour, total });
+    }
+
+    return counts;
+  }, [filteredShifts, activeDate, gridStartHour, gridEndHour]);
+
   function toggleExpand(shiftId: string) {
     setExpandedShiftId((current) => (current === shiftId ? null : shiftId));
   }
@@ -583,6 +606,23 @@ export function TimelineBoard({
               </div>
             );
           })}
+
+          <div className="flex border-t-2 border-slate-300 bg-slate-50">
+            <div className="hidden w-64 shrink-0 px-3 py-2 text-xs font-semibold text-slate-600 sm:block">
+              Scheduled / hour
+            </div>
+            <div className="relative flex-1" style={{ height: 32 }}>
+              {hourlyHeadcount.map(({ hour, total }) => (
+                <span
+                  key={hour}
+                  className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-semibold text-slate-700"
+                  style={{ left: `${percentFor(hour * 60 + 30)}%` }}
+                >
+                  {total}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 

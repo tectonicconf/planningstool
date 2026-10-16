@@ -66,6 +66,80 @@ export async function sendConfirmationEmail({
   }
 }
 
+// For accepting every block of a template in one tap — one email listing
+// all of them, instead of firing a separate confirmation per block.
+export async function sendTemplateConfirmationEmail({
+  to,
+  firstName,
+  token,
+  confirmedShifts,
+}: {
+  to: string;
+  firstName: string;
+  token: string;
+  confirmedShifts: Shift[];
+}) {
+  const personalLink = `${SITE_URL}/shift/${token}`;
+
+  const text = [
+    `Hi ${firstName},`,
+    "",
+    `You're confirmed for the following ${confirmedShifts.length} blocks:`,
+    ...confirmedShifts.map(formatShiftLine),
+    "",
+    `View your full schedule: ${personalLink}`,
+    "",
+    "Thanks for volunteering at Tectonic 2026!",
+  ].join("\n");
+
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: "You're confirmed for your Tectonic 2026 shift",
+    text,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+export async function sendTemplateCancellationEmail({
+  to,
+  firstName,
+  token,
+  cancelledShifts,
+}: {
+  to: string;
+  firstName: string;
+  token: string;
+  cancelledShifts: ShiftLineInfo[];
+}) {
+  const personalLink = `${SITE_URL}/shift/${token}`;
+
+  const text = [
+    `Hi ${firstName},`,
+    "",
+    `You're no longer signed up for the following ${cancelledShifts.length} blocks:`,
+    ...cancelledShifts.map(formatShiftLine),
+    "",
+    `View your current schedule: ${personalLink}`,
+    "",
+    "Thanks for letting us know — see you at another shift!",
+  ].join("\n");
+
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: "Your Tectonic 2026 shift was cancelled",
+    text,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 export async function sendCancellationEmail({
   to,
   firstName,

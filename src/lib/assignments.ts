@@ -2,7 +2,12 @@
 
 import { supabaseAdmin } from "@/lib/supabase";
 import { getShiftsForVolunteer } from "@/lib/shifts";
-import { sendConfirmationEmail, sendCancellationEmail } from "@/lib/email";
+import {
+  sendConfirmationEmail,
+  sendCancellationEmail,
+  sendTemplateConfirmationEmail,
+  sendTemplateCancellationEmail,
+} from "@/lib/email";
 
 export type AssignmentResponse = "accept" | "decline";
 
@@ -94,6 +99,117 @@ export async function respondToAssignment(
             location: shift.location,
             shiftType: shift.role_category,
           },
+        });
+      }
+    } catch (emailError) {
+      console.error("Failed to send cancellation email:", emailError);
+    }
+  }
+
+  return { ok: true };
+}
+
+// A template's blocks are meant to be accepted/declined as one unit — see
+// ShiftDashboard.tsx's grouping by `Shift.templateKey`. Scoped and validated
+// exactly like `respondToAssignment` above, just over several assignment ids
+// at once, with a single summary email instead of one per block.
+export async function respondToAssignments(
+  token: string,
+  assignmentIds: number[],
+  response: AssignmentResponse,
+): Promise<RespondToAssignmentResult> {
+  const { data: volunteer, error: volunteerError } = await supabaseAdmin
+    .from("volunteers")
+    .select("id, first_name, email")
+    .eq("magic_link_token", token)
+    .maybeSingle();
+
+  if (volunteerError || !volunteer) {
+    return { ok: false, error: "Volunteer not found." };
+  }
+
+  const newStatus = response === "accept" ? "confirmed" : "cancelled";
+  const allowedCurrentStatuses =
+    response === "accept" ? ["pending"] : ["pending", "confirmed"];
+
+  const { data, error } = await supabaseAdmin
+    .from("assignments")
+    .update({ status: newStatus, updated_at: new Date().toISOString() })
+    .in("id", assignmentIds)
+    .eq("volunteer_id", volunteer.id)
+    .in("status", allowedCurrentStatuses)
+    .select("id, shift_id");
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  if (!data || data.length === 0) {
+    return { ok: false, error: "This template can no longer be updated." };
+  }
+
+  const updatedIds = new Set(data.map((row) => row.id));
+
+  if (response === "accept" && volunteer.email) {
+    try {
+      const confirmedShifts = (await getShiftsForVolunteer(volunteer.id)).filter(
+        (shift) => shift.status === "confirmed" && updatedIds.has(shift.assignmentId),
+      );
+
+      if (confirmedShifts.length === 1) {
+        await sendConfirmationEmail({
+          to: volunteer.email,
+          firstName: volunteer.first_name,
+          token,
+          confirmedShift: confirmedShifts[0],
+        });
+      } else if (confirmedShifts.length > 1) {
+        await sendTemplateConfirmationEmail({
+          to: volunteer.email,
+          firstName: volunteer.first_name,
+          token,
+          confirmedShifts,
+        });
+      }
+    } catch (emailError) {
+      console.error("Failed to send confirmation email:", emailError);
+    }
+  }
+
+  if (response === "decline" && volunteer.email) {
+    try {
+      const shiftIds = data.map((row) => row.shift_id);
+      const { data: shiftRows } = await supabaseAdmin
+        .from("shifts")
+        .select("date, start_time, end_time, location, role_category")
+        .in("id", shiftIds);
+
+      if (shiftRows && shiftRows.length === 1) {
+        const shift = shiftRows[0];
+        await sendCancellationEmail({
+          to: volunteer.email,
+          firstName: volunteer.first_name,
+          token,
+          cancelledShift: {
+            date: shift.date,
+            startTime: shift.start_time,
+            endTime: shift.end_time,
+            location: shift.location,
+            shiftType: shift.role_category,
+          },
+        });
+      } else if (shiftRows && shiftRows.length > 1) {
+        await sendTemplateCancellationEmail({
+          to: volunteer.email,
+          firstName: volunteer.first_name,
+          token,
+          cancelledShifts: shiftRows.map((shift) => ({
+            date: shift.date,
+            startTime: shift.start_time,
+            endTime: shift.end_time,
+            location: shift.location,
+            shiftType: shift.role_category,
+          })),
         });
       }
     } catch (emailError) {
