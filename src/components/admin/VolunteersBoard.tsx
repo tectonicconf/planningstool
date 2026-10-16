@@ -50,12 +50,10 @@ function volunteerHasOpenAvailability(volunteer: VolunteerRow): boolean {
   });
 }
 
-// A single flat color on purpose — this used to turn grey when a slot was
-// already covered by an assigned shift, but once shift-type preference
-// badges (below) started using a different color per role category right
-// next to these, two unrelated color systems on the same card read as one
-// confusing one. The occupied/open distinction is kept (it's still useful),
-// just via a strikethrough instead of a second color.
+// Flat, uniform color — occupied-vs-open used to also be shown here via a
+// strikethrough, but that's already visible from the assignment list right
+// next to it, so marking it a second time on these badges was redundant and
+// read as a confusing second meaning for color/styling on the same card.
 function AvailabilityBadges({ volunteer }: { volunteer: VolunteerRow }) {
   if (volunteer.availability.length === 0) {
     return <span className="text-slate-400">—</span>;
@@ -68,17 +66,11 @@ function AvailabilityBadges({ volunteer }: { volunteer: VolunteerRow }) {
         const label = resolved
           ? (labelByDateSlot.get(`${resolved.date} ${resolved.slot}`) ?? raw)
           : raw;
-        const occupied = resolved
-          ? isAvailabilityOccupied(volunteer, resolved.date, resolved.slot)
-          : false;
 
         return (
           <span
             key={raw}
-            title={occupied ? "Already covered by an assigned shift" : "Still open"}
-            className={`rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-700 ${
-              occupied ? "line-through opacity-50" : ""
-            }`}
+            className="rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-700"
           >
             {label}
           </span>
@@ -499,7 +491,6 @@ export function VolunteersBoard({
       <p className="mt-3 flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
         <span className="inline-flex items-center gap-1">
           <span className="h-2 w-2 rounded-full bg-blue-400" /> blue = availability
-          (struck through = already covered by an assigned shift)
         </span>
         <span className="inline-flex items-center gap-1">
           <span className="h-2 w-2 rounded-full bg-slate-400" /> colored = shift-type

@@ -101,7 +101,7 @@ export default function FaqPage() {
                       return (
                         <div
                           key={item.id}
-                          className={`rounded-2xl border p-4 transition-colors ${
+                          className={`overflow-hidden rounded-2xl border transition-colors ${
                             isOpen
                               ? "border-blue-300/60 bg-white/[0.06]"
                               : "border-white/15 bg-white/[0.06]"
@@ -110,7 +110,7 @@ export default function FaqPage() {
                           <button
                             type="button"
                             onClick={() => setOpenId(isOpen ? null : item.id)}
-                            className="flex w-full items-center justify-between gap-3 text-left font-semibold"
+                            className="flex w-full items-center justify-between gap-3 p-4 text-left font-semibold"
                           >
                             <span>{item.question}</span>
                             <span
@@ -123,7 +123,7 @@ export default function FaqPage() {
                             </span>
                           </button>
                           {isOpen && (
-                            <p className="mt-3 text-sm text-white/70">
+                            <p className="-mt-1 px-4 pb-4 text-sm text-white/70">
                               <RichText>{item.answer}</RichText>
                             </p>
                           )}

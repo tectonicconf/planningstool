@@ -178,16 +178,6 @@ function Check() {
 export default function OnboardingPage() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#050A2B] px-6 py-10 text-white">
-      {/* ambient glow, same look as the home page */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse 60% 40% at 10% 0%, rgba(17,65,233,0.38), transparent 60%)," +
-            "radial-gradient(ellipse 50% 35% at 100% 60%, rgba(118,49,220,0.22), transparent 60%)",
-        }}
-      />
-
       <div className="relative mx-auto flex max-w-2xl flex-col gap-12">
         {/* Hero */}
         <header>
@@ -362,6 +352,12 @@ export default function OnboardingPage() {
             </figcaption>
           </figure>
           <Steps steps={ON_THE_DAY.steps} />
+          <div className="mt-4 rounded-3xl border border-cyan-300/30 bg-cyan-300/10 p-4">
+            <p className="font-semibold text-cyan-100">Late shift?</p>
+            <p className="mt-1 text-sm leading-relaxed text-white/80">
+              Pick up your badge early and enjoy Tectonic before you start.
+            </p>
+          </div>
         </section>
 
         {/* Where is what */}

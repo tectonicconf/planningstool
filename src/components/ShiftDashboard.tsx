@@ -15,6 +15,7 @@ import {
 } from "@/components/AcademyGateCard";
 import { AcademyFlow } from "@/components/AcademyFlow";
 import { SHIFTS_OPEN_AT } from "@/lib/constants";
+import { CREW_PARTNERS } from "@/data/crewPartners";
 
 export function ShiftDashboard({
   token,
@@ -214,6 +215,24 @@ export function ShiftDashboard({
             </p>
           </div>
         )}
+
+        <div className="mt-12 rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-8">
+          <p className="text-center text-xs font-bold uppercase tracking-wide text-white/70">
+            Crewing alongside you
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-6">
+            {CREW_PARTNERS.map((partner) => (
+              // eslint-disable-next-line @next/next/no-img-element -- external logos from each org's own site, not a local/optimizable asset
+              <img
+                key={partner.name}
+                src={partner.logoUrl}
+                alt={partner.name}
+                title={partner.name}
+                className="h-14 w-auto max-w-[200px] object-contain opacity-60 grayscale transition-opacity hover:opacity-90"
+              />
+            ))}
+          </div>
+        </div>
       </div>
 
       {academyOpen && (
