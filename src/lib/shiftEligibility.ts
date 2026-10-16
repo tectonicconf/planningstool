@@ -52,13 +52,26 @@ function toTimestamp(date: string, time: string): number {
 // advancing it, then reading the parts back out — never round-tripping
 // through `toISOString()` (UTC), which would shift the result by a day in
 // any timezone ahead of UTC (e.g. CEST) once local midnight is involved.
-function addDays(date: string, days: number): string {
+// `days` can be negative (used by getDisplayDate below) — the Date
+// constructor rolls the month/year back correctly either way.
+export function addDays(date: string, days: number): string {
   const [year, month, day] = date.split("-").map(Number);
   const next = new Date(year, month - 1, day + days);
   const y = next.getFullYear();
   const m = String(next.getMonth() + 1).padStart(2, "0");
   const d = String(next.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
+}
+
+// Which day a shift should be grouped under on a day-by-day view — not
+// always its literal `date`. A shift starting between 00:00 and 04:00 is
+// clock-wise "the next day", but it's really the tail end of the previous
+// evening (the Evening slot's own window runs 18:00-04:00 for the same
+// reason) — e.g. a 01:00-03:00 breakdown shift stored as Oct 21 is really
+// "Oct 20 night" and should show up on the Oct 20 tab, not get a day of its
+// own with nothing else in it.
+export function getDisplayDate(date: string, startTime: string): string {
+  return startTime < TIME_SLOT_WINDOWS.Evening.end ? addDays(date, -1) : date;
 }
 
 type TimeRange = { start: number; end: number };

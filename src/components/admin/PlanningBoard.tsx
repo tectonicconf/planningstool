@@ -14,6 +14,7 @@ import {
   isVolunteerAvailableForShift,
   hasOverlap,
   hasReachedShiftPreference,
+  getDisplayDate,
 } from "@/lib/shiftEligibility";
 import { Modal } from "@/components/Modal";
 import {
@@ -108,7 +109,7 @@ export function PlanningBoard({
   const [addVolunteerOverride, setAddVolunteerOverride] = useState(false);
 
   const dates = useMemo(
-    () => Array.from(new Set(shifts.map((s) => s.date))).sort(),
+    () => Array.from(new Set(shifts.map((s) => getDisplayDate(s.date, s.startTime)))).sort(),
     [shifts],
   );
 
@@ -140,7 +141,7 @@ export function PlanningBoard({
   }
 
   const shiftsForDate = useMemo(
-    () => shifts.filter((s) => s.date === activeDate),
+    () => shifts.filter((s) => getDisplayDate(s.date, s.startTime) === activeDate),
     [shifts, activeDate],
   );
 
@@ -505,9 +506,14 @@ export function PlanningBoard({
                     <div className="w-24 shrink-0 text-sm text-slate-500">
                       <div className="font-medium text-slate-700">
                         {startTime} – {endTime}
-                        {blockShifts[0].endDate !== blockShifts[0].date && (
+                        {(blockShifts[0].endDate !== blockShifts[0].date ||
+                          blockShifts[0].date !== activeDate) && (
                           <span
-                            title={`Ends ${blockShifts[0].endDate}`}
+                            title={
+                              blockShifts[0].date !== activeDate
+                                ? `Clock date is ${blockShifts[0].date} — shown here as the tail end of ${activeDate}'s evening`
+                                : `Ends ${blockShifts[0].endDate}`
+                            }
                             className="ml-1 align-top text-[10px] font-semibold text-amber-600"
                           >
                             +1d

@@ -70,43 +70,76 @@ export function availabilityValue(date: string, slot: string): string {
   return `${date} ${slot}`;
 }
 
-type RoleStyle = { emoji: string; badgeClassName: string; cardClassName: string };
+type RoleStyle = {
+  emoji: string;
+  badgeClassName: string;
+  cardClassName: string;
+  // Solid/light pair for the Timeline tab's two-tone bars (filled portion vs
+  // remaining capacity) — same hue family as badgeClassName/cardClassName
+  // above, just saturated enough to read against a white grid.
+  barClassName: string;
+  barLightClassName: string;
+};
 
 export const ROLE_STYLES: Record<string, RoleStyle> = {
   "Setup & Logistics": {
     emoji: "🛠️",
     badgeClassName: "bg-blue-100 text-blue-700",
     cardClassName: "border-blue-100 bg-blue-50",
+    barClassName: "bg-blue-500",
+    barLightClassName: "bg-blue-200",
   },
   "Technical Support": {
     emoji: "⚙️",
     badgeClassName: "bg-rose-100 text-rose-700",
     cardClassName: "border-rose-100 bg-rose-50",
+    barClassName: "bg-rose-500",
+    barLightClassName: "bg-rose-200",
   },
   "Guest Flow & Stewarding": {
     emoji: "🚶",
     badgeClassName: "bg-emerald-100 text-emerald-700",
     cardClassName: "border-emerald-100 bg-emerald-50",
+    barClassName: "bg-emerald-500",
+    barLightClassName: "bg-emerald-200",
   },
   "Info & Welcome": {
     emoji: "ℹ️",
     badgeClassName: "bg-violet-100 text-violet-700",
     cardClassName: "border-violet-100 bg-violet-50",
+    barClassName: "bg-violet-500",
+    barLightClassName: "bg-violet-200",
   },
   "Food & Drinks": {
     emoji: "🍽️",
     badgeClassName: "bg-amber-100 text-amber-700",
     cardClassName: "border-amber-100 bg-amber-50",
+    barClassName: "bg-amber-500",
+    barLightClassName: "bg-amber-200",
   },
   "Runner & Flexible Support": {
     emoji: "🏃",
     badgeClassName: "bg-cyan-100 text-cyan-700",
     cardClassName: "border-cyan-100 bg-cyan-50",
+    barClassName: "bg-cyan-500",
+    barLightClassName: "bg-cyan-200",
   },
   "Stage & Session Support": {
     emoji: "🎤",
     badgeClassName: "bg-fuchsia-100 text-fuchsia-700",
     cardClassName: "border-fuchsia-100 bg-fuchsia-50",
+    barClassName: "bg-fuchsia-500",
+    barLightClassName: "bg-fuchsia-200",
+  },
+  // Not in ROLE_CATEGORIES (admins can't pick it on the create-shift form),
+  // but present in real imported shift data — needs its own style or it
+  // falls back to DEFAULT_ROLE_STYLE like every other unrecognised value.
+  "Content & Media": {
+    emoji: "🎥",
+    badgeClassName: "bg-indigo-100 text-indigo-700",
+    cardClassName: "border-indigo-100 bg-indigo-50",
+    barClassName: "bg-indigo-500",
+    barLightClassName: "bg-indigo-200",
   },
 };
 
@@ -114,4 +147,6 @@ export const DEFAULT_ROLE_STYLE: RoleStyle = {
   emoji: "📌",
   badgeClassName: "bg-slate-100 text-slate-700",
   cardClassName: "border-slate-100 bg-slate-50",
+  barClassName: "bg-slate-400",
+  barLightClassName: "bg-slate-200",
 };
