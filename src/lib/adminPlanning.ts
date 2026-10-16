@@ -82,6 +82,9 @@ export type ShiftDirectoryEntry = {
   endTime: string;
   location: string;
   roleCategory: string;
+  shiftTitle: string;
+  room: string;
+  shiftLead: string;
 };
 
 export async function getShiftDirectory(
@@ -98,5 +101,8 @@ export async function getShiftDirectory(
     endTime: shift.end_time,
     location: shift.location,
     roleCategory: shift.role_category,
+    shiftTitle: shift.shift ?? "",
+    room: shift.room ?? "",
+    shiftLead: shift.shift_lead ?? "",
   }));
 }

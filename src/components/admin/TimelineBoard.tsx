@@ -249,6 +249,9 @@ export function TimelineBoard({
                   endTime: shift.endTime,
                   location: shift.location,
                   roleCategory: shift.roleCategory,
+                  shiftTitle: shift.shiftTitle,
+                  room: shift.room,
+                  shiftLead: shift.shiftLead,
                   status: "pending" as const,
                   checkedInAt: null,
                 },
@@ -348,13 +351,18 @@ export function TimelineBoard({
             );
           })}
         </div>
-        <span className="text-xs text-slate-400">Darker fill = filled spots</span>
+        <span className="text-xs text-slate-400">Light fill = filled, grey = still open</span>
       </div>
 
-      <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      {/* Bounded height + its own vertical scroll (not just overflow-x) is
+          what makes `sticky top-0` on the hour header actually engage — an
+          unbounded-height auto-overflow container never has real vertical
+          overflow for the header to stick against, so it just scrolls away
+          with the page instead. */}
+      <div className="mt-3 max-h-[75vh] overflow-auto rounded-xl border border-slate-200 bg-white">
         <div style={{ minWidth: Math.max(720, totalHours * 72) }}>
-          <div className="flex border-b border-slate-200 bg-slate-50 text-xs font-medium text-slate-500">
-            <div className="w-64 shrink-0 px-3 py-2">Shift</div>
+          <div className="sticky top-0 z-10 flex border-b border-slate-200 bg-slate-50 text-xs font-medium text-slate-500">
+            <div className="hidden w-64 shrink-0 px-3 py-2 sm:block">Shift</div>
             <div className="relative flex-1 py-2">
               {hourMarks.map((hour) => (
                 <span
@@ -402,7 +410,7 @@ export function TimelineBoard({
                   }}
                   className="flex cursor-pointer border-b border-slate-50 hover:bg-slate-50"
                 >
-                  <div className="w-64 shrink-0 px-3 py-3">
+                  <div className="hidden w-64 shrink-0 px-3 py-3 sm:block">
                     <p className="truncate text-sm font-semibold text-slate-900">
                       {shift.shiftTitle || shift.roleCategory}
                     </p>
@@ -424,7 +432,7 @@ export function TimelineBoard({
                     </p>
                   </div>
 
-                  <div className="relative flex-1 px-2 py-2" style={{ height: 60 }}>
+                  <div className="relative h-20 flex-1 px-2 py-2 sm:h-[60px]">
                     {hourMarks.map((hour) => (
                       <div
                         key={hour}
@@ -432,17 +440,26 @@ export function TimelineBoard({
                         style={{ left: `${percentFor(hour * 60)}%` }}
                       />
                     ))}
+                    {/* Small screens have no room for a separate label column
+                        without forcing a scroll back and forth between it and
+                        the bar — so the label rides along with the bar here
+                        instead, sharing its horizontal position. */}
+                    <p
+                      className="absolute top-0 max-w-[90%] truncate whitespace-nowrap text-[10px] font-medium text-slate-600 sm:hidden"
+                      style={{ left: `${barLeft}%` }}
+                    >
+                      {shift.shiftTitle || shift.roleCategory} · {shift.startTime}–{shift.endTime}
+                    </p>
                     <div
-                      className="absolute inset-y-2 flex overflow-hidden rounded-md"
+                      className="absolute bottom-2 h-9 overflow-hidden rounded-md border border-slate-200 sm:inset-y-2 sm:h-auto"
                       style={{ left: `${barLeft}%`, width: `${barWidth}%` }}
                       title={`${shift.roleCategory} · ${filled} / ${shift.volunteersNeeded} assigned`}
                     >
-                      <div className={style.barClassName} style={{ width: `${filledPct}%` }} />
-                      <div
-                        className={style.barLightClassName}
-                        style={{ width: `${100 - filledPct}%` }}
-                      />
-                      <span className="absolute inset-0 flex items-center justify-center truncate px-1 text-[11px] font-semibold text-white drop-shadow">
+                      <div className="flex h-full">
+                        <div className={style.barLightClassName} style={{ width: `${filledPct}%` }} />
+                        <div className="bg-slate-200" style={{ width: `${100 - filledPct}%` }} />
+                      </div>
+                      <span className="absolute inset-0 flex items-center justify-center truncate px-1 text-[11px] font-semibold text-slate-700">
                         {filled} / {shift.volunteersNeeded}
                       </span>
                     </div>

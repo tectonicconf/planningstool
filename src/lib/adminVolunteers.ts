@@ -12,6 +12,9 @@ export type VolunteerAssignment = {
   endTime: string;
   location: string;
   roleCategory: string;
+  shiftTitle: string;
+  room: string;
+  shiftLead: string;
   status: VolunteerAssignmentStatus;
   checkedInAt: string | null;
 };
@@ -23,6 +26,7 @@ export type VolunteerRow = {
   phoneNumber: string;
   association: string;
   availability: string[];
+  shiftPreferences: string[];
   magicLinkToken: string;
   shiftCountPreference: string;
   quizCompleted: boolean;
@@ -56,6 +60,9 @@ export async function getVolunteersWithAssignments(
       endTime: shift.end_time,
       location: shift.location,
       roleCategory: shift.role_category,
+      shiftTitle: shift.shift ?? "",
+      room: shift.room ?? "",
+      shiftLead: shift.shift_lead ?? "",
       status: assignment.status,
       checkedInAt: assignment.checked_in_at,
     });
@@ -69,6 +76,10 @@ export async function getVolunteersWithAssignments(
     phoneNumber: volunteer.phone_number ?? "",
     association: volunteer.association ?? "",
     availability: (volunteer.availability ?? "")
+      .split(";")
+      .map((entry: string) => entry.trim())
+      .filter(Boolean),
+    shiftPreferences: (volunteer.preferences ?? "")
       .split(";")
       .map((entry: string) => entry.trim())
       .filter(Boolean),

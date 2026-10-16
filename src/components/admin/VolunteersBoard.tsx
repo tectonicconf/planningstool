@@ -50,6 +50,12 @@ function volunteerHasOpenAvailability(volunteer: VolunteerRow): boolean {
   });
 }
 
+// A single flat color on purpose — this used to turn grey when a slot was
+// already covered by an assigned shift, but once shift-type preference
+// badges (below) started using a different color per role category right
+// next to these, two unrelated color systems on the same card read as one
+// confusing one. The occupied/open distinction is kept (it's still useful),
+// just via a strikethrough instead of a second color.
 function AvailabilityBadges({ volunteer }: { volunteer: VolunteerRow }) {
   if (volunteer.availability.length === 0) {
     return <span className="text-slate-400">—</span>;
@@ -70,11 +76,37 @@ function AvailabilityBadges({ volunteer }: { volunteer: VolunteerRow }) {
           <span
             key={raw}
             title={occupied ? "Already covered by an assigned shift" : "Still open"}
-            className={`rounded px-1.5 py-0.5 text-xs font-medium ${
-              occupied ? "bg-slate-100 text-slate-400" : "bg-blue-100 text-blue-700"
+            className={`rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-700 ${
+              occupied ? "line-through opacity-50" : ""
             }`}
           >
             {label}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+// Same layout as AvailabilityBadges, but colored per shift type (the same
+// ROLE_STYLES used on Planning/Timeline) so a preference badge reads as
+// "this role category", not as another occupied/open signal.
+function ShiftPreferenceBadges({ volunteer }: { volunteer: VolunteerRow }) {
+  if (volunteer.shiftPreferences.length === 0) {
+    return <span className="text-slate-400">—</span>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {volunteer.shiftPreferences.map((role) => {
+        const style = ROLE_STYLES[role] ?? DEFAULT_ROLE_STYLE;
+
+        return (
+          <span
+            key={role}
+            className={`rounded px-1.5 py-0.5 text-xs font-medium ${style.badgeClassName}`}
+          >
+            {role}
           </span>
         );
       })}
@@ -125,6 +157,9 @@ function VolunteerAssignmentsList({
             key={assignment.assignmentId}
             className="flex flex-col gap-2 rounded-lg border border-slate-100 bg-slate-50 px-2 py-1.5"
           >
+            {assignment.shiftTitle && (
+              <p className="text-xs font-semibold text-slate-700">{assignment.shiftTitle}</p>
+            )}
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-slate-600">
                 {formatDate(assignment.date)} · {assignment.startTime}–
@@ -138,7 +173,10 @@ function VolunteerAssignmentsList({
                   </span>
                 )}
               </span>
-              <span className="text-slate-400">{assignment.location}</span>
+              <span className="text-slate-400">
+                {assignment.location}
+                {assignment.room && ` · ${assignment.room}`}
+              </span>
               <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${style.badgeClassName}`}>
                 {assignment.roleCategory}
               </span>
@@ -158,6 +196,12 @@ function VolunteerAssignmentsList({
                 </button>
               )}
             </div>
+            {assignment.shiftLead && (
+              <div className="inline-flex w-fit items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-[11px] text-slate-600">
+                <span className="font-semibold text-slate-500">Shift lead</span>
+                {assignment.shiftLead}
+              </div>
+            )}
             {assignment.status === "confirmed" &&
               (readOnly ? (
                 <span
@@ -352,6 +396,9 @@ export function VolunteersBoard({
                   endTime: shift.endTime,
                   location: shift.location,
                   roleCategory: shift.roleCategory,
+                  shiftTitle: shift.shiftTitle,
+                  room: shift.room,
+                  shiftLead: shift.shiftLead,
                   status: "pending" as const,
                   checkedInAt: null,
                 },
@@ -449,13 +496,14 @@ export function VolunteersBoard({
         </span>
       </div>
 
-      <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
-        Availabilities:
+      <p className="mt-3 flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
         <span className="inline-flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-slate-300" /> light grey = already taken
+          <span className="h-2 w-2 rounded-full bg-blue-400" /> blue = availability
+          (struck through = already covered by an assigned shift)
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-blue-400" /> blue = still open
+          <span className="h-2 w-2 rounded-full bg-slate-400" /> colored = shift-type
+          preference (same colors as Planning/Timeline)
         </span>
         <span className="inline-flex items-center gap-1">
           <span className="h-2 w-2 rounded-full bg-orange-400" /> orange = already at
@@ -531,7 +579,13 @@ export function VolunteersBoard({
                   </dl>
 
                   <div className="mt-3">
+                    <p className="mb-1 text-xs font-medium text-slate-400">Availability</p>
                     <AvailabilityBadges volunteer={volunteer} />
+                  </div>
+
+                  <div className="mt-3">
+                    <p className="mb-1 text-xs font-medium text-slate-400">Shift preference</p>
+                    <ShiftPreferenceBadges volunteer={volunteer} />
                   </div>
                 </div>
 
@@ -568,6 +622,7 @@ export function VolunteersBoard({
                     phoneNumber: input.phoneNumber.replace(/[\s+]/g, ""),
                     association: input.association,
                     availability: input.availability,
+                    shiftPreferences: input.shiftPreferences,
                     magicLinkToken: result.data.magicLinkToken,
                     shiftCountPreference: input.shiftCountPreference,
                     quizCompleted: false,
@@ -687,9 +742,15 @@ export function VolunteersBoard({
                     }`}
                   >
                     <span>
+                      {shift.shiftTitle && (
+                        <span className="mr-1 font-semibold text-slate-700">
+                          {shift.shiftTitle}
+                        </span>
+                      )}
                       {formatDate(shift.date)} · {shift.startTime}–{shift.endTime}
                       <span className="ml-2 text-xs text-slate-400">
-                        {shift.location} · {shift.roleCategory}
+                        {shift.location}
+                        {shift.room && ` · ${shift.room}`} · {shift.roleCategory}
                       </span>
                     </span>
                     <span className="text-indigo-600">+</span>
