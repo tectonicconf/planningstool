@@ -362,7 +362,7 @@ export function ShiftDashboard({
                 src={partner.logoUrl}
                 alt={partner.name}
                 title={partner.name}
-                className="h-14 w-auto max-w-[200px] object-contain opacity-60 grayscale transition-opacity hover:opacity-90"
+                className="h-14 w-auto max-w-[200px] object-contain opacity-90 invert mix-blend-screen transition-opacity hover:opacity-100"
               />
             ))}
           </div>
@@ -421,8 +421,8 @@ export function ShiftDashboard({
             <h3 className="text-xl font-bold">Sad to see you go 😢</h3>
             <p className="mt-2 text-sm text-white/70">
               {templateDeclineTarget.every((block) => block.status === "confirmed")
-                ? `Are you sure you want to cancel all ${templateDeclineTarget.length} blocks of this template? We'll look for someone to cover them instead.`
-                : `Are you sure you want to decline the remaining ${templateDeclineTarget.length} block${templateDeclineTarget.length === 1 ? "" : "s"} of this template? Blocks you already accepted stay as they are.`}
+                ? `Are you sure you want to cancel all ${templateDeclineTarget.length} blocks of this rotation shift? We'll look for someone to cover them instead.`
+                : `Are you sure you want to decline the remaining ${templateDeclineTarget.length} block${templateDeclineTarget.length === 1 ? "" : "s"} of this rotation shift? Blocks you already accepted stay as they are.`}
             </p>
             <div className="mt-6 flex gap-3">
               <button

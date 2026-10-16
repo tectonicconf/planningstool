@@ -21,6 +21,7 @@ export type AdminTables = {
     shift_lead: string | null;
     shift: string | null;
     room: string | null;
+    volunteer: string | null;
   }[];
   assignmentRows: {
     id: number;
@@ -55,7 +56,7 @@ export async function getAdminTables(): Promise<AdminTables> {
       supabaseAdmin
         .from("shifts")
         .select(
-          "id, date, end_date, day, slot, start_time, end_time, hours, location, role_category, volunteers_needed, event_context, shift_lead, shift, room",
+          "id, date, end_date, day, slot, start_time, end_time, hours, location, role_category, volunteers_needed, event_context, shift_lead, shift, room, volunteer",
         )
         .order("date")
         .order("start_time"),
@@ -75,4 +76,26 @@ export async function getAdminTables(): Promise<AdminTables> {
     assignmentRows: assignmentRows ?? [],
     volunteerRows: volunteerRows ?? [],
   };
+}
+
+// Shifts sharing the exact same (non-empty) `shift.volunteer` value were
+// split into back-to-back blocks meant to be combined into one "template" —
+// see Shift.templateKey in src/lib/shifts.ts for the volunteer-facing side
+// of the same idea. Here it's a flat set of shift ids so admin views can
+// badge any shift that's part of one, independent of who (if anyone) is
+// currently assigned to it.
+export function getTemplateShiftIds(shiftRows: AdminTables["shiftRows"]): Set<string> {
+  const countByKey = new Map<string, number>();
+  for (const shift of shiftRows) {
+    if (!shift.volunteer) continue;
+    countByKey.set(shift.volunteer, (countByKey.get(shift.volunteer) ?? 0) + 1);
+  }
+
+  const ids = new Set<string>();
+  for (const shift of shiftRows) {
+    if (shift.volunteer && (countByKey.get(shift.volunteer) ?? 0) > 1) {
+      ids.add(shift.id);
+    }
+  }
+  return ids;
 }

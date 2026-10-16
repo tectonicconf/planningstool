@@ -302,6 +302,7 @@ export function TimelineBoard({
                   shiftTitle: shift.shiftTitle,
                   room: shift.room,
                   shiftLead: shift.shiftLead,
+                  isTemplate: shift.isTemplate,
                   status: "pending" as const,
                   checkedInAt: null,
                 },
@@ -472,9 +473,22 @@ export function TimelineBoard({
                   className="flex cursor-pointer border-b border-slate-50 hover:bg-slate-50"
                 >
                   <div className="hidden w-64 shrink-0 px-3 py-3 sm:block">
-                    <p className="truncate text-sm font-semibold text-slate-900">
-                      {shift.shiftTitle || shift.roleCategory}
-                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="truncate text-sm font-semibold text-slate-900">
+                        {shift.shiftTitle || shift.roleCategory}
+                      </p>
+                      <span className="shrink-0 font-mono text-[10px] text-slate-400">
+                        {shift.id}
+                      </span>
+                      {shift.isTemplate && (
+                        <span
+                          title="Part of a multi-block template — see the volunteer's Rotation shift"
+                          className="shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700"
+                        >
+                          Template
+                        </span>
+                      )}
+                    </div>
                     <p className="truncate text-xs text-slate-500">
                       {shift.location}
                       {shift.room && ` · ${shift.room}`} · {shift.startTime}–{shift.endTime}
@@ -534,6 +548,12 @@ export function TimelineBoard({
                         <span>{style.emoji}</span>
                         {shift.roleCategory}
                       </span>
+                      <span className="font-mono text-[10px] text-slate-400">{shift.id}</span>
+                      {shift.isTemplate && (
+                        <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+                          Template
+                        </span>
+                      )}
                       {shift.shiftLead && <span>Shift lead: {shift.shiftLead}</span>}
                       {shift.eventContext && <span>Context: {shift.eventContext}</span>}
                     </div>

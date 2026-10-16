@@ -311,6 +311,7 @@ export function PlanningBoard({
                   shiftTitle: shift.shiftTitle,
                   room: shift.room,
                   shiftLead: shift.shiftLead,
+                  isTemplate: shift.isTemplate,
                   status: "pending" as const,
                   checkedInAt: null,
                 },
@@ -537,9 +538,20 @@ export function PlanningBoard({
                             className={`rounded-lg border p-3 ${style.cardClassName}`}
                           >
                             <div className="flex items-start justify-between">
-                              <div className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ${style.badgeClassName}`}>
-                                <span>{style.emoji}</span>
-                                {shift.roleCategory}
+                              <div className="flex items-center gap-2">
+                                <div className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ${style.badgeClassName}`}>
+                                  <span>{style.emoji}</span>
+                                  {shift.roleCategory}
+                                </div>
+                                <span className="font-mono text-[10px] text-slate-400">{shift.id}</span>
+                                {shift.isTemplate && (
+                                  <span
+                                    title="Part of a multi-block template — see the volunteer's Rotation shift"
+                                    className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700"
+                                  >
+                                    Template
+                                  </span>
+                                )}
                               </div>
                               {!readOnly && (
                                 <button
@@ -700,6 +712,7 @@ export function PlanningBoard({
                   shiftLead: input.shiftLead,
                   shiftTitle: "",
                   room: "",
+                  isTemplate: false,
                   assignments: [],
                 },
               ]);

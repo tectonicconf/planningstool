@@ -1,4 +1,4 @@
-import { getAdminTables, type AdminTables } from "@/lib/adminData";
+import { getAdminTables, getTemplateShiftIds, type AdminTables } from "@/lib/adminData";
 
 export type VolunteerAssignmentStatus = "pending" | "confirmed" | "cancelled";
 
@@ -15,6 +15,7 @@ export type VolunteerAssignment = {
   shiftTitle: string;
   room: string;
   shiftLead: string;
+  isTemplate: boolean;
   status: VolunteerAssignmentStatus;
   checkedInAt: string | null;
 };
@@ -42,6 +43,7 @@ export async function getVolunteersWithAssignments(
   const { volunteerRows, assignmentRows, shiftRows } = data ?? (await getAdminTables());
 
   const shiftsById = new Map(shiftRows.map((s) => [s.id, s]));
+  const templateShiftIds = getTemplateShiftIds(shiftRows);
 
   const assignmentsByVolunteer = new Map<string, VolunteerAssignment[]>();
 
@@ -63,6 +65,7 @@ export async function getVolunteersWithAssignments(
       shiftTitle: shift.shift ?? "",
       room: shift.room ?? "",
       shiftLead: shift.shift_lead ?? "",
+      isTemplate: templateShiftIds.has(shift.id),
       status: assignment.status,
       checkedInAt: assignment.checked_in_at,
     });

@@ -149,9 +149,20 @@ function VolunteerAssignmentsList({
             key={assignment.assignmentId}
             className="flex flex-col gap-2 rounded-lg border border-slate-100 bg-slate-50 px-2 py-1.5"
           >
-            {assignment.shiftTitle && (
-              <p className="text-xs font-semibold text-slate-700">{assignment.shiftTitle}</p>
-            )}
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[10px] text-slate-400">{assignment.shiftId}</span>
+              {assignment.shiftTitle && (
+                <p className="text-xs font-semibold text-slate-700">{assignment.shiftTitle}</p>
+              )}
+              {assignment.isTemplate && (
+                <span
+                  title="Part of a multi-block template — see the volunteer's Rotation shift"
+                  className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700"
+                >
+                  Template
+                </span>
+              )}
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-slate-600">
                 {formatDate(assignment.date)} · {assignment.startTime}–
@@ -391,6 +402,7 @@ export function VolunteersBoard({
                   shiftTitle: shift.shiftTitle,
                   room: shift.room,
                   shiftLead: shift.shiftLead,
+                  isTemplate: shift.isTemplate,
                   status: "pending" as const,
                   checkedInAt: null,
                 },

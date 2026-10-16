@@ -1,4 +1,4 @@
-import { getAdminTables, type AdminTables } from "@/lib/adminData";
+import { getAdminTables, getTemplateShiftIds, type AdminTables } from "@/lib/adminData";
 
 export type PlanningAssignment = {
   assignmentId: number;
@@ -24,6 +24,9 @@ export type PlanningShift = {
   shiftLead: string;
   shiftTitle: string;
   room: string;
+  // True when this shift shares its `shift.volunteer` grouping key with at
+  // least one other shift — see getTemplateShiftIds in adminData.ts.
+  isTemplate: boolean;
   assignments: PlanningAssignment[];
 };
 
@@ -31,6 +34,7 @@ export async function getPlanningShifts(
   data?: AdminTables,
 ): Promise<PlanningShift[]> {
   const { shiftRows, assignmentRows, volunteerRows } = data ?? (await getAdminTables());
+  const templateShiftIds = getTemplateShiftIds(shiftRows);
 
   const namesById = new Map(
     volunteerRows.map((v) => [v.id, `${v.first_name} ${v.last_name}`.trim()]),
@@ -69,6 +73,7 @@ export async function getPlanningShifts(
     shiftLead: shift.shift_lead ?? "",
     shiftTitle: shift.shift ?? "",
     room: shift.room ?? "",
+    isTemplate: templateShiftIds.has(shift.id),
     assignments: assignmentsByShift.get(shift.id) ?? [],
   }));
 }
@@ -85,12 +90,14 @@ export type ShiftDirectoryEntry = {
   shiftTitle: string;
   room: string;
   shiftLead: string;
+  isTemplate: boolean;
 };
 
 export async function getShiftDirectory(
   data?: AdminTables,
 ): Promise<ShiftDirectoryEntry[]> {
   const { shiftRows } = data ?? (await getAdminTables());
+  const templateShiftIds = getTemplateShiftIds(shiftRows);
 
   return shiftRows.map((shift) => ({
     id: shift.id,
@@ -104,5 +111,6 @@ export async function getShiftDirectory(
     shiftTitle: shift.shift ?? "",
     room: shift.room ?? "",
     shiftLead: shift.shift_lead ?? "",
+    isTemplate: templateShiftIds.has(shift.id),
   }));
 }

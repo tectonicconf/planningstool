@@ -61,7 +61,7 @@ export function TemplateCard({
     >
       <div className="flex items-center justify-between gap-3">
         <span className="text-xs font-bold uppercase tracking-wide text-white/50">
-          Template · {blocks.length} blocks
+          Rotation shift · {blocks.length} blocks
         </span>
         <span
           className={`shrink-0 rounded-full px-3 py-1 text-xs uppercase tracking-wide ${
@@ -122,8 +122,8 @@ export function TemplateCard({
         <div className="mt-4" onClick={(event) => event.stopPropagation()}>
           {status === "partial" && (
             <p className="mb-3 rounded-xl bg-amber-500/15 px-3 py-2 text-sm text-amber-100">
-              You only accepted part of this template. Please confirm the rest
-              so the day is fully covered.
+              You only accepted part of this rotation shift. Please confirm
+              the rest so the day is fully covered.
             </p>
           )}
           <div className="flex gap-3">
@@ -149,7 +149,7 @@ export function TemplateCard({
           <p className="mt-2 text-center text-xs text-white/50">
             {status === "partial"
               ? "Blocks you already accepted stay as they are."
-              : "One tap confirms the whole template."}
+              : "One tap confirms the whole rotation shift."}
           </p>
         </div>
       )}

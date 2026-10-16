@@ -100,7 +100,7 @@ export function TemplateDetail({
 
         <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="text-2xl font-bold">{formatShiftDate(range.date)}</h1>
-          <span className="text-sm text-white/60">Template · {blocks.length} blocks</span>
+          <span className="text-sm text-white/60">Rotation shift · {blocks.length} blocks</span>
         </div>
 
         <p className="mt-2 text-sm text-white/70">
