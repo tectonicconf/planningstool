@@ -24,7 +24,7 @@ export default function FaqPage() {
   }, [query, category]);
 
   return (
-    <div className="min-h-screen bg-[#050A2B] px-6 py-10 text-white">
+    <div className="min-h-screen bg-[#050A2B] px-6 pt-24 pb-10 text-white">
       <div className="mx-auto max-w-2xl">
         <h1 className="text-3xl font-bold">FAQ</h1>
         <p className="mt-2 text-white/70">

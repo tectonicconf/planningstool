@@ -47,7 +47,7 @@ export function PortalNav() {
   }
 
   return (
-    <header className="sticky top-0 z-30 px-4 pt-3">
+    <header className="sticky top-0 z-30 px-4 pt-3 -mt-16">
       <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 rounded-full border border-white/25 bg-[#0D1341]/45 px-5 py-2 shadow-[0_9px_28px_-12px_rgba(4,16,72,0.8)] backdrop-blur-xl backdrop-saturate-150">
         {/* Dropped below the sm breakpoint so the tabs have room to breathe
             on phone-width screens instead of forcing a horizontal scroll. */}

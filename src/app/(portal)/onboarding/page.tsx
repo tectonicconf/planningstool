@@ -177,7 +177,16 @@ function Check() {
 
 export default function OnboardingPage() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#050A2B] px-6 py-10 text-white">
+    <div className="relative min-h-screen overflow-hidden bg-[#050A2B] px-6 pt-24 pb-10 text-white">
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 60% 40% at 10% 0%, rgba(17,65,233,0.38), transparent 60%)," +
+            "radial-gradient(ellipse 50% 35% at 100% 60%, rgba(118,49,220,0.22), transparent 60%)",
+        }}
+      />
+
       <div className="relative mx-auto flex max-w-2xl flex-col gap-12">
         {/* Hero */}
         <header>

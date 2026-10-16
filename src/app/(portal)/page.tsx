@@ -46,13 +46,24 @@ export default function Home() {
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#050A2B] font-sans text-white">
+      {/* ambient glow */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 60% 50% at 12% 95%, rgba(17,65,233,0.55), transparent 60%)," +
+            "radial-gradient(ellipse 55% 45% at 90% 5%, rgba(118,49,220,0.32), transparent 60%)," +
+            "linear-gradient(180deg, #0D1341 0%, #050A2B 55%, #03061C 100%)",
+        }}
+      />
+
       {/* decorative curved plate lines */}
       <div className="pointer-events-none absolute -left-56 -top-56 h-[560px] w-[560px] rotate-12 rounded-full border-t-2 border-blue-400/25" />
       <div className="pointer-events-none absolute -right-64 top-1/3 h-[620px] w-[620px] -rotate-12 rounded-full border-l-2 border-white/15" />
       <div className="pointer-events-none absolute -bottom-72 -left-24 h-[520px] w-[700px] rounded-full border-t-2 border-white/15" />
 
       {/* main */}
-      <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
+      <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 pt-24 pb-16 text-center">
         <p className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">
           TECTONIC 2026 · OCTOBER 21 2026 · GHENT, BELGIUM
         </p>
