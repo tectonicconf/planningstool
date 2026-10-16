@@ -713,6 +713,7 @@ export function PlanningBoard({
                   shiftTitle: "",
                   room: "",
                   isTemplate: false,
+                  templateKey: "",
                   assignments: [],
                 },
               ]);

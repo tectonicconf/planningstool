@@ -27,6 +27,10 @@ export type PlanningShift = {
   // True when this shift shares its `shift.volunteer` grouping key with at
   // least one other shift — see getTemplateShiftIds in adminData.ts.
   isTemplate: boolean;
+  // The raw grouping key itself, but only when isTemplate is true — "" for
+  // a standalone shift even if its own `shift.volunteer` column happens to
+  // hold some unshared value.
+  templateKey: string;
   assignments: PlanningAssignment[];
 };
 
@@ -74,8 +78,43 @@ export async function getPlanningShifts(
     shiftTitle: shift.shift ?? "",
     room: shift.room ?? "",
     isTemplate: templateShiftIds.has(shift.id),
+    templateKey: templateShiftIds.has(shift.id) ? (shift.volunteer ?? "") : "",
     assignments: assignmentsByShift.get(shift.id) ?? [],
   }));
+}
+
+export type TemplateGroup = {
+  key: string;
+  blocks: PlanningShift[];
+};
+
+// All shifts grouped into their templates — the admin-side view of the same
+// grouping the volunteer portal does per-volunteer (see ShiftDashboard.tsx's
+// `entries`), except here it's every template in the system regardless of
+// who (if anyone) is currently assigned to its blocks.
+export async function getTemplateGroups(data?: AdminTables): Promise<TemplateGroup[]> {
+  const shifts = await getPlanningShifts(data);
+
+  const byKey = new Map<string, PlanningShift[]>();
+  for (const shift of shifts) {
+    if (!shift.isTemplate) continue;
+    const list = byKey.get(shift.templateKey) ?? [];
+    list.push(shift);
+    byKey.set(shift.templateKey, list);
+  }
+
+  return Array.from(byKey.entries())
+    .map(([key, blocks]) => ({
+      key,
+      blocks: blocks.sort(
+        (a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`),
+      ),
+    }))
+    .sort((a, b) =>
+      `${a.blocks[0].date}${a.blocks[0].startTime}`.localeCompare(
+        `${b.blocks[0].date}${b.blocks[0].startTime}`,
+      ),
+    );
 }
 
 export type ShiftDirectoryEntry = {
