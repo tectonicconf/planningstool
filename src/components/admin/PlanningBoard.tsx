@@ -24,6 +24,7 @@ import {
   TIME_SLOTS,
   deriveSlotFromStartTime,
 } from "@/lib/constants";
+import { splitShiftLeads, formatShiftLead } from "@/lib/shiftLead";
 
 function formatShortDate(date: string) {
   return new Date(`${date}T00:00:00`).toLocaleDateString("en-GB", {
@@ -122,7 +123,7 @@ export function PlanningBoard({
   );
 
   const shiftLeads = useMemo(
-    () => Array.from(new Set(shifts.map((s) => s.shiftLead).filter(Boolean))).sort(),
+    () => Array.from(new Set(shifts.flatMap((s) => splitShiftLeads(s.shiftLead)))).sort(),
     [shifts],
   );
 
@@ -152,7 +153,8 @@ export function PlanningBoard({
       if (locationFilter !== "all" && shift.location !== locationFilter) return false;
       if (roleFilter !== "all" && shift.roleCategory !== roleFilter) return false;
       if (slotFilter !== "all" && shift.slot !== slotFilter) return false;
-      if (shiftLeadFilter !== "all" && shift.shiftLead !== shiftLeadFilter) return false;
+      if (shiftLeadFilter !== "all" && !splitShiftLeads(shift.shiftLead).includes(shiftLeadFilter))
+        return false;
       if (
         query &&
         !shift.assignments.some((a) => a.volunteerName.toLowerCase().includes(query))
@@ -584,7 +586,7 @@ export function PlanningBoard({
                             {shift.shiftLead && (
                               <div className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-[11px] text-slate-600">
                                 <span className="font-semibold text-slate-500">Shift lead</span>
-                                {shift.shiftLead}
+                                {formatShiftLead(shift.shiftLead)}
                               </div>
                             )}
 

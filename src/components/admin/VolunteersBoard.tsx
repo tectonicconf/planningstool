@@ -26,6 +26,7 @@ import {
   AVAILABILITY_OPTIONS,
   availabilityValue,
 } from "@/lib/constants";
+import { formatShiftLead } from "@/lib/shiftLead";
 
 // AVAILABILITY_OPTIONS already has a nice label for every (date, slot) —
 // used to display a short-form entry ("2026-10-20 Morning", from a
@@ -202,7 +203,7 @@ function VolunteerAssignmentsList({
             {assignment.shiftLead && (
               <div className="inline-flex w-fit items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-[11px] text-slate-600">
                 <span className="font-semibold text-slate-500">Shift lead</span>
-                {assignment.shiftLead}
+                {formatShiftLead(assignment.shiftLead)}
               </div>
             )}
             {assignment.status === "confirmed" &&

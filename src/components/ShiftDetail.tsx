@@ -4,6 +4,7 @@ import type { Shift } from "@/lib/shifts";
 import { formatShiftDate, STATUS_LABELS, STATUS_STYLES } from "@/components/ShiftCard";
 import { ROLE_STYLES, DEFAULT_ROLE_STYLE } from "@/lib/constants";
 import { ShiftBlockBody } from "@/components/ShiftBlockBody";
+import { formatShiftLead } from "@/lib/shiftLead";
 
 export function ShiftDetail({
   shift,
@@ -42,7 +43,9 @@ export function ShiftDetail({
         <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="text-2xl font-bold">{shift.shiftTitle || shift.shiftType}</h1>
           {shift.shiftLead && (
-            <span className="text-sm text-white/60">Shift lead: {shift.shiftLead}</span>
+            <span className="text-sm text-white/60">
+              Shift lead: {formatShiftLead(shift.shiftLead)}
+            </span>
           )}
         </div>
 

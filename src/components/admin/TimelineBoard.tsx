@@ -16,6 +16,7 @@ import {
 } from "@/lib/shiftEligibility";
 import { Modal } from "@/components/Modal";
 import { ROLE_CATEGORIES, ROLE_STYLES, DEFAULT_ROLE_STYLE } from "@/lib/constants";
+import { splitShiftLeads, formatShiftLead } from "@/lib/shiftLead";
 
 function formatShortDate(date: string) {
   return new Date(`${date}T00:00:00`).toLocaleDateString("en-GB", {
@@ -73,9 +74,11 @@ function minutesFromDayStart(dayDate: string, date: string, time: string): numbe
 export function TimelineBoard({
   initialShifts,
   volunteers: initialVolunteers,
+  readOnly = false,
 }: {
   initialShifts: PlanningShift[];
   volunteers: VolunteerRow[];
+  readOnly?: boolean;
 }) {
   const [shifts, setShifts] = useState(initialShifts);
   const [volunteers, setVolunteers] = useState(initialVolunteers);
@@ -106,7 +109,7 @@ export function TimelineBoard({
   const activeDate = dates.includes(selectedDate) ? selectedDate : dates[0] ?? "";
 
   const shiftLeads = useMemo(
-    () => Array.from(new Set(shifts.map((s) => s.shiftLead).filter(Boolean))).sort(),
+    () => Array.from(new Set(shifts.flatMap((s) => splitShiftLeads(s.shiftLead)))).sort(),
     [shifts],
   );
 
@@ -127,7 +130,8 @@ export function TimelineBoard({
     return shiftsForDate
       .filter((shift) => {
         if (roleFilter !== "all" && shift.roleCategory !== roleFilter) return false;
-        if (shiftLeadFilter !== "all" && shift.shiftLead !== shiftLeadFilter) return false;
+        if (shiftLeadFilter !== "all" && !splitShiftLeads(shift.shiftLead).includes(shiftLeadFilter))
+          return false;
         return true;
       })
       .sort(
@@ -554,7 +558,7 @@ export function TimelineBoard({
                           Template
                         </span>
                       )}
-                      {shift.shiftLead && <span>Shift lead: {shift.shiftLead}</span>}
+                      {shift.shiftLead && <span>Shift lead: {formatShiftLead(shift.shiftLead)}</span>}
                       {shift.eventContext && <span>Context: {shift.eventContext}</span>}
                     </div>
 
@@ -576,34 +580,47 @@ export function TimelineBoard({
                             >
                               {assignment.status === "confirmed" ? "Confirmed" : "Pending"}
                             </span>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveVolunteer(shift, assignment.assignmentId)}
-                              disabled={busyKey === `remove-${assignment.assignmentId}`}
-                              className="rounded bg-red-50 px-1.5 py-0.5 text-red-600 hover:bg-red-100 disabled:opacity-50"
-                            >
-                              Remove
-                            </button>
+                            {!readOnly && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveVolunteer(shift, assignment.assignmentId)}
+                                disabled={busyKey === `remove-${assignment.assignmentId}`}
+                                className="rounded bg-red-50 px-1.5 py-0.5 text-red-600 hover:bg-red-100 disabled:opacity-50"
+                              >
+                                Remove
+                              </button>
+                            )}
                           </div>
-                          {assignment.status === "confirmed" && (
-                            <button
-                              type="button"
-                              onClick={() => handleToggleCheckedIn(shift, assignment)}
-                              disabled={busyKey === `checkin-${assignment.assignmentId}`}
-                              title={
-                                assignment.checkedInAt
-                                  ? `Checked in at ${new Date(assignment.checkedInAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
-                                  : "Mark as checked in"
-                              }
-                              className={`w-full rounded px-2 py-1 text-center font-medium disabled:opacity-50 ${
-                                assignment.checkedInAt
-                                  ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                              }`}
-                            >
-                              {assignment.checkedInAt ? "Checked in ✓" : "Check in"}
-                            </button>
-                          )}
+                          {assignment.status === "confirmed" &&
+                            (readOnly ? (
+                              <span
+                                className={`w-full rounded px-2 py-1 text-center font-medium ${
+                                  assignment.checkedInAt
+                                    ? "bg-emerald-100 text-emerald-700"
+                                    : "bg-slate-100 text-slate-600"
+                                }`}
+                              >
+                                {assignment.checkedInAt ? "Checked in ✓" : "Not checked in"}
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleToggleCheckedIn(shift, assignment)}
+                                disabled={busyKey === `checkin-${assignment.assignmentId}`}
+                                title={
+                                  assignment.checkedInAt
+                                    ? `Checked in at ${new Date(assignment.checkedInAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
+                                    : "Mark as checked in"
+                                }
+                                className={`w-full rounded px-2 py-1 text-center font-medium disabled:opacity-50 ${
+                                  assignment.checkedInAt
+                                    ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                }`}
+                              >
+                                {assignment.checkedInAt ? "Checked in ✓" : "Check in"}
+                              </button>
+                            ))}
                         </div>
                       ))}
 
@@ -614,13 +631,15 @@ export function TimelineBoard({
                       )}
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setAddVolunteerShiftId(shift.id)}
-                      className="mt-3 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
-                    >
-                      + Add volunteer
-                    </button>
+                    {!readOnly && (
+                      <button
+                        type="button"
+                        onClick={() => setAddVolunteerShiftId(shift.id)}
+                        className="mt-3 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                      >
+                        + Add volunteer
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -646,7 +665,7 @@ export function TimelineBoard({
         </div>
       </div>
 
-      {addVolunteerShift && (
+      {!readOnly && addVolunteerShift && (
         <Modal
           onClose={() => {
             setAddVolunteerShiftId(null);
