@@ -1,7 +1,8 @@
 // Student associations/schools whose members are volunteering alongside
 // Tectonic's own crew — shown as a logo strip on the volunteer dashboard
 // ("Crewing alongside you"). Logos are hotlinked directly from each
-// organization's own site rather than mirrored here.
+// organization's own site rather than mirrored here, except where a
+// locally-supplied file renders better (see VEK below).
 export type CrewPartner = {
   name: string;
   logoUrl: string;
@@ -27,6 +28,6 @@ export const CREW_PARTNERS: CrewPartner[] = [
   },
   {
     name: "VEK Investment Club",
-    logoUrl: "https://www.vek.be/web/image/website/1/logo?unique=dffd29f",
+    logoUrl: "/vek-logo.png",
   },
 ];
