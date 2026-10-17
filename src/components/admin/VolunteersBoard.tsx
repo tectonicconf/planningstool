@@ -764,10 +764,15 @@ export function VolunteersBoard({
             )}
 
             {hasReachedShiftPreference(assignShiftVolunteer) && (
-              <p className="mt-2 rounded-lg bg-orange-50 px-2 py-1.5 text-xs text-orange-700">
+              <p className="mt-2 rounded-lg bg-slate-50 px-2 py-1.5 text-xs text-slate-600">
                 Already has their preferred number of shifts ({assignShiftVolunteer.shiftCountPreference}) — try not to assign more unless necessary.
               </p>
             )}
+
+            <p className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">
+              <span className="h-3 w-3 shrink-0 rounded bg-orange-50 border border-orange-200" />{" "}
+              orange background = this shift already has its needed number of volunteers
+            </p>
 
             <div className="mt-3 max-h-64 overflow-y-auto">
               {shiftDirectory
@@ -803,35 +808,39 @@ export function VolunteersBoard({
                   );
                 })
                 .slice(0, 30)
-                .map((shift) => (
-                  <button
-                    key={shift.id}
-                    type="button"
-                    onClick={() =>
-                      handleAssignShift(assignShiftVolunteer.id, shift, assignShiftOverride)
-                    }
-                    disabled={busyKey === `assign-${assignShiftVolunteer.id}-${shift.id}`}
-                    className={`flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm disabled:opacity-50 ${
-                      hasReachedShiftPreference(assignShiftVolunteer)
-                        ? "bg-orange-50 hover:bg-orange-100"
-                        : "hover:bg-slate-50"
-                    }`}
-                  >
-                    <span>
-                      {shift.shiftTitle && (
-                        <span className="mr-1 font-semibold text-slate-700">
-                          {shift.shiftTitle}
+                .map((shift) => {
+                  const isFull = shift.assignedCount >= shift.volunteersNeeded;
+
+                  return (
+                    <button
+                      key={shift.id}
+                      type="button"
+                      onClick={() =>
+                        handleAssignShift(assignShiftVolunteer.id, shift, assignShiftOverride)
+                      }
+                      disabled={busyKey === `assign-${assignShiftVolunteer.id}-${shift.id}`}
+                      title={isFull ? "This shift already has its needed number of volunteers" : undefined}
+                      className={`flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm disabled:opacity-50 ${
+                        isFull ? "bg-orange-50 hover:bg-orange-100" : "hover:bg-slate-50"
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        {shift.shiftTitle && (
+                          <span className="font-semibold text-slate-700">
+                            {shift.shiftTitle}
+                          </span>
+                        )}
+                        {formatDate(shift.date)} · {shift.startTime}–{shift.endTime}
+                        <span className="text-xs text-slate-400">
+                          {shift.location}
+                          {shift.room && ` · ${shift.room}`} · {shift.roleCategory} ·{" "}
+                          {shift.assignedCount}/{shift.volunteersNeeded}
                         </span>
-                      )}
-                      {formatDate(shift.date)} · {shift.startTime}–{shift.endTime}
-                      <span className="ml-2 text-xs text-slate-400">
-                        {shift.location}
-                        {shift.room && ` · ${shift.room}`} · {shift.roleCategory}
                       </span>
-                    </span>
-                    <span className="text-indigo-600">+</span>
-                  </button>
-                ))}
+                      <span className="text-indigo-600">+</span>
+                    </button>
+                  );
+                })}
             </div>
           </div>
         </Modal>

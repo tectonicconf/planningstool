@@ -130,13 +130,27 @@ export type ShiftDirectoryEntry = {
   room: string;
   shiftLead: string;
   isTemplate: boolean;
+  volunteersNeeded: number;
+  // Count of active (pending/confirmed, non-cancelled) assignments — used to
+  // flag a shift that's already fully staffed when picking a shift for a
+  // specific volunteer (see VolunteersBoard's "+ Add to shift").
+  assignedCount: number;
 };
 
 export async function getShiftDirectory(
   data?: AdminTables,
 ): Promise<ShiftDirectoryEntry[]> {
-  const { shiftRows } = data ?? (await getAdminTables());
+  const { shiftRows, assignmentRows } = data ?? (await getAdminTables());
   const templateShiftIds = getTemplateShiftIds(shiftRows);
+
+  const assignedCountByShift = new Map<string, number>();
+  for (const assignment of assignmentRows) {
+    if (assignment.status === "cancelled") continue;
+    assignedCountByShift.set(
+      assignment.shift_id,
+      (assignedCountByShift.get(assignment.shift_id) ?? 0) + 1,
+    );
+  }
 
   return shiftRows.map((shift) => ({
     id: shift.id,
@@ -151,5 +165,7 @@ export async function getShiftDirectory(
     room: shift.room ?? "",
     shiftLead: shift.shift_lead ?? "",
     isTemplate: templateShiftIds.has(shift.id),
+    volunteersNeeded: shift.volunteers_needed,
+    assignedCount: assignedCountByShift.get(shift.id) ?? 0,
   }));
 }
