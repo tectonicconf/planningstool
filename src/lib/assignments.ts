@@ -8,6 +8,7 @@ import {
   sendTemplateConfirmationEmail,
   sendTemplateCancellationEmail,
 } from "@/lib/email";
+import { logActivity } from "@/lib/activityLog";
 
 export type AssignmentResponse = "accept" | "decline";
 
@@ -39,6 +40,16 @@ export async function respondToAssignment(
   const allowedCurrentStatuses =
     response === "accept" ? ["pending"] : ["pending", "confirmed"];
 
+  // Fetched before the update purely so the activity log can tell "declined
+  // an invite" (was pending) apart from "cancelled after accepting" (was
+  // confirmed) — the update itself only returns the new row.
+  const { data: before } = await supabaseAdmin
+    .from("assignments")
+    .select("status")
+    .eq("id", assignmentId)
+    .eq("volunteer_id", volunteer.id)
+    .maybeSingle();
+
   const { data, error } = await supabaseAdmin
     .from("assignments")
     .update({ status: newStatus, updated_at: new Date().toISOString() })
@@ -55,6 +66,15 @@ export async function respondToAssignment(
   if (!data) {
     return { ok: false, error: "This shift can no longer be updated." };
   }
+
+  await logActivity({
+    eventType:
+      response === "accept" ? "confirmed" : before?.status === "confirmed" ? "cancelled" : "declined",
+    actorType: "volunteer",
+    volunteerId: volunteer.id,
+    shiftId: data.shift_id,
+    assignmentId: data.id,
+  });
 
   if (response === "accept" && volunteer.email) {
     try {
@@ -132,6 +152,16 @@ export async function respondToAssignments(
   const allowedCurrentStatuses =
     response === "accept" ? ["pending"] : ["pending", "confirmed"];
 
+  // Same reasoning as the single-assignment version above — fetched before
+  // the update so a bulk decline (which can hit a mix of pending and
+  // already-confirmed blocks in one call) logs the correct event per block.
+  const { data: before } = await supabaseAdmin
+    .from("assignments")
+    .select("id, status")
+    .in("id", assignmentIds)
+    .eq("volunteer_id", volunteer.id);
+  const statusBeforeById = new Map((before ?? []).map((row) => [row.id, row.status]));
+
   const { data, error } = await supabaseAdmin
     .from("assignments")
     .update({ status: newStatus, updated_at: new Date().toISOString() })
@@ -149,6 +179,23 @@ export async function respondToAssignments(
   }
 
   const updatedIds = new Set(data.map((row) => row.id));
+
+  await Promise.all(
+    data.map((row) =>
+      logActivity({
+        eventType:
+          response === "accept"
+            ? "confirmed"
+            : statusBeforeById.get(row.id) === "confirmed"
+              ? "cancelled"
+              : "declined",
+        actorType: "volunteer",
+        volunteerId: volunteer.id,
+        shiftId: row.shift_id,
+        assignmentId: row.id,
+      }),
+    ),
+  );
 
   if (response === "accept" && volunteer.email) {
     try {

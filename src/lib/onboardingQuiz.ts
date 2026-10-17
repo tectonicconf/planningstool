@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabase";
+import { logActivity } from "@/lib/activityLog";
 
 export type CompleteQuizResult = { ok: true } | { ok: false; error: string };
 
@@ -27,6 +28,12 @@ export async function completeOnboardingQuiz(
   if (error) {
     return { ok: false, error: error.message };
   }
+
+  await logActivity({
+    eventType: "quiz_completed",
+    actorType: "volunteer",
+    volunteerId: volunteer.id,
+  });
 
   return { ok: true };
 }

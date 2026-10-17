@@ -3,6 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { supabaseAdmin } from "@/lib/supabase";
 import { isVolunteerAvailableForShift, hasOverlap } from "@/lib/shiftEligibility";
+import { logActivity } from "@/lib/activityLog";
 
 export type ActionResult<T = undefined> =
   | { ok: true; data: T }
@@ -216,12 +217,29 @@ export async function addVolunteerToShift(
     return { ok: false, error: error?.message ?? "Failed to add volunteer." };
   }
 
+  await logActivity({
+    eventType: "shift_assigned",
+    actorType: "admin",
+    volunteerId,
+    shiftId,
+    assignmentId: data.id,
+    note: options?.force ? "via override" : null,
+  });
+
   return { ok: true, data: { assignmentId: data.id } };
 }
 
 export async function removeAssignment(
   assignmentId: number,
 ): Promise<ActionResult> {
+  // Fetched before the delete — once the row's gone there's nothing left to
+  // read volunteer/shift ids off of for the log entry.
+  const { data: existing } = await supabaseAdmin
+    .from("assignments")
+    .select("volunteer_id, shift_id")
+    .eq("id", assignmentId)
+    .maybeSingle();
+
   const { error } = await supabaseAdmin
     .from("assignments")
     .delete()
@@ -229,6 +247,16 @@ export async function removeAssignment(
 
   if (error) {
     return { ok: false, error: error.message };
+  }
+
+  if (existing) {
+    await logActivity({
+      eventType: "removed",
+      actorType: "admin",
+      volunteerId: existing.volunteer_id,
+      shiftId: existing.shift_id,
+      assignmentId,
+    });
   }
 
   return { ok: true, data: undefined };
@@ -240,13 +268,25 @@ export async function setAssignmentCheckedIn(
 ): Promise<ActionResult<{ checkedInAt: string | null }>> {
   const checkedInAt = checkedIn ? new Date().toISOString() : null;
 
-  const { error } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from("assignments")
     .update({ checked_in_at: checkedInAt })
-    .eq("id", assignmentId);
+    .eq("id", assignmentId)
+    .select("volunteer_id, shift_id")
+    .maybeSingle();
 
   if (error) {
     return { ok: false, error: error.message };
+  }
+
+  if (data) {
+    await logActivity({
+      eventType: checkedIn ? "checked_in" : "checked_out",
+      actorType: "admin",
+      volunteerId: data.volunteer_id,
+      shiftId: data.shift_id,
+      assignmentId,
+    });
   }
 
   return { ok: true, data: { checkedInAt } };
