@@ -44,6 +44,9 @@ export async function createShift(input: {
   volunteersNeeded: number;
   eventContext: string;
   shiftLead: string;
+  shiftTitle?: string;
+  room?: string;
+  tectonicResponsible?: string;
 }): Promise<ActionResult<{ id: string }>> {
   const id = generateShiftId();
 
@@ -62,9 +65,12 @@ export async function createShift(input: {
     hours: input.hours,
     location: input.location,
     role_category: input.roleCategory,
-    shift_lead: input.shiftLead || null,
+    shift_lead: input.shiftLead.trim() || "TBC",
     volunteers_needed: input.volunteersNeeded,
     event_context: input.eventContext,
+    shift: input.shiftTitle || null,
+    room: input.room || null,
+    tectonic_responsible: input.tectonicResponsible?.trim() || "TBC",
   });
 
   if (error) {
@@ -72,6 +78,116 @@ export async function createShift(input: {
   }
 
   return { ok: true, data: { id } };
+}
+
+// Both used by ShiftsBoard's inline shift-lead pills and volunteers-needed
+// editor. Kept separate (rather than one generic "updateShift") since
+// they're triggered independently from different inline controls and have
+// different validation needs.
+export async function updateShiftLead(
+  shiftId: string,
+  shiftLead: string,
+): Promise<ActionResult<{ shiftLead: string }>> {
+  const value = shiftLead.trim() || "TBC";
+
+  const { error } = await supabaseAdmin
+    .from("shifts")
+    .update({ shift_lead: value })
+    .eq("id", shiftId);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  return { ok: true, data: { shiftLead: value } };
+}
+
+export async function updateVolunteersNeeded(
+  shiftId: string,
+  volunteersNeeded: number,
+): Promise<ActionResult<{ volunteersNeeded: number }>> {
+  if (!Number.isInteger(volunteersNeeded) || volunteersNeeded < 1) {
+    return { ok: false, error: "Volunteers needed must be a positive whole number." };
+  }
+
+  const { error } = await supabaseAdmin
+    .from("shifts")
+    .update({ volunteers_needed: volunteersNeeded })
+    .eq("id", shiftId);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  return { ok: true, data: { volunteersNeeded } };
+}
+
+export async function updateTectonicResponsible(
+  shiftId: string,
+  tectonicResponsible: string,
+): Promise<ActionResult<{ tectonicResponsible: string }>> {
+  const value = tectonicResponsible.trim() || "TBC";
+
+  const { error } = await supabaseAdmin
+    .from("shifts")
+    .update({ tectonic_responsible: value })
+    .eq("id", shiftId);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  return { ok: true, data: { tectonicResponsible: value } };
+}
+
+// Full-detail edit for an existing shift — everything the create form
+// collects except volunteersNeeded/shiftLead/tectonicResponsible, which have
+// their own dedicated inline controls and actions above.
+export async function updateShiftDetails(
+  shiftId: string,
+  input: {
+    shiftTitle: string;
+    date: string;
+    endDate: string;
+    slot: string;
+    startTime: string;
+    endTime: string;
+    hours: number;
+    location: string;
+    room: string;
+    roleCategory: string;
+    eventContext: string;
+    extraInfo: string;
+  },
+): Promise<ActionResult<{ day: string }>> {
+  const day = new Date(`${input.date}T00:00:00`).toLocaleDateString("en-US", {
+    weekday: "long",
+  });
+
+  const { error } = await supabaseAdmin
+    .from("shifts")
+    .update({
+      shift: input.shiftTitle || null,
+      date: input.date,
+      end_date: input.endDate,
+      day,
+      slot: input.slot,
+      start_time: input.startTime,
+      end_time: input.endTime,
+      hours: input.hours,
+      location: input.location,
+      room: input.room || null,
+      role_category: input.roleCategory,
+      event_context: input.eventContext,
+      extra_info: input.extraInfo || null,
+    })
+    .eq("id", shiftId);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  return { ok: true, data: { day } };
 }
 
 export async function deleteShift(shiftId: string): Promise<ActionResult> {

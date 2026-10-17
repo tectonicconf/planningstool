@@ -4,7 +4,7 @@ import type { Shift } from "@/lib/shifts";
 import { formatShiftDate, STATUS_LABELS, STATUS_STYLES } from "@/components/ShiftCard";
 import { ROLE_STYLES, DEFAULT_ROLE_STYLE } from "@/lib/constants";
 import { ShiftBlockBody } from "@/components/ShiftBlockBody";
-import { formatShiftLead } from "@/lib/shiftLead";
+import { formatShiftLead, hasTectonicResponsible } from "@/lib/shiftLead";
 
 export function ShiftDetail({
   shift,
@@ -45,6 +45,11 @@ export function ShiftDetail({
           {shift.shiftLead && (
             <span className="text-sm text-white/60">
               Shift lead: {formatShiftLead(shift.shiftLead)}
+            </span>
+          )}
+          {hasTectonicResponsible(shift.tectonicResponsible) && (
+            <span className="text-sm text-white/60">
+              Tectonic responsible: {shift.tectonicResponsible}
             </span>
           )}
         </div>

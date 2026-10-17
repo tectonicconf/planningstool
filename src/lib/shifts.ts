@@ -20,6 +20,7 @@ export type Shift = {
   shiftType: string;
   shiftTitle: string;
   shiftLead: string;
+  tectonicResponsible: string;
   extraInfo: string;
   // A short clarifying label for an awkward clock time (e.g. a shift that
   // runs 01:00-03:00 but is operationally "Tuesday night" rather than
@@ -52,7 +53,7 @@ export async function getShiftsForVolunteer(
   const { data: shiftRows, error: shiftsError } = await supabaseAdmin
     .from("shifts")
     .select(
-      "id, date, start_time, end_time, hours, location, role_category, room, shift, shift_lead, extra_info, volunteer, event_context",
+      "id, date, start_time, end_time, hours, location, role_category, room, shift, shift_lead, tectonic_responsible, extra_info, volunteer, event_context",
     )
     .in("id", shiftIds);
 
@@ -118,6 +119,7 @@ export async function getShiftsForVolunteer(
         shiftType: shift.role_category,
         shiftTitle: shift.shift ?? "",
         shiftLead: shift.shift_lead ?? "",
+        tectonicResponsible: shift.tectonic_responsible ?? "",
         extraInfo: shift.extra_info ?? "",
         eventContext: shift.event_context ?? "",
         status: assignment.status as ShiftStatus,

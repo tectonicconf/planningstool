@@ -19,9 +19,11 @@ export type AdminTables = {
     volunteers_needed: number;
     event_context: string | null;
     shift_lead: string | null;
+    tectonic_responsible: string | null;
     shift: string | null;
     room: string | null;
     volunteer: string | null;
+    extra_info: string | null;
   }[];
   assignmentRows: {
     id: number;
@@ -56,7 +58,7 @@ export async function getAdminTables(): Promise<AdminTables> {
       supabaseAdmin
         .from("shifts")
         .select(
-          "id, date, end_date, day, slot, start_time, end_time, hours, location, role_category, volunteers_needed, event_context, shift_lead, shift, room, volunteer",
+          "id, date, end_date, day, slot, start_time, end_time, hours, location, role_category, volunteers_needed, event_context, shift_lead, tectonic_responsible, shift, room, volunteer, extra_info",
         )
         .order("date")
         .order("start_time"),

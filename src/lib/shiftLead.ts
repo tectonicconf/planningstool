@@ -13,3 +13,12 @@ export function splitShiftLeads(raw: string): string[] {
 export function formatShiftLead(raw: string): string {
   return splitShiftLeads(raw).join(", ");
 }
+
+// `shifts.tectonic_responsible` uses the same "TBC" not-yet-decided
+// placeholder convention as shift_lead, but holds a single name rather than
+// a ";"-separated list — this is the one place that decides whether a value
+// counts as "actually set" for display purposes.
+export function hasTectonicResponsible(raw: string): boolean {
+  const trimmed = raw.trim();
+  return trimmed !== "" && trimmed !== "TBC";
+}

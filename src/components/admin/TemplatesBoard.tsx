@@ -15,7 +15,7 @@ import {
 } from "@/lib/shiftEligibility";
 import { Modal } from "@/components/Modal";
 import { ROLE_STYLES, DEFAULT_ROLE_STYLE } from "@/lib/constants";
-import { formatShiftLead } from "@/lib/shiftLead";
+import { formatShiftLead, hasTectonicResponsible } from "@/lib/shiftLead";
 
 function formatShortDate(date: string) {
   return new Date(`${date}T00:00:00`).toLocaleDateString("en-GB", {
@@ -176,6 +176,7 @@ export function TemplatesBoard({
                   shiftTitle: shift.shiftTitle,
                   room: shift.room,
                   shiftLead: shift.shiftLead,
+                  tectonicResponsible: shift.tectonicResponsible,
                   isTemplate: shift.isTemplate,
                   status: "pending" as const,
                   checkedInAt: null,
@@ -309,6 +310,14 @@ export function TemplatesBoard({
                         <div className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-[11px] text-slate-600">
                           <span className="font-semibold text-slate-500">Shift lead</span>
                           {formatShiftLead(block.shiftLead)}
+                        </div>
+                      )}
+                      {hasTectonicResponsible(block.tectonicResponsible) && (
+                        <div className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-[11px] text-slate-600">
+                          <span className="font-semibold text-slate-500">
+                            Tectonic responsible
+                          </span>
+                          {block.tectonicResponsible}
                         </div>
                       )}
 

@@ -10,7 +10,7 @@ import {
   templateTimeRange,
   pendingBlocks,
 } from "@/lib/templateShift";
-import { formatShiftLead } from "@/lib/shiftLead";
+import { formatShiftLead, hasTectonicResponsible } from "@/lib/shiftLead";
 
 const PARTIAL_STYLE = "bg-amber-500/20 text-amber-200";
 
@@ -166,6 +166,12 @@ export function TemplateDetail({
                       <p className="mb-3 text-sm text-white/60">
                         Shift lead:{" "}
                         <span className="text-white">{formatShiftLead(block.shiftLead)}</span>
+                      </p>
+                    )}
+                    {hasTectonicResponsible(block.tectonicResponsible) && (
+                      <p className="mb-3 text-sm text-white/60">
+                        Tectonic responsible:{" "}
+                        <span className="text-white">{block.tectonicResponsible}</span>
                       </p>
                     )}
                     <ShiftBlockBody shift={block} />

@@ -16,7 +16,7 @@ import {
 } from "@/lib/shiftEligibility";
 import { Modal } from "@/components/Modal";
 import { ROLE_CATEGORIES, ROLE_STYLES, DEFAULT_ROLE_STYLE } from "@/lib/constants";
-import { splitShiftLeads, formatShiftLead } from "@/lib/shiftLead";
+import { splitShiftLeads, formatShiftLead, hasTectonicResponsible } from "@/lib/shiftLead";
 
 function formatShortDate(date: string) {
   return new Date(`${date}T00:00:00`).toLocaleDateString("en-GB", {
@@ -306,6 +306,7 @@ export function TimelineBoard({
                   shiftTitle: shift.shiftTitle,
                   room: shift.room,
                   shiftLead: shift.shiftLead,
+                  tectonicResponsible: shift.tectonicResponsible,
                   isTemplate: shift.isTemplate,
                   status: "pending" as const,
                   checkedInAt: null,
@@ -559,6 +560,9 @@ export function TimelineBoard({
                         </span>
                       )}
                       {shift.shiftLead && <span>Shift lead: {formatShiftLead(shift.shiftLead)}</span>}
+                      {hasTectonicResponsible(shift.tectonicResponsible) && (
+                        <span>Tectonic responsible: {shift.tectonicResponsible}</span>
+                      )}
                       {shift.eventContext && <span>Context: {shift.eventContext}</span>}
                     </div>
 

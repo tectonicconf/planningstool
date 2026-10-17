@@ -37,6 +37,27 @@ export function deriveSlotFromStartTime(startTime: string): (typeof TIME_SLOTS)[
   return "Afternoon";
 }
 
+// Rounds to the nearest half hour, matching the "Hours" input's step={0.5}
+// in the create-shift forms (Planning and Shifts boards). Returns 0 for an
+// empty/invalid/non-positive range rather than throwing, so it's safe to
+// call on every keystroke while the fields fill in. Takes the full
+// start/end date so a shift that runs past midnight (endDate !== date)
+// still gets a correct, positive duration.
+export function computeHoursBetween(
+  date: string,
+  startTime: string,
+  endDate: string,
+  endTime: string,
+): number {
+  const start = new Date(`${date}T${startTime}`).getTime();
+  const end = new Date(`${endDate}T${endTime}`).getTime();
+
+  if (Number.isNaN(start) || Number.isNaN(end)) return 0;
+
+  const minutes = (end - start) / 60000;
+  return minutes > 0 ? Math.round((minutes / 60) * 2) / 2 : 0;
+}
+
 export const SHIFT_COUNT_PREFERENCES = ["1", "2", "3", "4+", "No preference"] as const;
 
 // Fixed display order for the t-shirt size breakdown on the Activity page.

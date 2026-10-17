@@ -22,8 +22,16 @@ export type PlanningShift = {
   volunteersNeeded: number;
   eventContext: string;
   shiftLead: string;
+  // The Tectonic team member internally responsible for this shift, distinct
+  // from `shiftLead` (which is the volunteer leading it). "TBC" is the same
+  // not-yet-decided placeholder convention as shiftLead — see shiftLead.ts.
+  tectonicResponsible: string;
   shiftTitle: string;
   room: string;
+  // The volunteer-facing shift description — shown on the portal as "What
+  // you'll do" (see ShiftBlockBody.tsx). Only exposed admin-side so it can
+  // be edited from the Shifts tab.
+  extraInfo: string;
   // True when this shift shares its `shift.volunteer` grouping key with at
   // least one other shift — see getTemplateShiftIds in adminData.ts.
   isTemplate: boolean;
@@ -75,8 +83,10 @@ export async function getPlanningShifts(
     volunteersNeeded: shift.volunteers_needed,
     eventContext: shift.event_context ?? "",
     shiftLead: shift.shift_lead ?? "",
+    tectonicResponsible: shift.tectonic_responsible ?? "",
     shiftTitle: shift.shift ?? "",
     room: shift.room ?? "",
+    extraInfo: shift.extra_info ?? "",
     isTemplate: templateShiftIds.has(shift.id),
     templateKey: templateShiftIds.has(shift.id) ? (shift.volunteer ?? "") : "",
     assignments: assignmentsByShift.get(shift.id) ?? [],
@@ -129,6 +139,7 @@ export type ShiftDirectoryEntry = {
   shiftTitle: string;
   room: string;
   shiftLead: string;
+  tectonicResponsible: string;
   isTemplate: boolean;
   volunteersNeeded: number;
   // Count of active (pending/confirmed, non-cancelled) assignments — used to
@@ -164,6 +175,7 @@ export async function getShiftDirectory(
     shiftTitle: shift.shift ?? "",
     room: shift.room ?? "",
     shiftLead: shift.shift_lead ?? "",
+    tectonicResponsible: shift.tectonic_responsible ?? "",
     isTemplate: templateShiftIds.has(shift.id),
     volunteersNeeded: shift.volunteers_needed,
     assignedCount: assignedCountByShift.get(shift.id) ?? 0,

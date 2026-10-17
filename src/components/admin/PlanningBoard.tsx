@@ -5,7 +5,6 @@ import type { PlanningShift, PlanningAssignment } from "@/lib/adminPlanning";
 import type { VolunteerRow } from "@/lib/adminVolunteers";
 import {
   addVolunteerToShift,
-  createShift,
   deleteShift,
   removeAssignment,
   setAssignmentCheckedIn,
@@ -17,14 +16,8 @@ import {
   getDisplayDate,
 } from "@/lib/shiftEligibility";
 import { Modal } from "@/components/Modal";
-import {
-  ROLE_CATEGORIES,
-  ROLE_STYLES,
-  DEFAULT_ROLE_STYLE,
-  TIME_SLOTS,
-  deriveSlotFromStartTime,
-} from "@/lib/constants";
-import { splitShiftLeads, formatShiftLead } from "@/lib/shiftLead";
+import { ROLE_CATEGORIES, ROLE_STYLES, DEFAULT_ROLE_STYLE, TIME_SLOTS } from "@/lib/constants";
+import { splitShiftLeads, formatShiftLead, hasTectonicResponsible } from "@/lib/shiftLead";
 
 function formatShortDate(date: string) {
   return new Date(`${date}T00:00:00`).toLocaleDateString("en-GB", {
@@ -46,26 +39,6 @@ function formatLongDate(date: string) {
 
 function roleStyle(role: string) {
   return ROLE_STYLES[role] ?? DEFAULT_ROLE_STYLE;
-}
-
-// Rounds to the nearest half hour, matching the existing "Hours" input's
-// step={0.5}. Returns 0 for an empty/invalid/non-positive range rather than
-// throwing, so it's safe to call on every keystroke while the fields fill
-// in. Takes the full start/end date so a shift that runs past midnight
-// (endDate !== date) still gets a correct, positive duration.
-function computeHoursBetween(
-  date: string,
-  startTime: string,
-  endDate: string,
-  endTime: string,
-): number {
-  const start = new Date(`${date}T${startTime}`).getTime();
-  const end = new Date(`${endDate}T${endTime}`).getTime();
-
-  if (Number.isNaN(start) || Number.isNaN(end)) return 0;
-
-  const minutes = (end - start) / 60000;
-  return minutes > 0 ? Math.round((minutes / 60) * 2) / 2 : 0;
 }
 
 const ASSIGNMENT_STATUS_STYLES: Record<"pending" | "confirmed", string> = {
@@ -102,7 +75,6 @@ export function PlanningBoard({
   const [volunteers, setVolunteers] = useState(initialVolunteers);
   const [error, setError] = useState<string | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
-  const [createOpen, setCreateOpen] = useState(false);
   const [addVolunteerShiftId, setAddVolunteerShiftId] = useState<string | null>(
     null,
   );
@@ -313,6 +285,7 @@ export function PlanningBoard({
                   shiftTitle: shift.shiftTitle,
                   room: shift.room,
                   shiftLead: shift.shiftLead,
+                  tectonicResponsible: shift.tectonicResponsible,
                   isTemplate: shift.isTemplate,
                   status: "pending" as const,
                   checkedInAt: null,
@@ -339,15 +312,6 @@ export function PlanningBoard({
             quickly see where help is still needed.
           </p>
         </div>
-        {!readOnly && (
-          <button
-            type="button"
-            onClick={() => setCreateOpen(true)}
-            className="shrink-0 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-          >
-            + Create shift
-          </button>
-        )}
       </div>
 
       {error && (
@@ -589,6 +553,14 @@ export function PlanningBoard({
                                 {formatShiftLead(shift.shiftLead)}
                               </div>
                             )}
+                            {hasTectonicResponsible(shift.tectonicResponsible) && (
+                              <div className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-[11px] text-slate-600">
+                                <span className="font-semibold text-slate-500">
+                                  Tectonic responsible
+                                </span>
+                                {shift.tectonicResponsible}
+                              </div>
+                            )}
 
                             <div className="mt-2 flex flex-col gap-1">
                               {shift.assignments.map((assignment) => (
@@ -676,55 +648,6 @@ export function PlanningBoard({
           );
         })}
       </div>
-
-      {!readOnly && createOpen && (
-        <Modal onClose={() => setCreateOpen(false)}>
-          <CreateShiftForm
-            onCancel={() => setCreateOpen(false)}
-            onCreate={async (input) => {
-              setBusyKey("create");
-              const result = await createShift(input);
-              setBusyKey(null);
-
-              if (!result.ok) {
-                setError(result.error);
-                return;
-              }
-
-              const day = new Date(`${input.date}T00:00:00`).toLocaleDateString(
-                "en-US",
-                { weekday: "long" },
-              );
-
-              setShifts((current) => [
-                ...current,
-                {
-                  id: result.data.id,
-                  date: input.date,
-                  endDate: input.endDate,
-                  day,
-                  slot: input.slot,
-                  startTime: input.startTime,
-                  endTime: input.endTime,
-                  hours: input.hours,
-                  location: input.location,
-                  roleCategory: input.roleCategory,
-                  volunteersNeeded: input.volunteersNeeded,
-                  eventContext: input.eventContext,
-                  shiftLead: input.shiftLead,
-                  shiftTitle: "",
-                  room: "",
-                  isTemplate: false,
-                  templateKey: "",
-                  assignments: [],
-                },
-              ]);
-              setCreateOpen(false);
-            }}
-            busy={busyKey === "create"}
-          />
-        </Modal>
-      )}
 
       {!readOnly && addVolunteerShift && (
         <Modal
@@ -848,231 +771,6 @@ export function PlanningBoard({
           </div>
         </Modal>
       )}
-    </div>
-  );
-}
-
-function CreateShiftForm({
-  onCancel,
-  onCreate,
-  busy,
-}: {
-  onCancel: () => void;
-  onCreate: (input: {
-    date: string;
-    endDate: string;
-    slot: string;
-    startTime: string;
-    endTime: string;
-    hours: number;
-    location: string;
-    roleCategory: string;
-    volunteersNeeded: number;
-    eventContext: string;
-    shiftLead: string;
-  }) => void;
-  busy: boolean;
-}) {
-  const [date, setDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [startTime, setStartTime] = useState("09:00");
-  const [endTime, setEndTime] = useState("13:00");
-  const [hours, setHours] = useState(0);
-  const [location, setLocation] = useState("");
-  const [roleCategory, setRoleCategory] = useState<string>(ROLE_CATEGORIES[0]);
-  const [volunteersNeeded, setVolunteersNeeded] = useState(1);
-  const [eventContext, setEventContext] = useState("");
-  const [shiftLead, setShiftLead] = useState("");
-
-  // Hours follow start/end date+time automatically — admins shouldn't have
-  // to compute and re-type it themselves every time either changes. Updated
-  // directly in each field's own handler (below) rather than an effect,
-  // since the change always originates from one of these fields right here.
-  function handleDateChange(value: string) {
-    // End date mirrors the start date until the admin deliberately picks a
-    // different one (for a shift that runs past midnight) — once it does,
-    // further start-date edits stop overwriting that choice.
-    const endDateWasLinked = endDate === date;
-    setDate(value);
-    if (endDateWasLinked) {
-      setEndDate(value);
-      setHours(computeHoursBetween(value, startTime, value, endTime));
-    } else {
-      setHours(computeHoursBetween(value, startTime, endDate, endTime));
-    }
-  }
-
-  function handleEndDateChange(value: string) {
-    setEndDate(value);
-    setHours(computeHoursBetween(date, startTime, value, endTime));
-  }
-
-  function handleStartTimeChange(value: string) {
-    setStartTime(value);
-    setHours(computeHoursBetween(date, value, endDate, endTime));
-  }
-
-  function handleEndTimeChange(value: string) {
-    setEndTime(value);
-    setHours(computeHoursBetween(date, startTime, endDate, value));
-  }
-
-  const isValid =
-    date && endDate && location.trim() && startTime && endTime && hours > 0 && volunteersNeeded > 0;
-
-  return (
-    <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
-      <h3 className="text-lg font-bold">Create shift</h3>
-
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        <label className="text-sm">
-          Start date
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => handleDateChange(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
-          />
-        </label>
-
-        <label className="text-sm">
-          Start time
-          <input
-            type="time"
-            value={startTime}
-            onChange={(e) => handleStartTimeChange(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
-          />
-        </label>
-
-        <label className="text-sm">
-          End date
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => handleEndDateChange(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
-          />
-        </label>
-
-        <label className="text-sm">
-          End time
-          <input
-            type="time"
-            value={endTime}
-            onChange={(e) => handleEndTimeChange(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
-          />
-        </label>
-
-        <p className="col-span-2 -mt-1 text-xs text-slate-400">
-          Be aware 00:00 is at start of day, not end of day.
-        </p>
-
-        <label className="text-sm">
-          Volunteers needed
-          <input
-            type="number"
-            min={1}
-            value={volunteersNeeded}
-            onChange={(e) => setVolunteersNeeded(Number(e.target.value))}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
-          />
-        </label>
-
-        <label className="text-sm">
-          Hours
-          <input
-            type="number"
-            readOnly
-            value={hours}
-            className="mt-1 w-full cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-500"
-          />
-          <span className="mt-1 block text-xs text-slate-400">
-            Filled in automatically from start/end date and time.
-          </span>
-        </label>
-
-        <label className="text-sm">
-          Shift type
-          <select
-            value={roleCategory}
-            onChange={(e) => setRoleCategory(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
-          >
-            {ROLE_CATEGORIES.map((role) => (
-              <option key={role} value={role}>
-                {role}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="text-sm">
-          Shift lead
-          <input
-            type="text"
-            placeholder="e.g. Anna Peeters"
-            value={shiftLead}
-            onChange={(e) => setShiftLead(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
-          />
-        </label>
-
-        <label className="col-span-2 text-sm">
-          Location
-          <input
-            type="text"
-            placeholder="e.g. Vooruit - Concertzaal"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
-          />
-        </label>
-
-        <label className="col-span-2 text-sm">
-          Context (optional)
-          <input
-            type="text"
-            placeholder="e.g. Hackathon setup"
-            value={eventContext}
-            onChange={(e) => setEventContext(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
-          />
-        </label>
-      </div>
-
-      <div className="mt-6 flex gap-3">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 rounded-full border border-slate-200 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          disabled={!isValid || busy}
-          onClick={() =>
-            onCreate({
-              date,
-              endDate,
-              slot: deriveSlotFromStartTime(startTime),
-              startTime,
-              endTime,
-              hours,
-              location: location.trim(),
-              roleCategory,
-              volunteersNeeded,
-              eventContext: eventContext.trim(),
-              shiftLead: shiftLead.trim(),
-            })
-          }
-          className="flex-1 rounded-full bg-indigo-600 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-        >
-          Create shift
-        </button>
-      </div>
     </div>
   );
 }

@@ -26,7 +26,7 @@ import {
   AVAILABILITY_OPTIONS,
   availabilityValue,
 } from "@/lib/constants";
-import { formatShiftLead, splitShiftLeads } from "@/lib/shiftLead";
+import { formatShiftLead, splitShiftLeads, hasTectonicResponsible } from "@/lib/shiftLead";
 
 // AVAILABILITY_OPTIONS already has a nice label for every (date, slot) —
 // used to display a short-form entry ("2026-10-20 Morning", from a
@@ -206,6 +206,12 @@ function VolunteerAssignmentsList({
                 {formatShiftLead(assignment.shiftLead)}
               </div>
             )}
+            {hasTectonicResponsible(assignment.tectonicResponsible) && (
+              <div className="inline-flex w-fit items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-[11px] text-slate-600">
+                <span className="font-semibold text-slate-500">Tectonic responsible</span>
+                {assignment.tectonicResponsible}
+              </div>
+            )}
             {assignment.status === "confirmed" &&
               (readOnly ? (
                 <span
@@ -271,6 +277,7 @@ export function VolunteersBoard({
   const [shiftLeadFilter, setShiftLeadFilter] = useState("all");
   const [onlyLeadShifts, setOnlyLeadShifts] = useState(false);
   const [availabilityFilter, setAvailabilityFilter] = useState<"all" | "open">("all");
+  const [quizFilter, setQuizFilter] = useState<"all" | "completed" | "not_completed">("all");
   const [addVolunteerOpen, setAddVolunteerOpen] = useState(false);
   const [assignShiftVolunteerId, setAssignShiftVolunteerId] = useState<string | null>(null);
   const [assignShiftQuery, setAssignShiftQuery] = useState("");
@@ -325,9 +332,20 @@ export function VolunteersBoard({
       if (availabilityFilter === "open" && !volunteerHasOpenAvailability(volunteer))
         return false;
 
+      if (quizFilter === "completed" && !volunteer.quizCompleted) return false;
+      if (quizFilter === "not_completed" && volunteer.quizCompleted) return false;
+
       return true;
     });
-  }, [volunteers, searchQuery, orgFilter, statusFilter, shiftLeadFilter, availabilityFilter]);
+  }, [
+    volunteers,
+    searchQuery,
+    orgFilter,
+    statusFilter,
+    shiftLeadFilter,
+    availabilityFilter,
+    quizFilter,
+  ]);
 
   function clearFilters() {
     setSearchQuery("");
@@ -336,6 +354,7 @@ export function VolunteersBoard({
     setOrgFilter("all");
     setShiftLeadFilter("all");
     setOnlyLeadShifts(false);
+    setQuizFilter("all");
   }
 
   async function handleRemoveAssignment(volunteerId: string, assignmentId: number) {
@@ -425,6 +444,7 @@ export function VolunteersBoard({
                   shiftTitle: shift.shiftTitle,
                   room: shift.room,
                   shiftLead: shift.shiftLead,
+                  tectonicResponsible: shift.tectonicResponsible,
                   isTemplate: shift.isTemplate,
                   status: "pending" as const,
                   checkedInAt: null,
@@ -547,6 +567,18 @@ export function VolunteersBoard({
         >
           <option value="all">Any availability</option>
           <option value="open">Still available</option>
+        </select>
+
+        <select
+          value={quizFilter}
+          onChange={(e) =>
+            setQuizFilter(e.target.value as "all" | "completed" | "not_completed")
+          }
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+        >
+          <option value="all">Any quiz status</option>
+          <option value="completed">Quiz completed</option>
+          <option value="not_completed">Quiz not completed</option>
         </select>
 
         <button
@@ -764,7 +796,7 @@ export function VolunteersBoard({
             )}
 
             {hasReachedShiftPreference(assignShiftVolunteer) && (
-              <p className="mt-2 rounded-lg bg-slate-50 px-2 py-1.5 text-xs text-slate-600">
+              <p className="mt-2 rounded-lg bg-slate-50 px-2 py-1.5 text-xs font-medium text-orange-600">
                 Already has their preferred number of shifts ({assignShiftVolunteer.shiftCountPreference}) — try not to assign more unless necessary.
               </p>
             )}

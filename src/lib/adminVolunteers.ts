@@ -15,6 +15,7 @@ export type VolunteerAssignment = {
   shiftTitle: string;
   room: string;
   shiftLead: string;
+  tectonicResponsible: string;
   isTemplate: boolean;
   status: VolunteerAssignmentStatus;
   checkedInAt: string | null;
@@ -65,6 +66,7 @@ export async function getVolunteersWithAssignments(
       shiftTitle: shift.shift ?? "",
       room: shift.room ?? "",
       shiftLead: shift.shift_lead ?? "",
+      tectonicResponsible: shift.tectonic_responsible ?? "",
       isTemplate: templateShiftIds.has(shift.id),
       status: assignment.status,
       checkedInAt: assignment.checked_in_at,
