@@ -21,6 +21,10 @@ export type Shift = {
   shiftTitle: string;
   shiftLead: string;
   extraInfo: string;
+  // A short clarifying label for an awkward clock time (e.g. a shift that
+  // runs 01:00-03:00 but is operationally "Tuesday night" rather than
+  // "Wednesday morning") — shown right under the time whenever it's set.
+  eventContext: string;
   status: ShiftStatus;
   crew: ShiftCrewMember[];
   // Shifts that were split into smaller back-to-back blocks so they could be
@@ -48,7 +52,7 @@ export async function getShiftsForVolunteer(
   const { data: shiftRows, error: shiftsError } = await supabaseAdmin
     .from("shifts")
     .select(
-      "id, date, start_time, end_time, hours, location, role_category, room, shift, shift_lead, extra_info, volunteer",
+      "id, date, start_time, end_time, hours, location, role_category, room, shift, shift_lead, extra_info, volunteer, event_context",
     )
     .in("id", shiftIds);
 
@@ -115,6 +119,7 @@ export async function getShiftsForVolunteer(
         shiftTitle: shift.shift ?? "",
         shiftLead: shift.shift_lead ?? "",
         extraInfo: shift.extra_info ?? "",
+        eventContext: shift.event_context ?? "",
         status: assignment.status as ShiftStatus,
         crew: crewByShiftId.get(shift.id) ?? [],
         templateKey: shift.volunteer ?? "",

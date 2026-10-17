@@ -103,6 +103,9 @@ export function TemplateCard({
               <p className="font-medium">
                 {block.startTime} – {block.endTime} ({block.hours}h)
               </p>
+              {block.eventContext && (
+                <p className="text-xs text-cyan-300/80">{block.eventContext}</p>
+              )}
               <p className="truncate text-xs text-white/60">
                 {block.location} · {block.shiftTitle || block.shiftType}
               </p>

@@ -55,6 +55,9 @@ export function ShiftDetail({
         <p className="mt-2 text-sm text-white/70">
           {formatShiftDate(shift.date)} · {shift.startTime}–{shift.endTime} ({shift.hours}h)
         </p>
+        {shift.eventContext && (
+          <p className="mt-0.5 text-xs text-cyan-300/80">{shift.eventContext}</p>
+        )}
 
         <div className="mt-6">
           <ShiftBlockBody shift={shift} />

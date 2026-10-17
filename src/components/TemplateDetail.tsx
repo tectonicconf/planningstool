@@ -142,6 +142,9 @@ export function TemplateDetail({
                     <p className="font-semibold">
                       {block.startTime} – {block.endTime} ({block.hours}h)
                     </p>
+                    {block.eventContext && (
+                      <p className="text-xs text-cyan-300/80">{block.eventContext}</p>
+                    )}
                     <p className="truncate text-sm text-white/60">
                       {block.location} · {block.shiftTitle || block.shiftType}
                     </p>

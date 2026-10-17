@@ -62,6 +62,9 @@ export function ShiftCard({
           </span>
         </span>
       </div>
+      {shift.eventContext && (
+        <p className="mt-0.5 text-xs text-cyan-300/80">{shift.eventContext}</p>
+      )}
       <p className="mt-1 text-sm text-white/70">
         {shift.location} · {shift.shiftType}
       </p>
