@@ -361,7 +361,13 @@ export function ShiftDashboard({
                 src={partner.logoUrl}
                 alt={partner.name}
                 title={partner.name}
-                className="h-14 w-auto max-w-[200px] object-contain opacity-90 invert mix-blend-screen transition-opacity hover:opacity-100"
+                className={`${partner.heightClass ?? "h-14"} w-auto max-w-[200px] object-contain opacity-90 transition-opacity hover:opacity-100 ${
+                  partner.keepColors
+                    ? ""
+                    : partner.monoWhite
+                      ? "brightness-0 invert mix-blend-screen"
+                      : "invert mix-blend-screen"
+                } ${partner.extraClass ?? ""}`}
               />
             ))}
           </div>
