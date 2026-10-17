@@ -26,7 +26,7 @@ import {
   AVAILABILITY_OPTIONS,
   availabilityValue,
 } from "@/lib/constants";
-import { formatShiftLead } from "@/lib/shiftLead";
+import { formatShiftLead, splitShiftLeads } from "@/lib/shiftLead";
 
 // AVAILABILITY_OPTIONS already has a nice label for every (date, slot) —
 // used to display a short-form entry ("2026-10-20 Morning", from a
@@ -268,6 +268,8 @@ export function VolunteersBoard({
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [statusFilter, setStatusFilter] = useState<"all" | VolunteerAssignmentStatus>("all");
   const [orgFilter, setOrgFilter] = useState("all");
+  const [shiftLeadFilter, setShiftLeadFilter] = useState("all");
+  const [onlyLeadShifts, setOnlyLeadShifts] = useState(false);
   const [availabilityFilter, setAvailabilityFilter] = useState<"all" | "open">("all");
   const [addVolunteerOpen, setAddVolunteerOpen] = useState(false);
   const [assignShiftVolunteerId, setAssignShiftVolunteerId] = useState<string | null>(null);
@@ -279,6 +281,18 @@ export function VolunteersBoard({
   const organizations = useMemo(
     () =>
       Array.from(new Set(volunteers.map((v) => v.association).filter(Boolean))).sort(),
+    [volunteers],
+  );
+
+  const shiftLeads = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          volunteers.flatMap((v) =>
+            v.assignments.flatMap((a) => splitShiftLeads(a.shiftLead)),
+          ),
+        ),
+      ).sort(),
     [volunteers],
   );
 
@@ -302,18 +316,26 @@ export function VolunteersBoard({
       if (statusFilter !== "all" && !volunteer.assignments.some((a) => a.status === statusFilter))
         return false;
 
+      if (
+        shiftLeadFilter !== "all" &&
+        !volunteer.assignments.some((a) => splitShiftLeads(a.shiftLead).includes(shiftLeadFilter))
+      )
+        return false;
+
       if (availabilityFilter === "open" && !volunteerHasOpenAvailability(volunteer))
         return false;
 
       return true;
     });
-  }, [volunteers, searchQuery, orgFilter, statusFilter, availabilityFilter]);
+  }, [volunteers, searchQuery, orgFilter, statusFilter, shiftLeadFilter, availabilityFilter]);
 
   function clearFilters() {
     setSearchQuery("");
     setStatusFilter("all");
     setAvailabilityFilter("all");
     setOrgFilter("all");
+    setShiftLeadFilter("all");
+    setOnlyLeadShifts(false);
   }
 
   async function handleRemoveAssignment(volunteerId: string, assignmentId: number) {
@@ -480,6 +502,45 @@ export function VolunteersBoard({
         </select>
 
         <select
+          value={shiftLeadFilter}
+          onChange={(e) => {
+            setShiftLeadFilter(e.target.value);
+            if (e.target.value === "all") setOnlyLeadShifts(false);
+          }}
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+        >
+          <option value="all">All shift leads</option>
+          {shiftLeads.map((lead) => (
+            <option key={lead} value={lead}>
+              {lead}
+            </option>
+          ))}
+        </select>
+
+        {shiftLeadFilter !== "all" && (
+          <div className="flex overflow-hidden rounded-lg border border-slate-200 text-sm">
+            <button
+              type="button"
+              onClick={() => setOnlyLeadShifts(false)}
+              className={`px-3 py-2 ${
+                !onlyLeadShifts ? "bg-indigo-600 text-white" : "bg-white text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              Show all shifts
+            </button>
+            <button
+              type="button"
+              onClick={() => setOnlyLeadShifts(true)}
+              className={`border-l border-slate-200 px-3 py-2 ${
+                onlyLeadShifts ? "bg-indigo-600 text-white" : "bg-white text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              Show only {shiftLeadFilter}&apos;s shifts
+            </button>
+          </div>
+        )}
+
+        <select
           value={availabilityFilter}
           onChange={(e) => setAvailabilityFilter(e.target.value as "all" | "open")}
           className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
@@ -524,7 +585,15 @@ export function VolunteersBoard({
             No volunteers match the current filters.
           </p>
         ) : (
-          filteredVolunteers.map((volunteer) => (
+          filteredVolunteers.map((volunteer) => {
+            const displayedAssignments =
+              shiftLeadFilter !== "all" && onlyLeadShifts
+                ? volunteer.assignments.filter((a) =>
+                    splitShiftLeads(a.shiftLead).includes(shiftLeadFilter),
+                  )
+                : volunteer.assignments;
+
+            return (
             <div key={volunteer.id} className="rounded-xl border border-slate-200 bg-white p-4">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="min-w-0">
@@ -534,7 +603,9 @@ export function VolunteersBoard({
                       <p className="font-mono text-xs text-slate-400">{volunteer.id}</p>
                     </div>
                     <span className="shrink-0 text-xs text-slate-500">
-                      {volunteer.assignments.length} shift{volunteer.assignments.length === 1 ? "" : "s"}
+                      {displayedAssignments.length} shift{displayedAssignments.length === 1 ? "" : "s"}
+                      {displayedAssignments.length !== volunteer.assignments.length &&
+                        ` of ${volunteer.assignments.length}`}
                     </span>
                   </div>
 
@@ -595,7 +666,7 @@ export function VolunteersBoard({
 
                 <div className="min-w-0">
                   <VolunteerAssignmentsList
-                    volunteer={volunteer}
+                    volunteer={{ ...volunteer, assignments: displayedAssignments }}
                     busyKey={busyKey}
                     onToggleCheckedIn={(assignment) => handleToggleCheckedIn(volunteer.id, assignment)}
                     onRemove={(assignmentId) => handleRemoveAssignment(volunteer.id, assignmentId)}
@@ -605,7 +676,8 @@ export function VolunteersBoard({
                 </div>
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
 
