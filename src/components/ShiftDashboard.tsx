@@ -215,14 +215,15 @@ export function ShiftDashboard({
     setFeedback("accepted");
   }
 
-  // `templateDeclineTarget` is pre-filtered to exactly what should be
-  // declined — the remaining pending blocks for a partially-accepted
-  // template (confirmed ones stay untouched), or every block when the whole
-  // template is being cancelled after being fully confirmed.
+  // A rotation shift is all-or-nothing, so declining always targets every
+  // block in `templateDeclineTarget` — including ones already confirmed.
+  // respondToAssignments already allows declining a confirmed assignment
+  // (same as the single-shift "Cancel shift" flow), so no special-casing is
+  // needed here beyond that.
   async function handleDeclineBlocksConfirm() {
     if (!templateDeclineTarget || templateDeclineTarget.length === 0) return;
 
-    const wasConfirmed = templateDeclineTarget.every((block) => block.status === "confirmed");
+    const wasConfirmed = templateDeclineTarget.some((block) => block.status === "confirmed");
     const declinedIds = new Set(templateDeclineTarget.map((block) => block.assignmentId));
 
     setError(null);
@@ -312,9 +313,7 @@ export function ShiftDashboard({
                     blocks={entry.blocks}
                     isUpdating={bulkUpdating}
                     onAcceptAll={() => handleAcceptBlocks(entry.blocks)}
-                    onDeclinePending={() =>
-                      setTemplateDeclineTarget(pendingBlocks(entry.blocks))
-                    }
+                    onDeclineAll={() => setTemplateDeclineTarget(entry.blocks)}
                     onOpenDetail={() => setTemplateDetailTarget(entry.blocks)}
                   />
                 ),
@@ -404,13 +403,7 @@ export function ShiftDashboard({
           blocks={templateDetailTarget}
           isUpdating={bulkUpdating}
           onAcceptAll={() => handleAcceptBlocks(templateDetailTarget)}
-          onDeclinePending={() =>
-            setTemplateDeclineTarget(
-              pendingBlocks(templateDetailTarget).length > 0
-                ? pendingBlocks(templateDetailTarget)
-                : templateDetailTarget,
-            )
-          }
+          onDeclineAll={() => setTemplateDeclineTarget(templateDetailTarget)}
           onClose={() => setTemplateDetailTarget(null)}
         />
       )}
@@ -420,9 +413,9 @@ export function ShiftDashboard({
           <div className="w-full max-w-sm rounded-2xl border border-white/15 bg-[#0a0f35] p-6 text-white shadow-xl">
             <h3 className="text-xl font-bold">Sad to see you go 😢</h3>
             <p className="mt-2 text-sm text-white/70">
-              {templateDeclineTarget.every((block) => block.status === "confirmed")
-                ? `Are you sure you want to cancel all ${templateDeclineTarget.length} blocks of this rotation shift? We'll look for someone to cover them instead.`
-                : `Are you sure you want to decline the remaining ${templateDeclineTarget.length} block${templateDeclineTarget.length === 1 ? "" : "s"} of this rotation shift? Blocks you already accepted stay as they are.`}
+              {templateDeclineTarget.some((block) => block.status === "confirmed")
+                ? `Are you sure you want to cancel all ${templateDeclineTarget.length} blocks of this rotation shift, including the ones you already confirmed? A rotation shift is all or nothing, so we'll look for someone to cover the whole thing instead.`
+                : `Are you sure you want to decline all ${templateDeclineTarget.length} blocks of this rotation shift? We'll look for someone to cover them instead.`}
             </p>
             <div className="mt-6 flex gap-3">
               <button
@@ -438,9 +431,7 @@ export function ShiftDashboard({
                 onClick={handleDeclineBlocksConfirm}
                 className="flex-1 rounded-full bg-red-500/80 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50"
               >
-                {templateDeclineTarget.every((block) => block.status === "confirmed")
-                  ? "Yes, cancel"
-                  : "Yes, decline"}
+                Yes, decline all
               </button>
             </div>
           </div>

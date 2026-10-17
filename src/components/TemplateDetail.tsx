@@ -56,13 +56,13 @@ export function TemplateDetail({
   blocks,
   isUpdating,
   onAcceptAll,
-  onDeclinePending,
+  onDeclineAll,
   onClose,
 }: {
   blocks: Shift[];
   isUpdating: boolean;
   onAcceptAll: () => void;
-  onDeclinePending: () => void;
+  onDeclineAll: () => void;
   onClose: () => void;
 }) {
   const [expandedId, setExpandedId] = useState<number | null>(
@@ -189,7 +189,7 @@ export function TemplateDetail({
               <button
                 type="button"
                 disabled={isUpdating}
-                onClick={onDeclinePending}
+                onClick={onDeclineAll}
                 className="flex-1 rounded-full border border-white/25 py-3 text-sm font-semibold text-white/90 transition-colors hover:border-red-300/60 hover:text-red-200 disabled:opacity-50"
               >
                 Decline all
@@ -199,7 +199,7 @@ export function TemplateDetail({
             <button
               type="button"
               disabled={isUpdating}
-              onClick={onDeclinePending}
+              onClick={onDeclineAll}
               className="w-full rounded-full border border-white/25 py-3 text-sm font-semibold text-white/90 transition-colors hover:border-red-300/60 hover:text-red-200 disabled:opacity-50"
             >
               Decline all blocks

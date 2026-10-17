@@ -31,13 +31,13 @@ export function TemplateCard({
   blocks,
   isUpdating,
   onAcceptAll,
-  onDeclinePending,
+  onDeclineAll,
   onOpenDetail,
 }: {
   blocks: Shift[];
   isUpdating: boolean;
   onAcceptAll: () => void;
-  onDeclinePending: () => void;
+  onDeclineAll: () => void;
   onOpenDetail: () => void;
 }) {
   const status = templateStatus(blocks);
@@ -123,7 +123,8 @@ export function TemplateCard({
           {status === "partial" && (
             <p className="mb-3 rounded-xl bg-amber-500/15 px-3 py-2 text-sm text-amber-100">
               You only accepted part of this rotation shift. Please confirm
-              the rest so the day is fully covered.
+              the rest so the day is fully covered — or decline all if you
+              can no longer make it.
             </p>
           )}
           <div className="flex gap-3">
@@ -140,7 +141,7 @@ export function TemplateCard({
             <button
               type="button"
               disabled={isUpdating}
-              onClick={onDeclinePending}
+              onClick={onDeclineAll}
               className="flex-1 rounded-full border border-white/25 py-2 text-sm font-semibold text-white/90 transition-colors hover:border-cyan-300/70 disabled:opacity-50"
             >
               Decline all
@@ -148,8 +149,8 @@ export function TemplateCard({
           </div>
           <p className="mt-2 text-center text-xs text-white/50">
             {status === "partial"
-              ? "Blocks you already accepted stay as they are."
-              : "One tap confirms the whole rotation shift."}
+              ? "Declining cancels every block, including the ones you already accepted — a rotation shift is all or nothing."
+              : "One tap confirms or declines the whole rotation shift."}
           </p>
         </div>
       )}
