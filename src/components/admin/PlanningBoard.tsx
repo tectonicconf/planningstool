@@ -597,36 +597,25 @@ export function PlanningBoard({
                                       </button>
                                     )}
                                   </div>
-                                  {assignment.status === "confirmed" &&
-                                    (readOnly ? (
-                                      <span
-                                        className={`w-full rounded px-2 py-1 text-center font-medium ${
-                                          assignment.checkedInAt
-                                            ? "bg-emerald-100 text-emerald-700"
-                                            : "bg-slate-100 text-slate-600"
-                                        }`}
-                                      >
-                                        {assignment.checkedInAt ? "Checked in ✓" : "Not checked in"}
-                                      </span>
-                                    ) : (
-                                      <button
-                                        type="button"
-                                        onClick={() => handleToggleCheckedIn(shift, assignment)}
-                                        disabled={busyKey === `checkin-${assignment.assignmentId}`}
-                                        title={
-                                          assignment.checkedInAt
-                                            ? `Checked in at ${new Date(assignment.checkedInAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
-                                            : "Mark as checked in"
-                                        }
-                                        className={`w-full rounded px-2 py-1 text-center font-medium disabled:opacity-50 ${
-                                          assignment.checkedInAt
-                                            ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                                        }`}
-                                      >
-                                        {assignment.checkedInAt ? "Checked in ✓" : "Check in"}
-                                      </button>
-                                    ))}
+                                  {assignment.status === "confirmed" && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleToggleCheckedIn(shift, assignment)}
+                                      disabled={busyKey === `checkin-${assignment.assignmentId}`}
+                                      title={
+                                        assignment.checkedInAt
+                                          ? `Checked in at ${new Date(assignment.checkedInAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
+                                          : "Mark as checked in"
+                                      }
+                                      className={`w-full rounded px-2 py-1 text-center font-medium disabled:opacity-50 ${
+                                        assignment.checkedInAt
+                                          ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                      }`}
+                                    >
+                                      {assignment.checkedInAt ? "Checked in ✓" : "Check in"}
+                                    </button>
+                                  )}
                                 </div>
                               ))}
 
