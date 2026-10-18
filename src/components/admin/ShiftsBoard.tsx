@@ -676,6 +676,14 @@ export function ShiftsBoard({ initialShifts }: { initialShifts: PlanningShift[] 
                         <p className="font-semibold text-slate-900">
                           {shift.shiftTitle || shift.roleCategory}
                         </p>
+                        {shift.isTemplate && (
+                          <span
+                            title="Part of a multi-block template — see the volunteer's Rotation shift"
+                            className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700"
+                          >
+                            Template
+                          </span>
+                        )}
                         <PencilIcon className="text-slate-400 opacity-0 transition-opacity group-hover:opacity-100" />
                       </div>
 

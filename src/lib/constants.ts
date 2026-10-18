@@ -7,6 +7,7 @@ export const ROLE_CATEGORIES = [
   "Food & Drinks",
   "Runner & Flexible Support",
   "Stage & Session Support",
+  "Backup",
 ] as const;
 
 export const TIME_SLOTS = ["Morning", "Afternoon", "Evening"] as const;
@@ -161,6 +162,13 @@ export const ROLE_STYLES: Record<string, RoleStyle> = {
     cardClassName: "border-indigo-100 bg-indigo-50",
     barClassName: "bg-indigo-500",
     barLightClassName: "bg-indigo-200",
+  },
+  Backup: {
+    emoji: "🧯",
+    badgeClassName: "bg-teal-100 text-teal-700",
+    cardClassName: "border-teal-100 bg-teal-50",
+    barClassName: "bg-teal-500",
+    barLightClassName: "bg-teal-200",
   },
 };
 
