@@ -17,6 +17,9 @@ export type VolunteerAssignment = {
   shiftLead: string;
   tectonicResponsible: string;
   isTemplate: boolean;
+  // "" unless isTemplate — see PlanningShift.templateKey in adminPlanning.ts
+  // for the same convention.
+  templateKey: string;
   status: VolunteerAssignmentStatus;
   checkedInAt: string | null;
 };
@@ -35,6 +38,7 @@ export type VolunteerRow = {
   shirtSize: string;
   emergencyContactName: string;
   emergencyPhone: string;
+  linkedin: string;
   assignments: VolunteerAssignment[];
 };
 
@@ -68,6 +72,7 @@ export async function getVolunteersWithAssignments(
       shiftLead: shift.shift_lead ?? "",
       tectonicResponsible: shift.tectonic_responsible ?? "",
       isTemplate: templateShiftIds.has(shift.id),
+      templateKey: templateShiftIds.has(shift.id) ? (shift.volunteer ?? "") : "",
       status: assignment.status,
       checkedInAt: assignment.checked_in_at,
     });
@@ -96,6 +101,7 @@ export async function getVolunteersWithAssignments(
       .filter(Boolean)
       .join(" "),
     emergencyPhone: volunteer.emergency_phone ?? "",
+    linkedin: volunteer.LinkedIn ?? "",
     assignments: (assignmentsByVolunteer.get(volunteer.id) ?? []).sort(
       (a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`),
     ),

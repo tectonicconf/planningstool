@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useSyncExternalStore } from "react";
+import Link from "next/link";
 import type { PlanningShift, PlanningAssignment } from "@/lib/adminPlanning";
 import type { VolunteerRow } from "@/lib/adminVolunteers";
 import {
@@ -17,6 +18,7 @@ import {
 import { Modal } from "@/components/Modal";
 import { ROLE_CATEGORIES, ROLE_STYLES, DEFAULT_ROLE_STYLE } from "@/lib/constants";
 import { splitShiftLeads, formatShiftLead, hasTectonicResponsible } from "@/lib/shiftLead";
+import { templateHref } from "@/lib/templateLink";
 
 function formatShortDate(date: string) {
   return new Date(`${date}T00:00:00`).toLocaleDateString("en-GB", {
@@ -115,10 +117,12 @@ export function TimelineBoard({
 
   const [roleFilter, setRoleFilter] = useState("all");
   const [shiftLeadFilter, setShiftLeadFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   function clearFilters() {
     setRoleFilter("all");
     setShiftLeadFilter("all");
+    setSearchQuery("");
   }
 
   const shiftsForDate = useMemo(
@@ -127,10 +131,22 @@ export function TimelineBoard({
   );
 
   const filteredShifts = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
     return shiftsForDate
       .filter((shift) => {
         if (roleFilter !== "all" && shift.roleCategory !== roleFilter) return false;
         if (shiftLeadFilter !== "all" && !splitShiftLeads(shift.shiftLead).includes(shiftLeadFilter))
+          return false;
+        if (
+          query &&
+          !shift.id.toLowerCase().includes(query) &&
+          !shift.assignments.some(
+            (a) =>
+              a.volunteerName.toLowerCase().includes(query) ||
+              a.volunteerId.toLowerCase().includes(query),
+          )
+        )
           return false;
         return true;
       })
@@ -138,7 +154,7 @@ export function TimelineBoard({
         (a, b) =>
           a.startTime.localeCompare(b.startTime) || a.location.localeCompare(b.location),
       );
-  }, [shiftsForDate, roleFilter, shiftLeadFilter]);
+  }, [shiftsForDate, roleFilter, shiftLeadFilter, searchQuery]);
 
   const legendCategories = useMemo(
     () => Array.from(new Set(shiftsForDate.map((s) => s.roleCategory))).sort(),
@@ -308,6 +324,7 @@ export function TimelineBoard({
                   shiftLead: shift.shiftLead,
                   tectonicResponsible: shift.tectonicResponsible,
                   isTemplate: shift.isTemplate,
+                  templateKey: shift.templateKey,
                   status: "pending" as const,
                   checkedInAt: null,
                 },
@@ -355,6 +372,14 @@ export function TimelineBoard({
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
+        <input
+          type="text"
+          placeholder="Search by volunteer, volunteer ID or shift ID..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="min-w-64 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+        />
+
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
@@ -486,12 +511,14 @@ export function TimelineBoard({
                         {shift.id}
                       </span>
                       {shift.isTemplate && (
-                        <span
-                          title="Part of a multi-block template — see the volunteer's Rotation shift"
-                          className="shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700"
+                        <Link
+                          href={templateHref(shift.id)}
+                          onClick={(event) => event.stopPropagation()}
+                          title="Part of a multi-block template — click to see it on the Templates tab"
+                          className="shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-200"
                         >
                           Template
-                        </span>
+                        </Link>
                       )}
                     </div>
                     <p className="truncate text-xs text-slate-500">

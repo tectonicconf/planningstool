@@ -49,6 +49,10 @@ export type AdminTables = {
     emergency_first_name: string | null;
     emergency_last_name: string | null;
     emergency_phone: string | null;
+    // Mixed-case on purpose — the column was created as `"LinkedIn"`
+    // (quoted) rather than the table's usual snake_case, so every query
+    // touching it must reference this exact casing.
+    LinkedIn: string | null;
   }[];
 };
 
@@ -68,7 +72,7 @@ export async function getAdminTables(): Promise<AdminTables> {
       supabaseAdmin
         .from("volunteers")
         .select(
-          "id, first_name, last_name, email, phone_number, association, availability, preferences, magic_link_token, shift_count_preference, quiz, size, emergency_first_name, emergency_last_name, emergency_phone",
+          "id, first_name, last_name, email, phone_number, association, availability, preferences, magic_link_token, shift_count_preference, quiz, size, emergency_first_name, emergency_last_name, emergency_phone, LinkedIn",
         )
         .order("first_name"),
     ]);

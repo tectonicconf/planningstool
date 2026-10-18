@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import type { VolunteerRow, VolunteerAssignmentStatus } from "@/lib/adminVolunteers";
 import type { ShiftDirectoryEntry } from "@/lib/adminPlanning";
 import {
@@ -8,6 +9,7 @@ import {
   createVolunteer,
   removeAssignment,
   setAssignmentCheckedIn,
+  updateVolunteerLinkedin,
   type ActionResult,
 } from "@/lib/adminActions";
 import {
@@ -27,6 +29,7 @@ import {
   availabilityValue,
 } from "@/lib/constants";
 import { formatShiftLead, splitShiftLeads, hasTectonicResponsible } from "@/lib/shiftLead";
+import { templateHref } from "@/lib/templateLink";
 
 // AVAILABILITY_OPTIONS already has a nice label for every (date, slot) —
 // used to display a short-form entry ("2026-10-20 Morning", from a
@@ -113,6 +116,12 @@ const STATUS_STYLES: Record<VolunteerAssignmentStatus, string> = {
   cancelled: "bg-red-100 text-red-700",
 };
 
+// Admins may type a LinkedIn URL without a scheme (e.g. "linkedin.com/in/x")
+// — this is the one place that makes it a valid, clickable absolute URL.
+function ensureHttpUrl(url: string): string {
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
 function formatDate(date: string) {
   return new Date(`${date}T00:00:00`).toLocaleDateString("en-GB", {
     weekday: "short",
@@ -156,12 +165,13 @@ function VolunteerAssignmentsList({
                 <p className="text-xs font-semibold text-slate-700">{assignment.shiftTitle}</p>
               )}
               {assignment.isTemplate && (
-                <span
-                  title="Part of a multi-block template — see the volunteer's Rotation shift"
-                  className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700"
+                <Link
+                  href={templateHref(assignment.shiftId)}
+                  title="Part of a multi-block template — click to see it on the Templates tab"
+                  className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-200"
                 >
                   Template
-                </span>
+                </Link>
               )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -284,6 +294,8 @@ export function VolunteersBoard({
   const [assignShiftOverride, setAssignShiftOverride] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [editingLinkedinFor, setEditingLinkedinFor] = useState<string | null>(null);
+  const [tempLinkedin, setTempLinkedin] = useState("");
 
   const organizations = useMemo(
     () =>
@@ -311,7 +323,8 @@ export function VolunteersBoard({
         query &&
         !volunteer.name.toLowerCase().includes(query) &&
         !volunteer.email.toLowerCase().includes(query) &&
-        !volunteer.id.toLowerCase().includes(query)
+        !volunteer.id.toLowerCase().includes(query) &&
+        !volunteer.assignments.some((a) => a.shiftId.toLowerCase().includes(query))
       )
         return false;
 
@@ -355,6 +368,22 @@ export function VolunteersBoard({
     setShiftLeadFilter("all");
     setOnlyLeadShifts(false);
     setQuizFilter("all");
+  }
+
+  async function handleSaveLinkedin(volunteerId: string) {
+    setBusyKey(`linkedin-${volunteerId}`);
+    const result = await updateVolunteerLinkedin(volunteerId, tempLinkedin);
+    setBusyKey(null);
+
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+
+    setVolunteers((current) =>
+      current.map((v) => (v.id === volunteerId ? { ...v, linkedin: result.data.linkedin } : v)),
+    );
+    setEditingLinkedinFor(null);
   }
 
   async function handleRemoveAssignment(volunteerId: string, assignmentId: number) {
@@ -446,6 +475,7 @@ export function VolunteersBoard({
                   shiftLead: shift.shiftLead,
                   tectonicResponsible: shift.tectonicResponsible,
                   isTemplate: shift.isTemplate,
+                  templateKey: shift.templateKey,
                   status: "pending" as const,
                   checkedInAt: null,
                 },
@@ -470,15 +500,17 @@ export function VolunteersBoard({
             volunteers from shifts.
           </p>
         </div>
-        {!readOnly && (
-          <button
-            type="button"
-            onClick={() => setAddVolunteerOpen(true)}
-            className="shrink-0 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-          >
-            + Add volunteer
-          </button>
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          {!readOnly && (
+            <button
+              type="button"
+              onClick={() => setAddVolunteerOpen(true)}
+              className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+            >
+              + Add volunteer
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (
@@ -490,7 +522,7 @@ export function VolunteersBoard({
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <input
           type="text"
-          placeholder="Search by name, email or volunteer ID..."
+          placeholder="Search by name, email, volunteer ID or shift ID..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="min-w-64 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
@@ -683,6 +715,65 @@ export function VolunteersBoard({
                         "—"
                       )}
                     </dd>
+                    <dt className="text-slate-400">LinkedIn</dt>
+                    <dd className="text-slate-600">
+                      {editingLinkedinFor === volunteer.id ? (
+                        <span className="flex items-center gap-1.5">
+                          <input
+                            type="text"
+                            autoFocus
+                            placeholder="linkedin.com/in/..."
+                            value={tempLinkedin}
+                            onChange={(e) => setTempLinkedin(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleSaveLinkedin(volunteer.id);
+                              if (e.key === "Escape") setEditingLinkedinFor(null);
+                            }}
+                            className="w-40 rounded-lg border border-indigo-300 px-2 py-1 text-xs"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleSaveLinkedin(volunteer.id)}
+                            disabled={busyKey === `linkedin-${volunteer.id}`}
+                            className="rounded-full bg-indigo-600 px-2 py-1 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                          >
+                            ✓
+                          </button>
+                        </span>
+                      ) : volunteer.linkedin ? (
+                        <span className="flex items-center gap-2">
+                          <a
+                            href={ensureHttpUrl(volunteer.linkedin)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-indigo-600 hover:underline"
+                          >
+                            View profile ↗
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingLinkedinFor(volunteer.id);
+                              setTempLinkedin(volunteer.linkedin);
+                            }}
+                            className="text-xs text-slate-400 hover:text-indigo-500"
+                          >
+                            Edit
+                          </button>
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingLinkedinFor(volunteer.id);
+                            setTempLinkedin("");
+                          }}
+                          className="text-xs font-medium text-slate-400 hover:text-indigo-500"
+                        >
+                          + Add LinkedIn
+                        </button>
+                      )}
+                    </dd>
                   </dl>
 
                   <div className="mt-3">
@@ -737,6 +828,7 @@ export function VolunteersBoard({
                     shirtSize: "",
                     emergencyContactName: "",
                     emergencyPhone: "",
+                    linkedin: "",
                     assignments: [],
                   },
                 ]);

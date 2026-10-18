@@ -141,6 +141,7 @@ export type ShiftDirectoryEntry = {
   shiftLead: string;
   tectonicResponsible: string;
   isTemplate: boolean;
+  templateKey: string;
   volunteersNeeded: number;
   // Count of active (pending/confirmed, non-cancelled) assignments — used to
   // flag a shift that's already fully staffed when picking a shift for a
@@ -177,6 +178,7 @@ export async function getShiftDirectory(
     shiftLead: shift.shift_lead ?? "",
     tectonicResponsible: shift.tectonic_responsible ?? "",
     isTemplate: templateShiftIds.has(shift.id),
+    templateKey: templateShiftIds.has(shift.id) ? (shift.volunteer ?? "") : "",
     volunteersNeeded: shift.volunteers_needed,
     assignedCount: assignedCountByShift.get(shift.id) ?? 0,
   }));

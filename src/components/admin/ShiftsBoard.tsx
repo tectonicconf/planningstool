@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import type { PlanningShift } from "@/lib/adminPlanning";
 import {
   createShift,
@@ -19,6 +20,7 @@ import {
   computeHoursBetween,
 } from "@/lib/constants";
 import { splitShiftLeads, hasTectonicResponsible } from "@/lib/shiftLead";
+import { templateHref } from "@/lib/templateLink";
 
 function formatShortDate(date: string) {
   return new Date(`${date}T00:00:00`).toLocaleDateString("en-GB", {
@@ -170,7 +172,11 @@ export function ShiftsBoard({ initialShifts }: { initialShifts: PlanningShift[] 
         q &&
         !shift.id.toLowerCase().includes(q) &&
         !shift.shiftTitle.toLowerCase().includes(q) &&
-        !shift.shiftLead.toLowerCase().includes(q)
+        !shift.shiftLead.toLowerCase().includes(q) &&
+        !shift.assignments.some(
+          (a) =>
+            a.volunteerName.toLowerCase().includes(q) || a.volunteerId.toLowerCase().includes(q),
+        )
       )
         return false;
 
@@ -360,13 +366,15 @@ export function ShiftsBoard({ initialShifts }: { initialShifts: PlanningShift[] 
             Manage shift leads and how many volunteers each shift needs.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setCreateOpen(true)}
-          className="shrink-0 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-        >
-          + Add shift
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+          >
+            + Add shift
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -378,7 +386,7 @@ export function ShiftsBoard({ initialShifts }: { initialShifts: PlanningShift[] 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <input
           type="text"
-          placeholder="Search by shift name, ID or shift lead"
+          placeholder="Search by shift name, shift ID, shift lead, volunteer or volunteer ID"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="min-w-64 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
@@ -676,14 +684,6 @@ export function ShiftsBoard({ initialShifts }: { initialShifts: PlanningShift[] 
                         <p className="font-semibold text-slate-900">
                           {shift.shiftTitle || shift.roleCategory}
                         </p>
-                        {shift.isTemplate && (
-                          <span
-                            title="Part of a multi-block template — see the volunteer's Rotation shift"
-                            className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700"
-                          >
-                            Template
-                          </span>
-                        )}
                         <PencilIcon className="text-slate-400 opacity-0 transition-opacity group-hover:opacity-100" />
                       </div>
 
@@ -707,6 +707,16 @@ export function ShiftsBoard({ initialShifts }: { initialShifts: PlanningShift[] 
                         </span>
                       </div>
                     </button>
+
+                    {shift.isTemplate && (
+                      <Link
+                        href={templateHref(shift.id)}
+                        title="Part of a multi-block template — click to see it on the Templates tab"
+                        className="shrink-0 self-start rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-200"
+                      >
+                        Template
+                      </Link>
+                    )}
 
                     <button
                       type="button"

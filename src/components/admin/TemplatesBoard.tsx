@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { TemplateGroup, PlanningShift, PlanningAssignment } from "@/lib/adminPlanning";
-import type { VolunteerRow } from "@/lib/adminVolunteers";
+import type { VolunteerRow, VolunteerAssignment } from "@/lib/adminVolunteers";
 import {
   addVolunteerToShift,
   removeAssignment,
@@ -16,6 +16,7 @@ import {
 import { Modal } from "@/components/Modal";
 import { ROLE_STYLES, DEFAULT_ROLE_STYLE } from "@/lib/constants";
 import { formatShiftLead, hasTectonicResponsible } from "@/lib/shiftLead";
+import { shiftAnchorId } from "@/lib/templateLink";
 
 function formatShortDate(date: string) {
   return new Date(`${date}T00:00:00`).toLocaleDateString("en-GB", {
@@ -62,6 +63,9 @@ export function TemplatesBoard({
   const [addVolunteerShiftId, setAddVolunteerShiftId] = useState<string | null>(null);
   const [addVolunteerQuery, setAddVolunteerQuery] = useState("");
   const [addVolunteerOverride, setAddVolunteerOverride] = useState(false);
+  const [addVolunteerGroupKey, setAddVolunteerGroupKey] = useState<string | null>(null);
+  const [addVolunteerGroupQuery, setAddVolunteerGroupQuery] = useState("");
+  const [addVolunteerGroupOverride, setAddVolunteerGroupOverride] = useState(false);
 
   const filteredGroups = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -70,11 +74,16 @@ export function TemplatesBoard({
     return groups.filter((group) =>
       group.blocks.some(
         (block) =>
+          block.id.toLowerCase().includes(query) ||
           block.shiftTitle.toLowerCase().includes(query) ||
           block.location.toLowerCase().includes(query) ||
           block.roleCategory.toLowerCase().includes(query) ||
           block.shiftLead.toLowerCase().includes(query) ||
-          block.assignments.some((a) => a.volunteerName.toLowerCase().includes(query)),
+          block.assignments.some(
+            (a) =>
+              a.volunteerName.toLowerCase().includes(query) ||
+              a.volunteerId.toLowerCase().includes(query),
+          ),
       ),
     );
   }, [groups, searchQuery]);
@@ -178,6 +187,7 @@ export function TemplatesBoard({
                   shiftLead: shift.shiftLead,
                   tectonicResponsible: shift.tectonicResponsible,
                   isTemplate: shift.isTemplate,
+                  templateKey: shift.templateKey,
                   status: "pending" as const,
                   checkedInAt: null,
                 },
@@ -191,8 +201,86 @@ export function TemplatesBoard({
     setAddVolunteerQuery("");
   }
 
+  // Adds the same volunteer to every block of a template at once — the
+  // group is one Rotation shift to a volunteer, so assigning someone to it
+  // should mean all of it, not having to repeat "+ Add volunteer" per block.
+  async function handleAddVolunteerToGroup(
+    group: TemplateGroup,
+    volunteer: VolunteerRow,
+    force: boolean,
+  ) {
+    setBusyKey(`addgroup-${group.key}-${volunteer.id}`);
+    const results = await Promise.all(
+      group.blocks.map((block) => addVolunteerToShift(block.id, volunteer.id, { force })),
+    );
+    setBusyKey(null);
+
+    const firstFailure = results.find((r) => !r.ok);
+    if (firstFailure && !firstFailure.ok) {
+      setError(firstFailure.error);
+    }
+
+    const newAssignments: VolunteerAssignment[] = [];
+
+    group.blocks.forEach((block, i) => {
+      const result = results[i];
+      if (!result.ok) return;
+
+      const assignmentId = result.data.assignmentId;
+
+      updateBlock(block.id, (b) => ({
+        ...b,
+        assignments: [
+          ...b.assignments,
+          {
+            assignmentId,
+            volunteerId: volunteer.id,
+            volunteerName: volunteer.name,
+            status: "pending" as const,
+            checkedInAt: null,
+          },
+        ],
+      }));
+
+      newAssignments.push({
+        assignmentId,
+        shiftId: block.id,
+        date: block.date,
+        endDate: block.endDate,
+        slot: block.slot,
+        startTime: block.startTime,
+        endTime: block.endTime,
+        location: block.location,
+        roleCategory: block.roleCategory,
+        shiftTitle: block.shiftTitle,
+        room: block.room,
+        shiftLead: block.shiftLead,
+        tectonicResponsible: block.tectonicResponsible,
+        isTemplate: block.isTemplate,
+        templateKey: block.templateKey,
+        status: "pending",
+        checkedInAt: null,
+      });
+    });
+
+    if (newAssignments.length > 0) {
+      setVolunteers((current) =>
+        current.map((v) =>
+          v.id === volunteer.id ? { ...v, assignments: [...v.assignments, ...newAssignments] } : v,
+        ),
+      );
+    }
+
+    if (!firstFailure) {
+      setAddVolunteerGroupKey(null);
+      setAddVolunteerGroupQuery("");
+    }
+  }
+
   const addVolunteerShift =
     groups.flatMap((g) => g.blocks).find((block) => block.id === addVolunteerShiftId) ?? null;
+
+  const addVolunteerGroup = groups.find((g) => g.key === addVolunteerGroupKey) ?? null;
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
@@ -212,7 +300,7 @@ export function TemplatesBoard({
       <div className="mt-4 flex items-center gap-3">
         <input
           type="text"
-          placeholder="Search by shift, location, lead or volunteer..."
+          placeholder="Search by shift ID, shift, location, lead, volunteer or volunteer ID..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="min-w-64 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
@@ -256,7 +344,14 @@ export function TemplatesBoard({
                     {last.endTime}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-slate-600">
+                <div className="flex items-center gap-3 text-sm text-slate-600">
+                  <button
+                    type="button"
+                    onClick={() => setAddVolunteerGroupKey(group.key)}
+                    className="rounded-full bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+                  >
+                    + Add volunteer to Rotation shift
+                  </button>
                   <span>
                     {totals.assigned} / {totals.needed} assigned
                   </span>
@@ -272,7 +367,8 @@ export function TemplatesBoard({
                   return (
                     <div
                       key={block.id}
-                      className={`rounded-lg border bg-white p-3 ${style.cardClassName}`}
+                      id={shiftAnchorId(block.id)}
+                      className={`scroll-mt-6 rounded-lg border bg-white p-3 ${style.cardClassName}`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2">
@@ -506,6 +602,147 @@ export function TemplatesBoard({
           </div>
         </Modal>
       )}
+
+      {addVolunteerGroup &&
+        (() => {
+          const blocks = addVolunteerGroup.blocks;
+          const first = blocks[0];
+          const last = blocks[blocks.length - 1];
+          const combinedShiftInfo = {
+            date: first.date,
+            endDate: last.endDate,
+            slot: first.slot,
+            startTime: first.startTime,
+            endTime: last.endTime,
+          };
+          const sameLocation = blocks.every((b) => b.location === first.location);
+
+          return (
+            <Modal
+              onClose={() => {
+                setAddVolunteerGroupKey(null);
+                setAddVolunteerGroupQuery("");
+                setAddVolunteerGroupOverride(false);
+              }}
+            >
+              <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-bold">
+                      Add volunteer to all {blocks.length} blocks
+                    </h3>
+                    <p className="text-sm text-slate-500">
+                      {sameLocation ? first.location : "Multiple locations"} ·{" "}
+                      {formatShortDate(first.date)} · {first.startTime}–{last.endTime}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAddVolunteerGroupOverride((current) => !current)}
+                    className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                      addVolunteerGroupOverride
+                        ? "border-red-300 bg-red-50 text-red-700"
+                        : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    {addVolunteerGroupOverride ? "Override: on" : "Override"}
+                  </button>
+                </div>
+
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="Search by name, email or volunteer ID..."
+                  value={addVolunteerGroupQuery}
+                  onChange={(e) => setAddVolunteerGroupQuery(e.target.value)}
+                  className="mt-4 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                />
+
+                {addVolunteerGroupOverride ? (
+                  <p className="mt-1 rounded-lg bg-red-50 px-2 py-1.5 text-xs text-red-700">
+                    Override is on — every volunteer is shown, including ones who
+                    aren&apos;t available or already have an overlapping shift.
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs text-slate-400">
+                    Only volunteers who are available and have no overlapping shift across the
+                    whole combined block are shown.
+                  </p>
+                )}
+
+                <div className="mt-3 max-h-64 overflow-y-auto">
+                  {volunteers
+                    .filter((v) => {
+                      const query = addVolunteerGroupQuery.trim().toLowerCase();
+                      if (!query) return true;
+                      return (
+                        v.name.toLowerCase().includes(query) ||
+                        v.email.toLowerCase().includes(query) ||
+                        v.id.toLowerCase().includes(query)
+                      );
+                    })
+                    .filter(
+                      (v) =>
+                        !blocks.some((block) =>
+                          block.assignments.some((a) => a.volunteerId === v.id),
+                        ),
+                    )
+                    .filter((v) => {
+                      if (addVolunteerGroupOverride) return true;
+
+                      const activeShifts = v.assignments
+                        .filter((a) => a.status !== "cancelled")
+                        .map((a) => ({
+                          date: a.date,
+                          endDate: a.endDate,
+                          startTime: a.startTime,
+                          endTime: a.endTime,
+                        }));
+
+                      return (
+                        isVolunteerAvailableForShift(v.availability, combinedShiftInfo) &&
+                        !hasOverlap(combinedShiftInfo, activeShifts)
+                      );
+                    })
+                    .slice(0, 30)
+                    .map((volunteer) => {
+                      const atLimit = hasReachedShiftPreference(volunteer);
+
+                      return (
+                        <button
+                          key={volunteer.id}
+                          type="button"
+                          onClick={() =>
+                            handleAddVolunteerToGroup(
+                              addVolunteerGroup,
+                              volunteer,
+                              addVolunteerGroupOverride,
+                            )
+                          }
+                          disabled={busyKey === `addgroup-${addVolunteerGroup.key}-${volunteer.id}`}
+                          className={`flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm disabled:opacity-50 ${
+                            atLimit ? "bg-orange-50 hover:bg-orange-100" : "hover:bg-slate-50"
+                          }`}
+                        >
+                          <span className="flex items-center gap-1.5">
+                            {atLimit && (
+                              <span
+                                title="Already at their preferred shift count — try not to assign more"
+                                className="h-2 w-2 shrink-0 rounded-full bg-orange-400"
+                              />
+                            )}
+                            {volunteer.name}
+                            <span className="ml-2 text-xs text-slate-400">{volunteer.email}</span>
+                          </span>
+                          <span className="text-indigo-600">+</span>
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+            </Modal>
+          );
+        })()}
     </div>
   );
 }

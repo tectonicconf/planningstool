@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import type { PlanningShift, PlanningAssignment } from "@/lib/adminPlanning";
 import type { VolunteerRow } from "@/lib/adminVolunteers";
 import {
@@ -18,6 +19,7 @@ import {
 import { Modal } from "@/components/Modal";
 import { ROLE_CATEGORIES, ROLE_STYLES, DEFAULT_ROLE_STYLE, TIME_SLOTS } from "@/lib/constants";
 import { splitShiftLeads, formatShiftLead, hasTectonicResponsible } from "@/lib/shiftLead";
+import { templateHref } from "@/lib/templateLink";
 
 function formatShortDate(date: string) {
   return new Date(`${date}T00:00:00`).toLocaleDateString("en-GB", {
@@ -129,7 +131,12 @@ export function PlanningBoard({
         return false;
       if (
         query &&
-        !shift.assignments.some((a) => a.volunteerName.toLowerCase().includes(query))
+        !shift.id.toLowerCase().includes(query) &&
+        !shift.assignments.some(
+          (a) =>
+            a.volunteerName.toLowerCase().includes(query) ||
+            a.volunteerId.toLowerCase().includes(query),
+        )
       )
         return false;
       return true;
@@ -287,6 +294,7 @@ export function PlanningBoard({
                   shiftLead: shift.shiftLead,
                   tectonicResponsible: shift.tectonicResponsible,
                   isTemplate: shift.isTemplate,
+                  templateKey: shift.templateKey,
                   status: "pending" as const,
                   checkedInAt: null,
                 },
@@ -407,7 +415,7 @@ export function PlanningBoard({
 
         <input
           type="text"
-          placeholder="Search volunteers..."
+          placeholder="Search by volunteer, volunteer ID or shift ID..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="ml-auto rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
@@ -511,12 +519,13 @@ export function PlanningBoard({
                                 </div>
                                 <span className="font-mono text-[10px] text-slate-400">{shift.id}</span>
                                 {shift.isTemplate && (
-                                  <span
-                                    title="Part of a multi-block template — see the volunteer's Rotation shift"
-                                    className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700"
+                                  <Link
+                                    href={templateHref(shift.id)}
+                                    title="Part of a multi-block template — click to see it on the Templates tab"
+                                    className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-200"
                                   >
                                     Template
-                                  </span>
+                                  </Link>
                                 )}
                               </div>
                               {!readOnly && (

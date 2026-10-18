@@ -140,6 +140,26 @@ export async function updateTectonicResponsible(
   return { ok: true, data: { tectonicResponsible: value } };
 }
 
+export async function updateVolunteerLinkedin(
+  volunteerId: string,
+  linkedin: string,
+): Promise<ActionResult<{ linkedin: string }>> {
+  const value = linkedin.trim();
+
+  // Column is `"LinkedIn"` (mixed-case, quoted) rather than the table's
+  // usual snake_case — see adminData.ts.
+  const { error } = await supabaseAdmin
+    .from("volunteers")
+    .update({ LinkedIn: value || null })
+    .eq("id", volunteerId);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  return { ok: true, data: { linkedin: value } };
+}
+
 // Full-detail edit for an existing shift — everything the create form
 // collects except volunteersNeeded/shiftLead/tectonicResponsible, which have
 // their own dedicated inline controls and actions above.
