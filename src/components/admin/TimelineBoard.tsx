@@ -73,6 +73,33 @@ function minutesFromDayStart(dayDate: string, date: string, time: string): numbe
   return (point - dayStart) / 60000;
 }
 
+function locationRoomKey(location: string, room: string): string {
+  return `${location}|||${room}`;
+}
+
+// "Backup" shifts are floaters with no real fixed location — whatever
+// placeholder ended up in their location/room fields (often inconsistent
+// between rows, e.g. "TBC" vs "Back-up") isn't meaningful grouping
+// information, so they're all pooled into one canonical bucket regardless
+// of what's actually in those fields, instead of scattering across however
+// many different placeholder strings happen to appear in the data.
+const BACKUP_ROLE_CATEGORY = "Backup";
+
+function timelineGroupKey(shift: PlanningShift): string {
+  if (shift.roleCategory === BACKUP_ROLE_CATEGORY) {
+    return locationRoomKey(BACKUP_ROLE_CATEGORY, "");
+  }
+  return locationRoomKey(shift.location, shift.room);
+}
+
+type TimelineRow = {
+  key: string;
+  location: string;
+  room: string;
+  isBackup: boolean;
+  shifts: PlanningShift[];
+};
+
 export function TimelineBoard({
   initialShifts,
   volunteers: initialVolunteers,
@@ -156,6 +183,72 @@ export function TimelineBoard({
       );
   }, [shiftsForDate, roleFilter, shiftLeadFilter, searchQuery]);
 
+  // Shifts that don't overlap in time and share the same location+room are
+  // packed onto the same row (like a resource/Gantt timeline) instead of
+  // each getting its own — computed purely from date/time/location, so this
+  // keeps working automatically for any future year's shift data with no
+  // hardcoding. Greedy interval packing per room: sort by start time, place
+  // each shift on the first lane whose last shift has already ended, else
+  // open a new lane (only needed if a room is genuinely double-booked).
+  const timelineRows = useMemo<TimelineRow[]>(() => {
+    const byRoom = new Map<string, PlanningShift[]>();
+    for (const shift of filteredShifts) {
+      const key = timelineGroupKey(shift);
+      const list = byRoom.get(key) ?? [];
+      list.push(shift);
+      byRoom.set(key, list);
+    }
+
+    const rows: TimelineRow[] = [];
+
+    for (const [key, roomShifts] of byRoom) {
+      const sorted = [...roomShifts].sort(
+        (a, b) =>
+          minutesFromDayStart(activeDate, a.date, a.startTime) -
+          minutesFromDayStart(activeDate, b.date, b.startTime),
+      );
+
+      const lanes: PlanningShift[][] = [];
+
+      for (const shift of sorted) {
+        const shiftStart = minutesFromDayStart(activeDate, shift.date, shift.startTime);
+        const lane = lanes.find((candidate) => {
+          const last = candidate[candidate.length - 1];
+          return minutesFromDayStart(activeDate, last.endDate, last.endTime) <= shiftStart;
+        });
+
+        if (lane) {
+          lane.push(shift);
+        } else {
+          lanes.push([shift]);
+        }
+      }
+
+      lanes.forEach((laneShifts, laneIndex) => {
+        const isBackup = laneShifts[0].roleCategory === BACKUP_ROLE_CATEGORY;
+        rows.push({
+          key: `${key}###${laneIndex}`,
+          location: isBackup ? BACKUP_ROLE_CATEGORY : laneShifts[0].location,
+          room: isBackup ? "" : laneShifts[0].room,
+          isBackup,
+          shifts: laneShifts,
+        });
+      });
+    }
+
+    return rows.sort((a, b) => {
+      // Backup rows always last, regardless of when they happen — their
+      // location is a placeholder, not a real scheduling signal.
+      if (a.isBackup !== b.isBackup) return a.isBackup ? 1 : -1;
+
+      const aStart = minutesFromDayStart(activeDate, a.shifts[0].date, a.shifts[0].startTime);
+      const bStart = minutesFromDayStart(activeDate, b.shifts[0].date, b.shifts[0].startTime);
+      return (
+        aStart - bStart || a.location.localeCompare(b.location) || a.room.localeCompare(b.room)
+      );
+    });
+  }, [filteredShifts, activeDate]);
+
   const legendCategories = useMemo(
     () => Array.from(new Set(shiftsForDate.map((s) => s.roleCategory))).sort(),
     [shiftsForDate],
@@ -189,6 +282,23 @@ export function TimelineBoard({
 
   function percentFor(minutes: number) {
     return ((minutes - gridStartHour * 60) / (totalHours * 60)) * 100;
+  }
+
+  // Matches the minWidth set on the scrollable track below — used to turn a
+  // bar's percentage width back into a real pixel width, so we can estimate
+  // whether its title text will actually fit instead of guessing from the
+  // percentage alone (which means nothing on its own without the track's
+  // real rendered width).
+  const trackWidthPx = isMobile ? Math.max(420, totalHours * 44) : Math.max(720, totalHours * 72);
+
+  // Rough average glyph width at this font size — good enough to decide
+  // in/out, not meant to be pixel-exact (an actual DOM measurement per bar
+  // would need a ref + layout effect for every shift, which is a lot of
+  // machinery for a cosmetic threshold).
+  function titleFitsInBar(title: string, barWidthPercent: number): boolean {
+    const barWidthPx = (barWidthPercent / 100) * trackWidthPx;
+    const estimatedTitleWidthPx = title.length * 5.5;
+    return estimatedTitleWidthPx <= barWidthPx - 12;
   }
 
   // pending + confirmed
@@ -445,7 +555,7 @@ export function TimelineBoard({
       <div className="mt-3 max-h-[75vh] overflow-auto rounded-xl border border-slate-200 bg-white">
         <div style={{ minWidth: isMobile ? Math.max(420, totalHours * 44) : Math.max(720, totalHours * 72) }}>
           <div className="sticky top-0 z-10 flex border-b border-slate-200 bg-slate-50 py-2 text-xs font-medium text-slate-500">
-            <div className="hidden w-64 shrink-0 px-3 sm:block">Shift</div>
+            <div className="hidden w-72 shrink-0 px-3 sm:block">Location</div>
             <div className="relative flex-1">
               {hourMarks.map((hour) => {
                 // Centering every label works for the ones in the middle,
@@ -468,136 +578,148 @@ export function TimelineBoard({
             </div>
           </div>
 
-          {filteredShifts.length === 0 && (
+          {timelineRows.length === 0 && (
             <p className="px-4 py-6 text-center text-sm text-slate-500">
               No shifts match the current filters.
             </p>
           )}
 
-          {filteredShifts.map((shift) => {
-            const style = roleStyle(shift.roleCategory);
-            const filled = shift.assignments.length;
-            const needed = Math.max(1, shift.volunteersNeeded);
-            const filledPct = Math.min(100, Math.round((filled / needed) * 100));
-            const openSpots = shift.volunteersNeeded - shift.assignments.length;
+          {timelineRows.map((row) => {
+            const expandedShift = row.shifts.find((s) => s.id === expandedShiftId) ?? null;
+            const expandedStyle = expandedShift ? roleStyle(expandedShift.roleCategory) : null;
+            const openSpots = expandedShift
+              ? expandedShift.volunteersNeeded - expandedShift.assignments.length
+              : 0;
 
-            const barStart = minutesFromDayStart(activeDate, shift.date, shift.startTime);
-            const barEnd = minutesFromDayStart(activeDate, shift.endDate, shift.endTime);
-            const barLeft = percentFor(barStart);
-            const barWidth = Math.max(2, percentFor(barEnd) - barLeft);
+            const rowShiftData = row.shifts.map((shift) => {
+              const style = roleStyle(shift.roleCategory);
+              const filled = shift.assignments.length;
+              const needed = Math.max(1, shift.volunteersNeeded);
+              const filledPct = Math.min(100, Math.round((filled / needed) * 100));
 
-            const expanded = expandedShiftId === shift.id;
+              const barStart = minutesFromDayStart(activeDate, shift.date, shift.startTime);
+              const barEnd = minutesFromDayStart(activeDate, shift.endDate, shift.endTime);
+              const barLeft = percentFor(barStart);
+              const barWidth = Math.max(2, percentFor(barEnd) - barLeft);
+              const crossesDay = shift.endDate !== shift.date || shift.date !== activeDate;
+              const title = shift.shiftTitle || shift.roleCategory;
+              const fits = titleFitsInBar(title, barWidth);
+
+              return { shift, style, filled, filledPct, barLeft, barWidth, crossesDay, title, fits };
+            });
 
             return (
-              <div key={shift.id}>
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => toggleExpand(shift.id)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      toggleExpand(shift.id);
-                    }
-                  }}
-                  className="flex cursor-pointer border-b border-slate-50 hover:bg-slate-50"
-                >
-                  <div className="hidden w-64 shrink-0 px-3 py-3 sm:block">
-                    <div className="flex items-center gap-1.5">
-                      <p className="truncate text-sm font-semibold text-slate-900">
-                        {shift.shiftTitle || shift.roleCategory}
-                      </p>
-                      <span className="shrink-0 font-mono text-[10px] text-slate-400">
-                        {shift.id}
+              <div key={row.key}>
+                <div className="flex border-b border-slate-50">
+                  <div className="hidden w-72 shrink-0 px-3 py-3 sm:block">
+                    <p className="truncate text-sm font-semibold text-slate-900">
+                      {row.location}
+                    </p>
+                    {row.room && (
+                      <p className="truncate text-xs text-slate-500">{row.room}</p>
+                    )}
+                  </div>
+
+                  <div className="flex-1 px-2 py-2">
+                    <div className="relative h-16 sm:h-[60px]">
+                      {hourMarks.map((hour) => (
+                        <div
+                          key={hour}
+                          className="absolute top-0 bottom-0 border-l border-slate-100"
+                          style={{ left: `${percentFor(hour * 60)}%` }}
+                        />
+                      ))}
+
+                      {rowShiftData.map(({ shift, style, filled, filledPct, barLeft, barWidth, crossesDay, title, fits }) => (
+                        <button
+                          key={shift.id}
+                          type="button"
+                          onClick={() => toggleExpand(shift.id)}
+                          className={`absolute inset-y-2 overflow-hidden rounded-md border text-left hover:brightness-95 ${
+                            expandedShiftId === shift.id
+                              ? "border-indigo-400 ring-2 ring-indigo-200"
+                              : "border-slate-200"
+                          }`}
+                          style={{ left: `${barLeft}%`, width: `${barWidth}%` }}
+                          title={`${title} · ${shift.id} · ${shift.startTime}–${shift.endTime}${crossesDay ? " (+1d)" : ""} · ${filled} / ${shift.volunteersNeeded} assigned`}
+                        >
+                          <div className="flex h-full">
+                            <div className={style.barLightClassName} style={{ width: `${filledPct}%` }} />
+                            <div className="bg-slate-200" style={{ width: `${100 - filledPct}%` }} />
+                          </div>
+                          <span className="absolute inset-0 flex flex-col justify-center gap-0.5 overflow-hidden px-1.5">
+                            <span className="flex w-full items-center justify-between gap-1">
+                              <span className="shrink-0 text-[10px] font-semibold text-slate-700">
+                                {shift.startTime}–{shift.endTime}
+                              </span>
+                              <span className="shrink-0 text-[10px] font-semibold text-slate-700">
+                                {filled}/{shift.volunteersNeeded}
+                              </span>
+                            </span>
+                            {fits && (
+                              <span className="w-full truncate text-[10px] text-slate-600">
+                                {title}
+                              </span>
+                            )}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* A title that doesn't fit its own bar goes here
+                        instead of being silently truncated away — tinted
+                        with that shift's own light color so it still reads
+                        as "belonging to" the bar above it. */}
+                    {rowShiftData.some((d) => !d.fits) && (
+                      <div className="relative mt-1 h-4">
+                        {rowShiftData
+                          .filter((d) => !d.fits)
+                          .map(({ shift, style, barLeft, title }) => (
+                            <span
+                              key={shift.id}
+                              className={`absolute truncate rounded px-1 text-[10px] font-medium text-slate-700 ${style.barLightClassName}`}
+                              style={{ left: `${barLeft}%`, maxWidth: `calc(100% - ${barLeft}%)` }}
+                              title={title}
+                            >
+                              {title}
+                            </span>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {expandedShift && expandedStyle && (
+                  <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+                      <span className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ${expandedStyle.badgeClassName}`}>
+                        <span>{expandedStyle.emoji}</span>
+                        {expandedShift.roleCategory}
                       </span>
-                      {shift.isTemplate && (
+                      <span className="font-mono text-[10px] text-slate-400">{expandedShift.id}</span>
+                      {expandedShift.isTemplate && (
                         <Link
-                          href={templateHref(shift.id)}
-                          onClick={(event) => event.stopPropagation()}
+                          href={templateHref(expandedShift.id)}
                           title="Part of a multi-block template — click to see it on the Templates tab"
-                          className="shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-200"
+                          className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-200"
                         >
                           Template
                         </Link>
                       )}
-                    </div>
-                    <p className="truncate text-xs text-slate-500">
-                      {shift.location}
-                      {shift.room && ` · ${shift.room}`} · {shift.startTime}–{shift.endTime}
-                      {(shift.endDate !== shift.date || shift.date !== activeDate) && (
-                        <span
-                          title={
-                            shift.date !== activeDate
-                              ? `Clock date is ${shift.date} — shown here as the tail end of ${activeDate}'s evening`
-                              : `Ends ${shift.endDate}`
-                          }
-                          className="ml-1 font-semibold text-amber-600"
-                        >
-                          +1d
-                        </span>
+                      {expandedShift.shiftLead && (
+                        <span>Shift lead: {formatShiftLead(expandedShift.shiftLead)}</span>
                       )}
-                    </p>
-                  </div>
-
-                  <div className="relative h-16 flex-1 px-2 py-2 sm:h-[60px]">
-                    {hourMarks.map((hour) => (
-                      <div
-                        key={hour}
-                        className="absolute top-0 bottom-0 border-l border-slate-100"
-                        style={{ left: `${percentFor(hour * 60)}%` }}
-                      />
-                    ))}
-                    {/* On a phone there's no separate label column (hidden
-                        above), so the shift's name/time live inside the bar
-                        itself — stacked above the count — instead of a
-                        floating label outside it that only added another
-                        thing to scroll past. */}
-                    <div
-                      className="absolute inset-y-2 overflow-hidden rounded-md border border-slate-200"
-                      style={{ left: `${barLeft}%`, width: `${barWidth}%` }}
-                      title={`${shift.roleCategory} · ${filled} / ${shift.volunteersNeeded} assigned`}
-                    >
-                      <div className="flex h-full">
-                        <div className={style.barLightClassName} style={{ width: `${filledPct}%` }} />
-                        <div className="bg-slate-200" style={{ width: `${100 - filledPct}%` }} />
-                      </div>
-                      <span className="absolute inset-0 flex flex-col items-center justify-center gap-0.5 overflow-hidden px-1 text-center">
-                        <span className="w-full truncate text-[10px] font-medium text-slate-600 sm:hidden">
-                          {shift.shiftTitle || shift.roleCategory} · {shift.startTime}–{shift.endTime}
-                        </span>
-                        <span className="truncate text-[11px] font-semibold text-slate-700">
-                          {filled} / {shift.volunteersNeeded}
-                        </span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {expanded && (
-                  <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
-                      <span className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ${style.badgeClassName}`}>
-                        <span>{style.emoji}</span>
-                        {shift.roleCategory}
-                      </span>
-                      <span className="font-mono text-[10px] text-slate-400">{shift.id}</span>
-                      {shift.isTemplate && (
-                        <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
-                          Template
-                        </span>
+                      {hasTectonicResponsible(expandedShift.tectonicResponsible) && (
+                        <span>Tectonic responsible: {expandedShift.tectonicResponsible}</span>
                       )}
-                      {shift.shiftLead && <span>Shift lead: {formatShiftLead(shift.shiftLead)}</span>}
-                      {hasTectonicResponsible(shift.tectonicResponsible) && (
-                        <span>Tectonic responsible: {shift.tectonicResponsible}</span>
-                      )}
-                      {shift.eventContext && <span>Context: {shift.eventContext}</span>}
+                      {expandedShift.eventContext && <span>Context: {expandedShift.eventContext}</span>}
                     </div>
 
                     {/* Content-width chips, not equal grid columns — a name
                         and a Remove button don't need a whole stretched grid
                         cell to themselves. */}
                     <div className="mt-3 flex flex-wrap gap-2">
-                      {shift.assignments.map((assignment) => (
+                      {expandedShift.assignments.map((assignment) => (
                         <div
                           key={assignment.assignmentId}
                           className="flex min-w-[140px] flex-col gap-1 rounded-md bg-white px-2 py-1.5 text-xs"
@@ -614,7 +736,7 @@ export function TimelineBoard({
                             {!readOnly && (
                               <button
                                 type="button"
-                                onClick={() => handleRemoveVolunteer(shift, assignment.assignmentId)}
+                                onClick={() => handleRemoveVolunteer(expandedShift, assignment.assignmentId)}
                                 disabled={busyKey === `remove-${assignment.assignmentId}`}
                                 className="rounded bg-red-50 px-1.5 py-0.5 text-red-600 hover:bg-red-100 disabled:opacity-50"
                               >
@@ -625,7 +747,7 @@ export function TimelineBoard({
                           {assignment.status === "confirmed" && (
                             <button
                               type="button"
-                              onClick={() => handleToggleCheckedIn(shift, assignment)}
+                              onClick={() => handleToggleCheckedIn(expandedShift, assignment)}
                               disabled={busyKey === `checkin-${assignment.assignmentId}`}
                               title={
                                 assignment.checkedInAt
@@ -654,7 +776,7 @@ export function TimelineBoard({
                     {!readOnly && (
                       <button
                         type="button"
-                        onClick={() => setAddVolunteerShiftId(shift.id)}
+                        onClick={() => setAddVolunteerShiftId(expandedShift.id)}
                         className="mt-3 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
                       >
                         + Add volunteer
@@ -667,7 +789,7 @@ export function TimelineBoard({
           })}
 
           <div className="flex border-t-2 border-slate-300 bg-slate-50">
-            <div className="hidden w-64 shrink-0 px-3 py-2 text-xs font-semibold text-slate-600 sm:block">
+            <div className="hidden w-72 shrink-0 px-3 py-2 text-xs font-semibold text-slate-600 sm:block">
               Scheduled / hour
             </div>
             <div className="relative flex-1" style={{ height: 32 }}>

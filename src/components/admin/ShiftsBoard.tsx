@@ -111,6 +111,11 @@ export function ShiftsBoard({ initialShifts }: { initialShifts: PlanningShift[] 
   const [typeFilter, setTypeFilter] = useState("all");
   const [shiftLeadFilter, setShiftLeadFilter] = useState("all");
   const [tbcOnly, setTbcOnly] = useState(false);
+  // Shifts just resolved out of TBC while the "TBC" filter is on stay
+  // visible instead of vanishing from the list the instant they're fixed —
+  // that disappearing act read as "it didn't work" even when it did.
+  // Cleared whenever the TBC filter itself is toggled off/on again.
+  const [recentlyResolvedIds, setRecentlyResolvedIds] = useState<Set<string>>(new Set());
   const [dateFilter, setDateFilter] = useState("all");
   const [locationFilter, setLocationFilter] = useState("all");
   const [createOpen, setCreateOpen] = useState(false);
@@ -185,7 +190,12 @@ export function ShiftsBoard({ initialShifts }: { initialShifts: PlanningShift[] 
       if (shiftLeadFilter !== "all" && !realLeads(shift.shiftLead).includes(shiftLeadFilter))
         return false;
 
-      if (tbcOnly && realLeads(shift.shiftLead).length > 0) return false;
+      if (
+        tbcOnly &&
+        realLeads(shift.shiftLead).length > 0 &&
+        !recentlyResolvedIds.has(shift.id)
+      )
+        return false;
 
       if (dateFilter !== "all" && shift.date !== dateFilter) return false;
 
@@ -197,13 +207,23 @@ export function ShiftsBoard({ initialShifts }: { initialShifts: PlanningShift[] 
 
       return true;
     });
-  }, [sortedShifts, query, typeFilter, shiftLeadFilter, tbcOnly, dateFilter, locationFilter]);
+  }, [
+    sortedShifts,
+    query,
+    typeFilter,
+    shiftLeadFilter,
+    tbcOnly,
+    recentlyResolvedIds,
+    dateFilter,
+    locationFilter,
+  ]);
 
   function clearFilters() {
     setQuery("");
     setTypeFilter("all");
     setShiftLeadFilter("all");
     setTbcOnly(false);
+    setRecentlyResolvedIds(new Set());
     setDateFilter("all");
     setLocationFilter("all");
   }
@@ -229,6 +249,7 @@ export function ShiftsBoard({ initialShifts }: { initialShifts: PlanningShift[] 
     setShifts((current) =>
       current.map((s) => (s.id === shift.id ? { ...s, shiftLead: result.data.shiftLead } : s)),
     );
+    setRecentlyResolvedIds((current) => new Set(current).add(shift.id));
     setAddingLeadFor(null);
     setNewLeadName("");
   }
@@ -422,7 +443,10 @@ export function ShiftsBoard({ initialShifts }: { initialShifts: PlanningShift[] 
           <input
             type="checkbox"
             checked={tbcOnly}
-            onChange={(e) => setTbcOnly(e.target.checked)}
+            onChange={(e) => {
+              setTbcOnly(e.target.checked);
+              setRecentlyResolvedIds(new Set());
+            }}
           />
           TBC
         </label>
