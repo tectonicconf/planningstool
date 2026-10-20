@@ -145,11 +145,13 @@ export function TimelineBoard({
 
   const [roleFilter, setRoleFilter] = useState("all");
   const [shiftLeadFilter, setShiftLeadFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "confirmed">("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   function clearFilters() {
     setRoleFilter("all");
     setShiftLeadFilter("all");
+    setStatusFilter("all");
     setSearchQuery("");
   }
 
@@ -165,6 +167,8 @@ export function TimelineBoard({
       .filter((shift) => {
         if (roleFilter !== "all" && shift.roleCategory !== roleFilter) return false;
         if (shiftLeadFilter !== "all" && !splitShiftLeads(shift.shiftLead).includes(shiftLeadFilter))
+          return false;
+        if (statusFilter !== "all" && !shift.assignments.some((a) => a.status === statusFilter))
           return false;
         if (
           query &&
@@ -182,7 +186,7 @@ export function TimelineBoard({
         (a, b) =>
           a.startTime.localeCompare(b.startTime) || a.location.localeCompare(b.location),
       );
-  }, [shiftsForDate, roleFilter, shiftLeadFilter, searchQuery]);
+  }, [shiftsForDate, roleFilter, shiftLeadFilter, statusFilter, searchQuery]);
 
   // Shifts that don't overlap in time and share the same location+room are
   // packed onto the same row (like a resource/Gantt timeline) instead of
@@ -518,6 +522,16 @@ export function TimelineBoard({
           ))}
         </select>
 
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as "all" | "pending" | "confirmed")}
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+        >
+          <option value="all">All statuses</option>
+          <option value="pending">Has pending</option>
+          <option value="confirmed">Has confirmed</option>
+        </select>
+
         <button
           type="button"
           onClick={clearFilters}
@@ -596,6 +610,8 @@ export function TimelineBoard({
             const rowShiftData = row.shifts.map((shift) => {
               const style = roleStyle(shift.roleCategory);
               const filled = shift.assignments.length;
+              const confirmedCount = shift.assignments.filter((a) => a.status === "confirmed").length;
+              const pendingCount = shift.assignments.filter((a) => a.status === "pending").length;
               const needed = Math.max(1, shift.volunteersNeeded);
               const filledPct = Math.min(100, Math.round((filled / needed) * 100));
 
@@ -607,7 +623,19 @@ export function TimelineBoard({
               const title = shift.shiftTitle || shift.roleCategory;
               const fits = titleFitsInBar(title, barWidth);
 
-              return { shift, style, filled, filledPct, barLeft, barWidth, crossesDay, title, fits };
+              return {
+                shift,
+                style,
+                filled,
+                confirmedCount,
+                pendingCount,
+                filledPct,
+                barLeft,
+                barWidth,
+                crossesDay,
+                title,
+                fits,
+              };
             });
 
             return (
@@ -632,40 +660,59 @@ export function TimelineBoard({
                         />
                       ))}
 
-                      {rowShiftData.map(({ shift, style, filled, filledPct, barLeft, barWidth, crossesDay, title, fits }) => (
-                        <button
-                          key={shift.id}
-                          type="button"
-                          onClick={() => toggleExpand(shift.id)}
-                          className={`absolute inset-y-2 overflow-hidden rounded-md border text-left hover:brightness-95 ${
-                            expandedShiftId === shift.id
-                              ? "border-indigo-400 ring-2 ring-indigo-200"
-                              : "border-slate-200"
-                          }`}
-                          style={{ left: `${barLeft}%`, width: `${barWidth}%` }}
-                          title={`${title} · ${shift.id} · ${shift.startTime}–${shift.endTime}${crossesDay ? " (+1d)" : ""} · ${filled} / ${shift.volunteersNeeded} assigned`}
-                        >
-                          <div className="flex h-full">
-                            <div className={style.barLightClassName} style={{ width: `${filledPct}%` }} />
-                            <div className="bg-slate-200" style={{ width: `${100 - filledPct}%` }} />
-                          </div>
-                          <span className="absolute inset-0 flex flex-col justify-center gap-0.5 overflow-hidden px-1.5">
-                            <span className="flex w-full items-center justify-between gap-1">
-                              <span className="shrink-0 text-[10px] font-semibold text-slate-700">
-                                {shift.startTime}–{shift.endTime}
+                      {rowShiftData.map(
+                        ({
+                          shift,
+                          style,
+                          confirmedCount,
+                          pendingCount,
+                          filledPct,
+                          barLeft,
+                          barWidth,
+                          crossesDay,
+                          title,
+                          fits,
+                        }) => (
+                          <button
+                            key={shift.id}
+                            type="button"
+                            onClick={() => toggleExpand(shift.id)}
+                            className={`absolute inset-y-2 overflow-hidden rounded-md border text-left hover:brightness-95 ${
+                              expandedShiftId === shift.id
+                                ? "border-indigo-400 ring-2 ring-indigo-200"
+                                : "border-slate-200"
+                            }`}
+                            style={{ left: `${barLeft}%`, width: `${barWidth}%` }}
+                            title={`${title} · ${shift.id} · ${shift.startTime}–${shift.endTime}${crossesDay ? " (+1d)" : ""} · ${confirmedCount} confirmed + ${pendingCount} pending / ${shift.volunteersNeeded} needed`}
+                          >
+                            <div className="flex h-full">
+                              <div className={style.barLightClassName} style={{ width: `${filledPct}%` }} />
+                              <div className="bg-slate-200" style={{ width: `${100 - filledPct}%` }} />
+                            </div>
+                            <span className="absolute inset-0 flex flex-col justify-center gap-0.5 overflow-hidden px-1.5">
+                              <span className="flex w-full items-center justify-between gap-1">
+                                <span className="shrink-0 text-[10px] font-semibold text-slate-700">
+                                  {shift.startTime}–{shift.endTime}
+                                </span>
+                                {/* Always shown, independent of the status filter above —
+                                    confirmed (green) and pending (blue) broken out
+                                    separately rather than one merged "filled" count. */}
+                                <span className="shrink-0 rounded-md bg-white px-1.5 py-0.5 text-[10px] font-semibold shadow-sm">
+                                  <span className="text-emerald-600">{confirmedCount}</span>
+                                  <span className="text-slate-400">+</span>
+                                  <span className="text-sky-600">{pendingCount}</span>
+                                  <span className="text-slate-700">/{shift.volunteersNeeded}</span>
+                                </span>
                               </span>
-                              <span className="shrink-0 text-[10px] font-semibold text-slate-700">
-                                {filled}/{shift.volunteersNeeded}
-                              </span>
+                              {fits && (
+                                <span className="w-full truncate text-[10px] text-slate-600">
+                                  {title}
+                                </span>
+                              )}
                             </span>
-                            {fits && (
-                              <span className="w-full truncate text-[10px] text-slate-600">
-                                {title}
-                              </span>
-                            )}
-                          </span>
-                        </button>
-                      ))}
+                          </button>
+                        ),
+                      )}
                     </div>
 
                     {/* A title that doesn't fit its own bar goes here
