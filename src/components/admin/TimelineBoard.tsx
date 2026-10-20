@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useSyncExternalStore } from "react";
+import { useSyncedState } from "@/lib/useSyncedState";
 import Link from "next/link";
 import type { PlanningShift, PlanningAssignment } from "@/lib/adminPlanning";
 import type { VolunteerRow } from "@/lib/adminVolunteers";
@@ -109,8 +110,8 @@ export function TimelineBoard({
   volunteers: VolunteerRow[];
   readOnly?: boolean;
 }) {
-  const [shifts, setShifts] = useState(initialShifts);
-  const [volunteers, setVolunteers] = useState(initialVolunteers);
+  const [shifts, setShifts] = useSyncedState(initialShifts);
+  const [volunteers, setVolunteers] = useSyncedState(initialVolunteers);
   const [error, setError] = useState<string | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [expandedShiftId, setExpandedShiftId] = useState<string | null>(null);

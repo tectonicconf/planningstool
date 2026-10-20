@@ -26,6 +26,11 @@ export type VolunteerAssignment = {
 
 export type VolunteerRow = {
   id: string;
+  // `name` is the derived display string below; firstName/lastName are kept
+  // separately too so an edit form can populate two inputs without having to
+  // guess how to split a multi-word last name back out of `name`.
+  firstName: string;
+  lastName: string;
   name: string;
   email: string;
   phoneNumber: string;
@@ -81,9 +86,16 @@ export async function getVolunteersWithAssignments(
 
   return volunteerRows.map((volunteer) => ({
     id: volunteer.id,
-    name: `${volunteer.first_name} ${volunteer.last_name}`.trim(),
+    firstName: volunteer.first_name ?? "",
+    lastName: volunteer.last_name ?? "",
+    name: `${volunteer.first_name ?? ""} ${volunteer.last_name ?? ""}`.trim(),
     email: volunteer.email,
-    phoneNumber: volunteer.phone_number ?? "",
+    // `phone_number` is typed as a string here, but the underlying Postgres
+    // column is actually numeric — Supabase hands back a real JS `number`
+    // for it (confirmed on real rows), not a string. Any ``.trim()``/
+    // ``.replace()`` call downstream would throw on an uncoerced value, so
+    // it's normalized to a string here rather than trusting the column type.
+    phoneNumber: volunteer.phone_number != null ? String(volunteer.phone_number) : "",
     association: volunteer.association ?? "",
     availability: (volunteer.availability ?? "")
       .split(";")

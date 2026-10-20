@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSyncedState } from "@/lib/useSyncedState";
 import Link from "next/link";
 import type { VolunteerRow, VolunteerAssignmentStatus } from "@/lib/adminVolunteers";
 import type { ShiftDirectoryEntry } from "@/lib/adminPlanning";
@@ -10,6 +11,7 @@ import {
   removeAssignment,
   setAssignmentCheckedIn,
   updateVolunteerLinkedin,
+  updateVolunteerProfile,
   type ActionResult,
 } from "@/lib/adminActions";
 import {
@@ -26,6 +28,7 @@ import {
   ROLE_CATEGORIES,
   SHIFT_COUNT_PREFERENCES,
   AVAILABILITY_OPTIONS,
+  SHIRT_SIZES,
   availabilityValue,
 } from "@/lib/constants";
 import { formatShiftLead, splitShiftLeads, hasTectonicResponsible } from "@/lib/shiftLead";
@@ -269,7 +272,7 @@ export function VolunteersBoard({
   initialSearch?: string;
   readOnly?: boolean;
 }) {
-  const [volunteers, setVolunteers] = useState(initialVolunteers);
+  const [volunteers, setVolunteers] = useSyncedState(initialVolunteers);
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [statusFilter, setStatusFilter] = useState<"all" | VolunteerAssignmentStatus>("all");
   const [orgFilter, setOrgFilter] = useState("all");
@@ -285,6 +288,7 @@ export function VolunteersBoard({
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [editingLinkedinFor, setEditingLinkedinFor] = useState<string | null>(null);
   const [tempLinkedin, setTempLinkedin] = useState("");
+  const [editingVolunteerId, setEditingVolunteerId] = useState<string | null>(null);
 
   const organizations = useMemo(
     () =>
@@ -373,6 +377,42 @@ export function VolunteersBoard({
       current.map((v) => (v.id === volunteerId ? { ...v, linkedin: result.data.linkedin } : v)),
     );
     setEditingLinkedinFor(null);
+  }
+
+  async function handleSaveVolunteerProfile(
+    volunteerId: string,
+    input: Parameters<typeof updateVolunteerProfile>[1],
+  ) {
+    setBusyKey(`profile-${volunteerId}`);
+    const result = await updateVolunteerProfile(volunteerId, input);
+    setBusyKey(null);
+
+    if (!result.ok) {
+      setError(result.error);
+      return result;
+    }
+
+    setVolunteers((current) =>
+      current.map((v) =>
+        v.id === volunteerId
+          ? {
+              ...v,
+              firstName: input.firstName,
+              lastName: input.lastName,
+              name: result.data.name,
+              email: input.email,
+              phoneNumber: input.phoneNumber,
+              association: input.association,
+              linkedin: input.linkedin,
+              shirtSize: input.shirtSize,
+              emergencyContactName: input.emergencyContactName,
+              emergencyPhone: input.emergencyPhone,
+            }
+          : v,
+      ),
+    );
+    setEditingVolunteerId(null);
+    return result;
   }
 
   async function handleRemoveAssignment(volunteerId: string, assignmentId: number) {
@@ -478,6 +518,7 @@ export function VolunteersBoard({
   }
 
   const assignShiftVolunteer = volunteers.find((v) => v.id === assignShiftVolunteerId) ?? null;
+  const editingVolunteer = volunteers.find((v) => v.id === editingVolunteerId) ?? null;
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
@@ -652,7 +693,18 @@ export function VolunteersBoard({
                 <div className="min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="font-medium text-slate-900">{volunteer.name}</p>
+                      <p className="flex items-center gap-2 font-medium text-slate-900">
+                        {volunteer.name}
+                        {!readOnly && (
+                          <button
+                            type="button"
+                            onClick={() => setEditingVolunteerId(volunteer.id)}
+                            className="shrink-0 rounded-full border border-slate-200 px-2 py-0.5 text-[11px] font-medium text-slate-500 hover:bg-slate-50"
+                          >
+                            Edit
+                          </button>
+                        )}
+                      </p>
                       <p className="font-mono text-xs text-slate-400">{volunteer.id}</p>
                     </div>
                     <span className="shrink-0 text-xs text-slate-500">
@@ -805,6 +857,8 @@ export function VolunteersBoard({
                   ...current,
                   {
                     id: result.data.id,
+                    firstName: input.firstName,
+                    lastName: input.lastName,
                     name: `${input.firstName} ${input.lastName}`.trim(),
                     email: input.email,
                     phoneNumber: input.phoneNumber.replace(/[\s+]/g, ""),
@@ -826,6 +880,16 @@ export function VolunteersBoard({
 
               return result;
             }}
+          />
+        </Modal>
+      )}
+
+      {!readOnly && editingVolunteer && (
+        <Modal onClose={() => setEditingVolunteerId(null)}>
+          <EditVolunteerForm
+            volunteer={editingVolunteer}
+            onCancel={() => setEditingVolunteerId(null)}
+            onSubmit={(input) => handleSaveVolunteerProfile(editingVolunteer.id, input)}
           />
         </Modal>
       )}
@@ -1163,6 +1227,185 @@ function AddVolunteerForm({
           className="flex-1 rounded-full bg-indigo-600 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
         >
           Add volunteer
+        </button>
+      </div>
+    </div>
+  );
+}
+
+type EditVolunteerInput = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  association: string;
+  linkedin: string;
+  shirtSize: string;
+  emergencyContactName: string;
+  emergencyPhone: string;
+};
+
+function EditVolunteerForm({
+  volunteer,
+  onCancel,
+  onSubmit,
+}: {
+  volunteer: VolunteerRow;
+  onCancel: () => void;
+  onSubmit: (input: EditVolunteerInput) => Promise<ActionResult<{ name: string }>>;
+}) {
+  const [firstName, setFirstName] = useState(volunteer.firstName);
+  const [lastName, setLastName] = useState(volunteer.lastName);
+  const [email, setEmail] = useState(volunteer.email);
+  const [phoneNumber, setPhoneNumber] = useState(volunteer.phoneNumber);
+  const [association, setAssociation] = useState(volunteer.association);
+  const [linkedin, setLinkedin] = useState(volunteer.linkedin);
+  const [shirtSize, setShirtSize] = useState(volunteer.shirtSize);
+  const [emergencyContactName, setEmergencyContactName] = useState(volunteer.emergencyContactName);
+  const [emergencyPhone, setEmergencyPhone] = useState(volunteer.emergencyPhone);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function handleSubmit() {
+    setBusy(true);
+    setFormError(null);
+
+    const result = await onSubmit({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim(),
+      phoneNumber: phoneNumber.trim(),
+      association: association.trim(),
+      linkedin: linkedin.trim(),
+      shirtSize,
+      emergencyContactName: emergencyContactName.trim(),
+      emergencyPhone: emergencyPhone.trim(),
+    });
+
+    setBusy(false);
+
+    if (!result.ok) {
+      setFormError(result.error);
+    }
+  }
+
+  return (
+    <div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
+      <h3 className="text-lg font-bold">Edit volunteer</h3>
+
+      {formError && (
+        <p className="mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {formError}
+        </p>
+      )}
+
+      <div className="mt-4 flex flex-col gap-3">
+        <label className="text-sm">
+          First name
+          <input
+            type="text"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+          />
+        </label>
+        <label className="text-sm">
+          Last name
+          <input
+            type="text"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+          />
+        </label>
+        <label className="text-sm">
+          Email
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+          />
+        </label>
+        <label className="text-sm">
+          Phone number
+          <input
+            type="tel"
+            placeholder="+324XXXXXXXX"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+          />
+        </label>
+        <label className="text-sm">
+          Organization
+          <input
+            type="text"
+            value={association}
+            onChange={(e) => setAssociation(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+          />
+        </label>
+        <label className="text-sm">
+          LinkedIn
+          <input
+            type="text"
+            placeholder="linkedin.com/in/..."
+            value={linkedin}
+            onChange={(e) => setLinkedin(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+          />
+        </label>
+        <label className="text-sm">
+          T-shirt size
+          <select
+            value={shirtSize}
+            onChange={(e) => setShirtSize(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+          >
+            <option value="">Not specified</option>
+            {SHIRT_SIZES.map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-sm">
+          Emergency contact name
+          <input
+            type="text"
+            value={emergencyContactName}
+            onChange={(e) => setEmergencyContactName(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+          />
+        </label>
+        <label className="text-sm">
+          Emergency contact phone
+          <input
+            type="tel"
+            value={emergencyPhone}
+            onChange={(e) => setEmergencyPhone(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+          />
+        </label>
+      </div>
+
+      <div className="mt-6 flex gap-3">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 rounded-full border border-slate-200 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={handleSubmit}
+          className="flex-1 rounded-full bg-indigo-600 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+        >
+          Save changes
         </button>
       </div>
     </div>

@@ -1,9 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSyncedState } from "@/lib/useSyncedState";
 import type { PlanningShift, PlanningAssignment } from "@/lib/adminPlanning";
 import { setAssignmentCheckedIn, setAssignmentPeopleCheckedIn } from "@/lib/adminActions";
 import { ROLE_STYLES, DEFAULT_ROLE_STYLE } from "@/lib/constants";
+import { dailyCheckinColumnForDate } from "@/lib/dailyCheckin";
+
+export type DailyCheckinState = { daily1: boolean; daily2: boolean };
 
 function formatShortDate(date: string) {
   return new Date(`${date}T00:00:00`).toLocaleDateString("en-GB", {
@@ -37,8 +41,18 @@ function timeGroupKey(shift: PlanningShift): string {
   return `${shift.date}|||${shift.startTime}`;
 }
 
-export function CheckInBoard({ initialShifts }: { initialShifts: PlanningShift[] }) {
-  const [shifts, setShifts] = useState(initialShifts);
+export function CheckInBoard({
+  initialShifts,
+  initialDailyCheckins,
+}: {
+  initialShifts: PlanningShift[];
+  initialDailyCheckins: Record<string, DailyCheckinState>;
+}) {
+  const [shifts, setShifts] = useSyncedState(initialShifts);
+  // Per-volunteer, not per-assignment — a single shared map so updating one
+  // row (any shift, any time slot) for a volunteer updates every other row
+  // for that same volunteer at once, exactly like the underlying DB column.
+  const [dailyCheckins, setDailyCheckins] = useSyncedState(initialDailyCheckins);
   const [query, setQuery] = useState("");
   const [dateFilter, setDateFilter] = useState<string>(() => {
     const today = new Date().toISOString().slice(0, 10);
@@ -151,6 +165,19 @@ export function CheckInBoard({ initialShifts }: { initialShifts: PlanningShift[]
           : s,
       ),
     );
+
+    if (result.data.dailyCheckin) {
+      const { column, value } = result.data.dailyCheckin;
+      const key = column === "daily_checkin_1" ? "daily1" : "daily2";
+
+      setDailyCheckins((current) => ({
+        ...current,
+        [assignment.volunteerId]: {
+          ...(current[assignment.volunteerId] ?? { daily1: false, daily2: false }),
+          [key]: value,
+        },
+      }));
+    }
   }
 
   return (
@@ -262,6 +289,12 @@ export function CheckInBoard({ initialShifts }: { initialShifts: PlanningShift[]
                           Boolean(assignment.checkedInAt) !== assignment.peopleCheckedIn;
                         const busyPeople = busyKey === `people-${assignment.assignmentId}`;
                         const busyCheckin = busyKey === `checkin-${assignment.assignmentId}`;
+                        const dailyColumn = dailyCheckinColumnForDate(shift.date);
+                        const dailyChecked = dailyColumn
+                          ? dailyColumn === "daily_checkin_1"
+                            ? (dailyCheckins[assignment.volunteerId]?.daily1 ?? false)
+                            : (dailyCheckins[assignment.volunteerId]?.daily2 ?? false)
+                          : null;
 
                         return (
                           <div
@@ -302,6 +335,21 @@ export function CheckInBoard({ initialShifts }: { initialShifts: PlanningShift[]
                                 />
                                 Check-in
                               </label>
+                              {dailyColumn && (
+                                <label
+                                  className="flex items-center gap-1.5 text-xs text-slate-400"
+                                  title="Set automatically once this person is people-checked-in for any shift that day — not editable directly"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={Boolean(dailyChecked)}
+                                    disabled
+                                    readOnly
+                                    className="cursor-not-allowed"
+                                  />
+                                  Day
+                                </label>
+                              )}
                             </div>
                           </div>
                         );

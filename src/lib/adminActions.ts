@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { isVolunteerAvailableForShift, hasOverlap } from "@/lib/shiftEligibility";
 import { logActivity } from "@/lib/activityLog";
 import { sendCustomEmail } from "@/lib/email";
+import { dailyCheckinColumnForDate, type DailyCheckinColumn } from "@/lib/dailyCheckin";
 
 export type ActionResult<T = undefined> =
   | { ok: true; data: T }
@@ -159,6 +160,54 @@ export async function updateVolunteerLinkedin(
   }
 
   return { ok: true, data: { linkedin: value } };
+}
+
+// Full-detail edit for an existing volunteer's profile — everything the
+// Volunteers card displays as plain info (not the array-based availability /
+// shift-preference fields, which have their own intake flow). The emergency
+// contact is a single input client-side but two columns in the DB — the
+// first word becomes the first name, the rest the last name, mirroring how
+// `name` is already assembled from first_name/last_name everywhere else.
+export async function updateVolunteerProfile(
+  volunteerId: string,
+  input: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber: string;
+    association: string;
+    linkedin: string;
+    shirtSize: string;
+    emergencyContactName: string;
+    emergencyPhone: string;
+  },
+): Promise<ActionResult<{ name: string }>> {
+  const [emergencyFirstName, ...emergencyLastNameParts] = input.emergencyContactName
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  const { error } = await supabaseAdmin
+    .from("volunteers")
+    .update({
+      first_name: input.firstName.trim(),
+      last_name: input.lastName.trim(),
+      email: input.email.trim(),
+      phone_number: input.phoneNumber.trim() || null,
+      association: input.association.trim() || null,
+      LinkedIn: input.linkedin.trim() || null,
+      size: input.shirtSize || null,
+      emergency_first_name: emergencyFirstName || null,
+      emergency_last_name: emergencyLastNameParts.join(" ") || null,
+      emergency_phone: input.emergencyPhone.trim() || null,
+    })
+    .eq("id", volunteerId);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  return { ok: true, data: { name: `${input.firstName} ${input.lastName}`.trim() } };
 }
 
 // Full-detail edit for an existing shift — everything the create form
@@ -435,7 +484,12 @@ export async function setAssignmentCheckedIn(
 export async function setAssignmentPeopleCheckedIn(
   assignmentId: number,
   checkedIn: boolean,
-): Promise<ActionResult<{ peopleCheckedIn: boolean }>> {
+): Promise<
+  ActionResult<{
+    peopleCheckedIn: boolean;
+    dailyCheckin: { column: DailyCheckinColumn; value: boolean } | null;
+  }>
+> {
   const { data, error } = await supabaseAdmin
     .from("assignments")
     .update({ people_checkin: checkedIn })
@@ -447,17 +501,57 @@ export async function setAssignmentPeopleCheckedIn(
     return { ok: false, error: error.message };
   }
 
-  if (data) {
-    await logActivity({
-      eventType: checkedIn ? "people_checked_in" : "people_checked_out",
-      actorType: "admin",
-      volunteerId: data.volunteer_id,
-      shiftId: data.shift_id,
-      assignmentId,
-    });
+  if (!data) {
+    return { ok: true, data: { peopleCheckedIn: checkedIn, dailyCheckin: null } };
   }
 
-  return { ok: true, data: { peopleCheckedIn: checkedIn } };
+  await logActivity({
+    eventType: checkedIn ? "people_checked_in" : "people_checked_out",
+    actorType: "admin",
+    volunteerId: data.volunteer_id,
+    shiftId: data.shift_id,
+    assignmentId,
+  });
+
+  // Daily check-in is a per-volunteer, per-day flag, never set directly by
+  // an admin — it's recomputed here as "is this volunteer people-checked-in
+  // for *any* non-cancelled assignment on a shift that falls on this day".
+  let dailyCheckin: { column: DailyCheckinColumn; value: boolean } | null = null;
+
+  const { data: shiftRow } = await supabaseAdmin
+    .from("shifts")
+    .select("date")
+    .eq("id", data.shift_id)
+    .maybeSingle();
+
+  const column = shiftRow ? dailyCheckinColumnForDate(shiftRow.date) : null;
+
+  if (column) {
+    const { data: sameDateShifts } = await supabaseAdmin
+      .from("shifts")
+      .select("id")
+      .eq("date", shiftRow!.date);
+    const sameDateShiftIds = new Set((sameDateShifts ?? []).map((s) => s.id));
+
+    const { data: volunteerAssignments } = await supabaseAdmin
+      .from("assignments")
+      .select("shift_id, people_checkin, status")
+      .eq("volunteer_id", data.volunteer_id)
+      .neq("status", "cancelled");
+
+    const anyCheckedInThatDay = (volunteerAssignments ?? []).some(
+      (a) => sameDateShiftIds.has(a.shift_id) && a.people_checkin,
+    );
+
+    await supabaseAdmin
+      .from("volunteers")
+      .update({ [column]: anyCheckedInThatDay })
+      .eq("id", data.volunteer_id);
+
+    dailyCheckin = { column, value: anyCheckedInThatDay };
+  }
+
+  return { ok: true, data: { peopleCheckedIn: checkedIn, dailyCheckin } };
 }
 
 export async function createVolunteer(input: {
@@ -557,4 +651,19 @@ export async function sendBulkEmail(input: {
     ok: true,
     data: { sentCount: uniqueEmails.length - failedEmails.length, failedEmails },
   };
+}
+
+// The admin-side half of appSettings.ts's getCancellationsEnabled — toggles
+// whether volunteers can cancel an already-confirmed shift from the portal.
+export async function setCancellationsEnabled(enabled: boolean): Promise<ActionResult<{ enabled: boolean }>> {
+  const { error } = await supabaseAdmin
+    .from("app_settings")
+    .update({ allow_confirmed_cancellations: enabled })
+    .eq("id", 1);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  return { ok: true, data: { enabled } };
 }

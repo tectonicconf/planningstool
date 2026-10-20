@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSyncedState } from "@/lib/useSyncedState";
 import type { TemplateGroup, PlanningShift, PlanningAssignment } from "@/lib/adminPlanning";
 import type { VolunteerRow, VolunteerAssignment } from "@/lib/adminVolunteers";
 import {
@@ -55,8 +56,8 @@ export function TemplatesBoard({
   initialGroups: TemplateGroup[];
   volunteers: VolunteerRow[];
 }) {
-  const [groups, setGroups] = useState(initialGroups);
-  const [volunteers, setVolunteers] = useState(initialVolunteers);
+  const [groups, setGroups] = useSyncedState(initialGroups);
+  const [volunteers, setVolunteers] = useSyncedState(initialVolunteers);
   const [error, setError] = useState<string | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");

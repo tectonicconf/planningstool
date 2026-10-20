@@ -9,6 +9,7 @@ import {
   sendTemplateCancellationEmail,
 } from "@/lib/email";
 import { logActivity } from "@/lib/activityLog";
+import { getCancellationsEnabled } from "@/lib/appSettings";
 
 export type AssignmentResponse = "accept" | "decline";
 
@@ -49,6 +50,15 @@ export async function respondToAssignment(
     .eq("id", assignmentId)
     .eq("volunteer_id", volunteer.id)
     .maybeSingle();
+
+  // Only gates an actual cancel (was already confirmed) — declining a
+  // still-pending invite is always allowed regardless of this setting.
+  if (response === "decline" && before?.status === "confirmed" && !(await getCancellationsEnabled())) {
+    return {
+      ok: false,
+      error: "Cancelling a confirmed shift is currently disabled. Please contact the organizers.",
+    };
+  }
 
   const { data, error } = await supabaseAdmin
     .from("assignments")
@@ -161,6 +171,20 @@ export async function respondToAssignments(
     .in("id", assignmentIds)
     .eq("volunteer_id", volunteer.id);
   const statusBeforeById = new Map((before ?? []).map((row) => [row.id, row.status]));
+
+  // A template's blocks are accepted/declined as one unit (see the comment
+  // above), so if any of them is already confirmed this is a genuine cancel,
+  // not a decline of a still-pending invite — gate the whole batch rather
+  // than letting it cancel some blocks and silently skip others.
+  const anyAlreadyConfirmed = Array.from(statusBeforeById.values()).some(
+    (status) => status === "confirmed",
+  );
+  if (response === "decline" && anyAlreadyConfirmed && !(await getCancellationsEnabled())) {
+    return {
+      ok: false,
+      error: "Cancelling a confirmed shift is currently disabled. Please contact the organizers.",
+    };
+  }
 
   const { data, error } = await supabaseAdmin
     .from("assignments")

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSyncedState } from "@/lib/useSyncedState";
 import Link from "next/link";
 import type { PlanningShift } from "@/lib/adminPlanning";
 import {
@@ -106,7 +107,7 @@ type ShiftDetailsInput = {
 };
 
 export function ShiftsBoard({ initialShifts }: { initialShifts: PlanningShift[] }) {
-  const [shifts, setShifts] = useState(initialShifts);
+  const [shifts, setShifts] = useSyncedState(initialShifts);
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [shiftLeadFilter, setShiftLeadFilter] = useState("all");

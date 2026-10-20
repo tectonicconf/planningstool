@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSyncedState } from "@/lib/useSyncedState";
 import Link from "next/link";
 import type { PlanningShift, PlanningAssignment } from "@/lib/adminPlanning";
 import type { VolunteerRow } from "@/lib/adminVolunteers";
@@ -73,8 +74,8 @@ export function PlanningBoard({
   volunteers: VolunteerRow[];
   readOnly?: boolean;
 }) {
-  const [shifts, setShifts] = useState(initialShifts);
-  const [volunteers, setVolunteers] = useState(initialVolunteers);
+  const [shifts, setShifts] = useSyncedState(initialShifts);
+  const [volunteers, setVolunteers] = useSyncedState(initialVolunteers);
   const [error, setError] = useState<string | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [addVolunteerShiftId, setAddVolunteerShiftId] = useState<string | null>(

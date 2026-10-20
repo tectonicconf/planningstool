@@ -31,29 +31,32 @@ function PencilIcon() {
   );
 }
 
-export function AdminNav() {
+export function AdminNav({ children }: { children?: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <nav className="flex gap-2 border-b border-slate-200 bg-white px-6 py-3">
-      {LINKS.map((link) => {
-        const isActive = pathname === link.href;
+    <nav className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white px-6 py-3">
+      <div className="flex flex-wrap items-center gap-2">
+        {LINKS.map((link) => {
+          const isActive = pathname === link.href;
 
-        return (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-              isActive
-                ? "bg-indigo-100 text-indigo-700"
-                : "text-slate-600 hover:bg-slate-100"
-            }`}
-          >
-            {link.label}
-            {link.icon === "pencil" && <PencilIcon />}
-          </Link>
-        );
-      })}
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                isActive
+                  ? "bg-indigo-100 text-indigo-700"
+                  : "text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              {link.label}
+              {link.icon === "pencil" && <PencilIcon />}
+            </Link>
+          );
+        })}
+      </div>
+      {children}
     </nav>
   );
 }

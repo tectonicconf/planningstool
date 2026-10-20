@@ -120,7 +120,8 @@ export async function getUnassignedVolunteers(
     .map((v) => ({
       id: v.id,
       name: `${v.first_name} ${v.last_name}`.trim(),
-      phone: v.phone_number ?? "",
+      // phone_number is really numeric in Postgres — see adminData.ts.
+      phone: v.phone_number != null ? String(v.phone_number) : "",
       email: v.email,
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -168,9 +169,13 @@ function isBusyPastWednesdayCutoff(shift: { date: string; endDate: string; endTi
   return shift.endTime >= WEDNESDAY_LATE_CUTOFF;
 }
 
-// Groups each volunteer's active (pending/confirmed) assignments into
-// "shift units" — one unit per template they're part of, one per standalone
-// shift otherwise — to build the two Activity-tab lists described above.
+// Groups each volunteer's *confirmed* assignments into "shift units" — one
+// unit per template they're part of, one per standalone shift otherwise —
+// to build the two Activity-tab lists described above. Deliberately
+// confirmed-only, not pending too: a still-pending invite might never be
+// accepted, so counting it here would overstate how many shifts someone is
+// actually doing (getPlanningShifts itself keeps both; the confirmed filter
+// is applied here).
 export async function getVolunteerShiftCountLists(
   data?: AdminTables,
 ): Promise<VolunteerShiftCountLists> {
@@ -185,6 +190,8 @@ export async function getVolunteerShiftCountLists(
     const isLate = isBusyPastWednesdayCutoff(shift);
 
     for (const assignment of shift.assignments) {
+      if (assignment.status !== "confirmed") continue;
+
       const keys = unitKeysByVolunteer.get(assignment.volunteerId) ?? new Set<string>();
       keys.add(unitKey);
       unitKeysByVolunteer.set(assignment.volunteerId, keys);
@@ -203,7 +210,8 @@ export async function getVolunteerShiftCountLists(
       // defensively instead of trusting the column type.
       name: `${v.first_name ?? ""} ${v.last_name ?? ""}`.trim(),
       email: v.email ?? "",
-      phone: v.phone_number ?? "",
+      // phone_number is really numeric in Postgres — see adminData.ts.
+      phone: v.phone_number != null ? String(v.phone_number) : "",
       shiftCount: unitKeysByVolunteer.get(v.id)?.size ?? 0,
       hasLateShift: hasLateShiftByVolunteer.has(v.id),
     }))
@@ -251,7 +259,8 @@ export async function getRecentAssignmentUpdates(
             volunteerName: volunteer
               ? `${volunteer.first_name} ${volunteer.last_name}`.trim()
               : "Unknown volunteer",
-            volunteerPhone: volunteer?.phone_number ?? "",
+            // phone_number is really numeric in Postgres — see adminData.ts.
+            volunteerPhone: volunteer?.phone_number != null ? String(volunteer.phone_number) : "",
             updatedAt: assignment.updated_at,
             date: shift.date,
             startTime: shift.start_time,

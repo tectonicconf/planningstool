@@ -43,7 +43,12 @@ export type AdminTables = {
     first_name: string;
     last_name: string;
     email: string;
-    phone_number: string | null;
+    // Really a numeric column in Postgres (confirmed on real rows) despite
+    // the name/every other phone-ish column being text — Supabase returns a
+    // JS `number` for it. Coerced to a real string in
+    // getVolunteersWithAssignments (adminVolunteers.ts); don't call string
+    // methods on this raw field directly.
+    phone_number: string | number | null;
     association: string | null;
     availability: string | null;
     preferences: string | null;
@@ -58,6 +63,12 @@ export type AdminTables = {
     // (quoted) rather than the table's usual snake_case, so every query
     // touching it must reference this exact casing.
     LinkedIn: string | null;
+    // Per-day, per-volunteer attendance flags — see dailyCheckin.ts for the
+    // date each one corresponds to. Set automatically (never directly by an
+    // admin) whenever a people-check-in happens for a shift on that day —
+    // see setAssignmentPeopleCheckedIn in adminActions.ts.
+    daily_checkin_1: boolean | null;
+    daily_checkin_2: boolean | null;
   }[];
 };
 
@@ -80,7 +91,7 @@ export async function getAdminTables(): Promise<AdminTables> {
     supabaseAdmin
       .from("volunteers")
       .select(
-        "id, first_name, last_name, email, phone_number, association, availability, preferences, magic_link_token, shift_count_preference, quiz, size, emergency_first_name, emergency_last_name, emergency_phone, LinkedIn",
+        "id, first_name, last_name, email, phone_number, association, availability, preferences, magic_link_token, shift_count_preference, quiz, size, emergency_first_name, emergency_last_name, emergency_phone, LinkedIn, daily_checkin_1, daily_checkin_2",
       )
       .order("first_name"),
   ]);
