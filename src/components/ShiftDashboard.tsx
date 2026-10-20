@@ -24,18 +24,25 @@ type ScheduleEntry =
   | { type: "single"; shift: Shift }
   | { type: "template"; key: string; blocks: Shift[] };
 
+// Shown instead of the usual "are you sure" confirm step once an admin has
+// disabled cancelling an already-confirmed shift — see appSettings.ts.
+const PEOPLE_TEAM_WHATSAPP_DISPLAY = "+32 451 05 54 92";
+const PEOPLE_TEAM_WHATSAPP_LINK = "https://wa.me/32451055492";
+
 export function ShiftDashboard({
   token,
   firstName,
   initialShifts,
   initialQuizCompleted,
   openAcademyFlow = false,
+  cancellationsEnabled,
 }: {
   token: string;
   firstName: string;
   initialShifts: Shift[];
   initialQuizCompleted: boolean;
   openAcademyFlow?: boolean;
+  cancellationsEnabled: boolean;
 }) {
   // This component only ever renders after the server has confirmed the
   // token belongs to a real volunteer, so it's safe to remember it here —
@@ -417,29 +424,58 @@ export function ShiftDashboard({
       {templateDeclineTarget && (
         <Modal onClose={() => setTemplateDeclineTarget(null)}>
           <div className="w-full max-w-sm rounded-2xl border border-white/15 bg-[#0a0f35] p-6 text-white shadow-xl">
-            <h3 className="text-xl font-bold">Sad to see you go 😢</h3>
-            <p className="mt-2 text-sm text-white/70">
-              {templateDeclineTarget.some((block) => block.status === "confirmed")
-                ? `Are you sure you want to cancel all ${templateDeclineTarget.length} blocks of this rotation shift, including the ones you already confirmed? A rotation shift is all or nothing, so we'll look for someone to cover the whole thing instead.`
-                : `Are you sure you want to decline all ${templateDeclineTarget.length} blocks of this rotation shift? We'll look for someone to cover them instead.`}
-            </p>
-            <div className="mt-6 flex gap-3">
-              <button
-                type="button"
-                onClick={() => setTemplateDeclineTarget(null)}
-                className="flex-1 rounded-full border border-white/25 py-2 text-sm font-semibold text-white/90 hover:border-cyan-300/70"
-              >
-                Back
-              </button>
-              <button
-                type="button"
-                disabled={bulkUpdating}
-                onClick={handleDeclineBlocksConfirm}
-                className="flex-1 rounded-full bg-red-500/80 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50"
-              >
-                Yes, decline all
-              </button>
-            </div>
+            {!cancellationsEnabled &&
+            templateDeclineTarget.some((block) => block.status === "confirmed") ? (
+              <>
+                <h3 className="text-xl font-bold">Can&apos;t cancel through the app</h3>
+                <p className="mt-2 text-sm text-white/70">
+                  You can no longer cancel a confirmed shift through the platform. Call or text
+                  the People team on WhatsApp at{" "}
+                  <a
+                    href={PEOPLE_TEAM_WHATSAPP_LINK}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-cyan-300 underline"
+                  >
+                    {PEOPLE_TEAM_WHATSAPP_DISPLAY}
+                  </a>{" "}
+                  if you can no longer make it.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setTemplateDeclineTarget(null)}
+                  className="mt-6 w-full rounded-full border border-white/25 py-2 text-sm font-semibold text-white/90 hover:border-cyan-300/70"
+                >
+                  Got it
+                </button>
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-bold">Sad to see you go 😢</h3>
+                <p className="mt-2 text-sm text-white/70">
+                  {templateDeclineTarget.some((block) => block.status === "confirmed")
+                    ? `Are you sure you want to cancel all ${templateDeclineTarget.length} blocks of this rotation shift, including the ones you already confirmed? A rotation shift is all or nothing, so we'll look for someone to cover the whole thing instead.`
+                    : `Are you sure you want to decline all ${templateDeclineTarget.length} blocks of this rotation shift? We'll look for someone to cover them instead.`}
+                </p>
+                <div className="mt-6 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setTemplateDeclineTarget(null)}
+                    className="flex-1 rounded-full border border-white/25 py-2 text-sm font-semibold text-white/90 hover:border-cyan-300/70"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    disabled={bulkUpdating}
+                    onClick={handleDeclineBlocksConfirm}
+                    className="flex-1 rounded-full bg-red-500/80 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50"
+                  >
+                    Yes, decline all
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </Modal>
       )}
@@ -447,31 +483,59 @@ export function ShiftDashboard({
       {declineTarget && (
         <Modal onClose={() => setDeclineTarget(null)}>
           <div className="w-full max-w-sm rounded-2xl border border-white/15 bg-[#0a0f35] p-6 text-white shadow-xl">
-            <h3 className="text-xl font-bold">Sad to see you go 😢</h3>
-            <p className="mt-2 text-sm text-white/70">
-              {declineTarget.status === "confirmed"
-                ? "Are you sure you want to cancel this shift? We'll look for someone to cover it instead."
-                : "Are you sure you want to decline this shift? We'll look for someone to cover it instead."}
-            </p>
-            <div className="mt-6 flex gap-3">
-              <button
-                type="button"
-                onClick={() => setDeclineTarget(null)}
-                className="flex-1 rounded-full border border-white/25 py-2 text-sm font-semibold text-white/90 hover:border-cyan-300/70"
-              >
-                Back
-              </button>
-              <button
-                type="button"
-                disabled={updatingId === declineTarget.assignmentId}
-                onClick={handleDeclineConfirm}
-                className="flex-1 rounded-full bg-red-500/80 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50"
-              >
-                {declineTarget.status === "confirmed"
-                  ? "Yes, cancel"
-                  : "Yes, decline"}
-              </button>
-            </div>
+            {!cancellationsEnabled && declineTarget.status === "confirmed" ? (
+              <>
+                <h3 className="text-xl font-bold">Can&apos;t cancel through the app</h3>
+                <p className="mt-2 text-sm text-white/70">
+                  You can no longer cancel a confirmed shift through the platform. Call or text
+                  the People team on WhatsApp at{" "}
+                  <a
+                    href={PEOPLE_TEAM_WHATSAPP_LINK}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-cyan-300 underline"
+                  >
+                    {PEOPLE_TEAM_WHATSAPP_DISPLAY}
+                  </a>{" "}
+                  if you can no longer make it.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setDeclineTarget(null)}
+                  className="mt-6 w-full rounded-full border border-white/25 py-2 text-sm font-semibold text-white/90 hover:border-cyan-300/70"
+                >
+                  Got it
+                </button>
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-bold">Sad to see you go 😢</h3>
+                <p className="mt-2 text-sm text-white/70">
+                  {declineTarget.status === "confirmed"
+                    ? "Are you sure you want to cancel this shift? We'll look for someone to cover it instead."
+                    : "Are you sure you want to decline this shift? We'll look for someone to cover it instead."}
+                </p>
+                <div className="mt-6 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setDeclineTarget(null)}
+                    className="flex-1 rounded-full border border-white/25 py-2 text-sm font-semibold text-white/90 hover:border-cyan-300/70"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    disabled={updatingId === declineTarget.assignmentId}
+                    onClick={handleDeclineConfirm}
+                    className="flex-1 rounded-full bg-red-500/80 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50"
+                  >
+                    {declineTarget.status === "confirmed"
+                      ? "Yes, cancel"
+                      : "Yes, decline"}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </Modal>
       )}

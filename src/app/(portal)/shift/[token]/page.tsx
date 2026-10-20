@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getVolunteerByToken } from "@/lib/volunteers";
 import { getShiftsForVolunteer } from "@/lib/shifts";
+import { getCancellationsEnabled } from "@/lib/appSettings";
 import { ShiftDashboard } from "@/components/ShiftDashboard";
 
 export default async function ShiftPage(props: PageProps<"/shift/[token]">) {
@@ -12,7 +13,10 @@ export default async function ShiftPage(props: PageProps<"/shift/[token]">) {
     notFound();
   }
 
-  const shifts = await getShiftsForVolunteer(volunteer.id);
+  const [shifts, cancellationsEnabled] = await Promise.all([
+    getShiftsForVolunteer(volunteer.id),
+    getCancellationsEnabled(),
+  ]);
 
   return (
     <ShiftDashboard
@@ -21,6 +25,7 @@ export default async function ShiftPage(props: PageProps<"/shift/[token]">) {
       initialShifts={shifts}
       initialQuizCompleted={volunteer.quizCompleted}
       openAcademyFlow={searchParams.academy === "open"}
+      cancellationsEnabled={cancellationsEnabled}
     />
   );
 }

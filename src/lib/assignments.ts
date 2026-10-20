@@ -56,7 +56,7 @@ export async function respondToAssignment(
   if (response === "decline" && before?.status === "confirmed" && !(await getCancellationsEnabled())) {
     return {
       ok: false,
-      error: "Cancelling a confirmed shift is currently disabled. Please contact the organizers.",
+      error: "You can no longer cancel a confirmed shift through the platform. Call or text the People team on WhatsApp at +32 451 05 54 92 if you can no longer make it.",
     };
   }
 
@@ -182,7 +182,7 @@ export async function respondToAssignments(
   if (response === "decline" && anyAlreadyConfirmed && !(await getCancellationsEnabled())) {
     return {
       ok: false,
-      error: "Cancelling a confirmed shift is currently disabled. Please contact the organizers.",
+      error: "You can no longer cancel a confirmed shift through the platform. Call or text the People team on WhatsApp at +32 451 05 54 92 if you can no longer make it.",
     };
   }
 
