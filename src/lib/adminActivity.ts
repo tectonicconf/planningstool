@@ -50,17 +50,42 @@ export type UnassignedVolunteer = {
 // for the coverage bar at the top of the Activity page. Cancelled
 // assignments don't occupy a position (see README's capacity rules), so
 // "open" is whatever's left after pending + confirmed.
-export async function getShiftCoverageStats(
-  data?: AdminTables,
-): Promise<ShiftCoverageStats> {
+//
+// Broken down per shift date (rather than one event-wide total) so the
+// Activity page can let an admin click a day and see just that day's
+// numbers — DailyActivity.tsx sums every entry together for the "All days"
+// view, so there's no separate all-shifts variant of this function.
+export type DailyShiftCoverage = ShiftCoverageStats & { date: string };
+
+export async function getShiftCoverageByDay(data?: AdminTables): Promise<DailyShiftCoverage[]> {
   const { shiftRows, assignmentRows } = data ?? (await getAdminTables());
 
-  const totalNeeded = shiftRows.reduce((sum, s) => sum + s.volunteers_needed, 0);
-  const confirmed = assignmentRows.filter((a) => a.status === "confirmed").length;
-  const pending = assignmentRows.filter((a) => a.status === "pending").length;
-  const open = Math.max(0, totalNeeded - confirmed - pending);
+  const confirmedByShift = new Map<string, number>();
+  const pendingByShift = new Map<string, number>();
+  for (const a of assignmentRows) {
+    if (a.status === "confirmed") {
+      confirmedByShift.set(a.shift_id, (confirmedByShift.get(a.shift_id) ?? 0) + 1);
+    } else if (a.status === "pending") {
+      pendingByShift.set(a.shift_id, (pendingByShift.get(a.shift_id) ?? 0) + 1);
+    }
+  }
 
-  return { totalNeeded, confirmed, pending, open };
+  const byDate = new Map<string, { totalNeeded: number; confirmed: number; pending: number }>();
+  for (const shift of shiftRows) {
+    const entry = byDate.get(shift.date) ?? { totalNeeded: 0, confirmed: 0, pending: 0 };
+    entry.totalNeeded += shift.volunteers_needed;
+    entry.confirmed += confirmedByShift.get(shift.id) ?? 0;
+    entry.pending += pendingByShift.get(shift.id) ?? 0;
+    byDate.set(shift.date, entry);
+  }
+
+  return Array.from(byDate.entries())
+    .map(([date, totals]) => ({
+      date,
+      ...totals,
+      open: Math.max(0, totals.totalNeeded - totals.confirmed - totals.pending),
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 // Same idea as the coverage bar above, but for onboarding-quiz completion
@@ -231,8 +256,12 @@ export async function getVolunteerShiftCountLists(
 // one doesn't crowd the others out of a shared limit. The UI only shows the
 // first 10 of each per default (with a "Load all" button) — this `limit` is
 // just a server-side ceiling, kept generous since the whole table is small.
+// Confirmed alone passed 200 real rows partway through the event, which was
+// silently dropping the oldest ones — bumped well above the event's total
+// capacity (331 spots) so a day-filtered count (DailyActivity.tsx) is never
+// quietly short of the real per-day total shown in the coverage bar.
 export async function getRecentAssignmentUpdates(
-  limit = 200,
+  limit = 1000,
   data?: AdminTables,
 ): Promise<RecentAssignmentUpdates> {
   const { assignmentRows, volunteerRows, shiftRows } = data ?? (await getAdminTables());
