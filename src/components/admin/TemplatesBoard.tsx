@@ -161,6 +161,7 @@ export function TemplatesBoard({
           volunteerName: volunteer.name,
           status: "pending" as const,
           checkedInAt: null,
+          peopleCheckedIn: false,
         },
       ],
     }));
@@ -238,6 +239,7 @@ export function TemplatesBoard({
             volunteerName: volunteer.name,
             status: "pending" as const,
             checkedInAt: null,
+            peopleCheckedIn: false,
           },
         ],
       }));

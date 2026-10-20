@@ -265,6 +265,7 @@ export function PlanningBoard({
                   volunteerName: volunteer.name,
                   status: "pending" as const,
                   checkedInAt: null,
+                  peopleCheckedIn: false,
                 },
               ],
             }

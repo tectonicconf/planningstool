@@ -5,22 +5,26 @@ import {
   getQuizCompletionStats,
   getTshirtSizeStats,
   getUnassignedVolunteers,
+  getVolunteerShiftCountLists,
 } from "@/lib/adminActivity";
 import { ActivityFeed } from "@/components/admin/ActivityFeed";
 import { ShiftCoverageBar } from "@/components/admin/ShiftCoverageBar";
 import { QuizCompletionBar } from "@/components/admin/QuizCompletionBar";
 import { TshirtSizeBar } from "@/components/admin/TshirtSizeBar";
 import { UnassignedVolunteers } from "@/components/admin/UnassignedVolunteers";
+import { VolunteerShiftCountList } from "@/components/admin/VolunteerShiftCountList";
 
 export default async function AdminActivityPage() {
   const data = await getAdminTables();
-  const [updates, coverage, quizStats, tshirtStats, unassignedVolunteers] = await Promise.all([
-    getRecentAssignmentUpdates(200, data),
-    getShiftCoverageStats(data),
-    getQuizCompletionStats(data),
-    getTshirtSizeStats(data),
-    getUnassignedVolunteers(data),
-  ]);
+  const [updates, coverage, quizStats, tshirtStats, unassignedVolunteers, shiftCountLists] =
+    await Promise.all([
+      getRecentAssignmentUpdates(200, data),
+      getShiftCoverageStats(data),
+      getQuizCompletionStats(data),
+      getTshirtSizeStats(data),
+      getUnassignedVolunteers(data),
+      getVolunteerShiftCountLists(data),
+    ]);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
@@ -41,6 +45,19 @@ export default async function AdminActivityPage() {
 
       <div className="mt-6">
         <UnassignedVolunteers volunteers={unassignedVolunteers} />
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <VolunteerShiftCountList
+          title="Tectonic"
+          volunteers={shiftCountLists.oneShift}
+          emptyMessage="No one has a shift yet."
+        />
+        <VolunteerShiftCountList
+          title="Tecnotonic"
+          volunteers={shiftCountLists.twoShiftsOrLate}
+          emptyMessage="No one matches this right now."
+        />
       </div>
 
       <div className="mt-6">

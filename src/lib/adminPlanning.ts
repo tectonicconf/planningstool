@@ -6,6 +6,12 @@ export type PlanningAssignment = {
   volunteerName: string;
   status: "pending" | "confirmed";
   checkedInAt: string | null;
+  // A separate check: has this person physically checked in (e.g. at
+  // registration), distinct from checkedInAt (this specific shift). Kept
+  // apart so the Check-in tab can flag when one is set without the other —
+  // see CheckInBoard.tsx. A plain boolean (the underlying column doesn't
+  // store a timestamp, unlike checkedInAt).
+  peopleCheckedIn: boolean;
 };
 
 export type PlanningShift = {
@@ -65,6 +71,7 @@ export async function getPlanningShifts(
         namesById.get(assignment.volunteer_id) ?? "Unknown volunteer",
       status: assignment.status,
       checkedInAt: assignment.checked_in_at,
+      peopleCheckedIn: assignment.people_checkin ?? false,
     });
     assignmentsByShift.set(assignment.shift_id, list);
   }

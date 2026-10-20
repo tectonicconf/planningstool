@@ -8,6 +8,8 @@ export type ActivityEventType =
   | "removed"
   | "checked_in"
   | "checked_out"
+  | "people_checked_in"
+  | "people_checked_out"
   | "quiz_completed";
 
 export type ActivityActorType = "volunteer" | "admin";

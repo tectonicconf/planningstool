@@ -1,4 +1,5 @@
 import { getAdminTables, type AdminTables } from "@/lib/adminData";
+import { getPlanningShifts } from "@/lib/adminPlanning";
 import { SHIRT_SIZES } from "@/lib/constants";
 
 export type AssignmentUpdate = {
@@ -123,6 +124,96 @@ export async function getUnassignedVolunteers(
       email: v.email,
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export type VolunteerShiftSummary = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  // Counts a whole template as one shift, not one per block (see
+  // PlanningShift.templateKey in adminPlanning.ts) — a volunteer covering
+  // every block of one template has shiftCount 1, same as someone with a
+  // single standalone shift.
+  shiftCount: number;
+  hasLateShift: boolean;
+};
+
+export type VolunteerShiftCountLists = {
+  // One or more shifts (by the template-aware count above) — i.e. anyone
+  // with an active assignment at all.
+  oneShift: VolunteerShiftSummary[];
+  // Two or more shifts, OR any shift (any block, template or not) still
+  // running at or past the Wednesday cutoff below — the two conditions are
+  // independent, so someone with only one (late) shift appears here even
+  // though they're also in oneShift.
+  twoShiftsOrLate: VolunteerShiftSummary[];
+};
+
+const WEDNESDAY_LATE_CUTOFF = "18:31";
+
+function weekdayOf(dateStr: string): string {
+  return new Date(`${dateStr}T00:00:00`).toLocaleDateString("en-US", { weekday: "long" });
+}
+
+// "Still busy at 18:31 or later on Wednesday" — a shift counts if it starts
+// on a Wednesday and either runs past midnight (so it's still going well
+// beyond 18:31 that night) or its own end time on that same day is at or
+// after the cutoff. Computed from the weekday name rather than a hardcoded
+// date so this keeps working for next year's dates (see the Timeline tab's
+// automatic row-packing for the same reasoning).
+function isBusyPastWednesdayCutoff(shift: { date: string; endDate: string; endTime: string }): boolean {
+  if (weekdayOf(shift.date) !== "Wednesday") return false;
+  if (shift.endDate !== shift.date) return true;
+  return shift.endTime >= WEDNESDAY_LATE_CUTOFF;
+}
+
+// Groups each volunteer's active (pending/confirmed) assignments into
+// "shift units" — one unit per template they're part of, one per standalone
+// shift otherwise — to build the two Activity-tab lists described above.
+export async function getVolunteerShiftCountLists(
+  data?: AdminTables,
+): Promise<VolunteerShiftCountLists> {
+  const tables = data ?? (await getAdminTables());
+  const shifts = await getPlanningShifts(tables);
+
+  const unitKeysByVolunteer = new Map<string, Set<string>>();
+  const hasLateShiftByVolunteer = new Set<string>();
+
+  for (const shift of shifts) {
+    const unitKey = shift.isTemplate ? `template:${shift.templateKey}` : `shift:${shift.id}`;
+    const isLate = isBusyPastWednesdayCutoff(shift);
+
+    for (const assignment of shift.assignments) {
+      const keys = unitKeysByVolunteer.get(assignment.volunteerId) ?? new Set<string>();
+      keys.add(unitKey);
+      unitKeysByVolunteer.set(assignment.volunteerId, keys);
+
+      if (isLate) {
+        hasLateShiftByVolunteer.add(assignment.volunteerId);
+      }
+    }
+  }
+
+  const summaries: VolunteerShiftSummary[] = tables.volunteerRows
+    .map((v): VolunteerShiftSummary => ({
+      id: v.id,
+      // first_name/last_name/email are typed as non-null, but (like `quiz` —
+      // see CLAUDE.md) some rows read back null in practice, so coerce
+      // defensively instead of trusting the column type.
+      name: `${v.first_name ?? ""} ${v.last_name ?? ""}`.trim(),
+      email: v.email ?? "",
+      phone: v.phone_number ?? "",
+      shiftCount: unitKeysByVolunteer.get(v.id)?.size ?? 0,
+      hasLateShift: hasLateShiftByVolunteer.has(v.id),
+    }))
+    .filter((v) => v.shiftCount > 0)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  return {
+    oneShift: summaries.filter((v) => v.shiftCount >= 1),
+    twoShiftsOrLate: summaries.filter((v) => v.shiftCount >= 2 || v.hasLateShift),
+  };
 }
 
 // A lightweight activity feed built from the assignments' own current state

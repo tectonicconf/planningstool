@@ -31,6 +31,11 @@ export type AdminTables = {
     shift_id: string;
     status: "pending" | "confirmed" | "cancelled";
     checked_in_at: string | null;
+    // Separate from checked_in_at — see PlanningAssignment.peopleCheckedIn
+    // (adminPlanning.ts) for what distinguishes the two. A plain boolean
+    // (unlike checked_in_at's timestamp) — that's the column type as it was
+    // actually created, so the UI can't show *when* for this one.
+    people_checkin: boolean | null;
     updated_at: string;
   }[];
   volunteerRows: {
@@ -57,25 +62,38 @@ export type AdminTables = {
 };
 
 export async function getAdminTables(): Promise<AdminTables> {
-  const [{ data: shiftRows }, { data: assignmentRows }, { data: volunteerRows }] =
-    await Promise.all([
-      supabaseAdmin
-        .from("shifts")
-        .select(
-          "id, date, end_date, day, slot, start_time, end_time, hours, location, role_category, volunteers_needed, event_context, shift_lead, tectonic_responsible, shift, room, volunteer, extra_info",
-        )
-        .order("date")
-        .order("start_time"),
-      supabaseAdmin
-        .from("assignments")
-        .select("id, volunteer_id, shift_id, status, checked_in_at, updated_at"),
-      supabaseAdmin
-        .from("volunteers")
-        .select(
-          "id, first_name, last_name, email, phone_number, association, availability, preferences, magic_link_token, shift_count_preference, quiz, size, emergency_first_name, emergency_last_name, emergency_phone, LinkedIn",
-        )
-        .order("first_name"),
-    ]);
+  const [
+    { data: shiftRows, error: shiftsError },
+    { data: assignmentRows, error: assignmentsError },
+    { data: volunteerRows, error: volunteersError },
+  ] = await Promise.all([
+    supabaseAdmin
+      .from("shifts")
+      .select(
+        "id, date, end_date, day, slot, start_time, end_time, hours, location, role_category, volunteers_needed, event_context, shift_lead, tectonic_responsible, shift, room, volunteer, extra_info",
+      )
+      .order("date")
+      .order("start_time"),
+    supabaseAdmin
+      .from("assignments")
+      .select("id, volunteer_id, shift_id, status, checked_in_at, people_checkin, updated_at"),
+    supabaseAdmin
+      .from("volunteers")
+      .select(
+        "id, first_name, last_name, email, phone_number, association, availability, preferences, magic_link_token, shift_count_preference, quiz, size, emergency_first_name, emergency_last_name, emergency_phone, LinkedIn",
+      )
+      .order("first_name"),
+  ]);
+
+  // A query error (e.g. a column that doesn't exist yet in this
+  // environment) otherwise falls through silently — `?? []` below would mask
+  // it as "zero rows" instead of a failed fetch, which previously showed up
+  // as every volunteer looking unassigned rather than as a visible error.
+  if (shiftsError) console.error("getAdminTables: shifts query failed:", shiftsError.message);
+  if (assignmentsError)
+    console.error("getAdminTables: assignments query failed:", assignmentsError.message);
+  if (volunteersError)
+    console.error("getAdminTables: volunteers query failed:", volunteersError.message);
 
   return {
     shiftRows: shiftRows ?? [],

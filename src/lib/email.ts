@@ -140,6 +140,31 @@ export async function sendTemplateCancellationEmail({
   }
 }
 
+// Free-form admin broadcast (the Mail tab) — unlike the other functions
+// here, subject/body are whatever the admin typed, not a fixed template.
+// Always sent one recipient at a time (same as every other function in this
+// file) so a "to" never leaks the rest of the mailing list to each reader.
+export async function sendCustomEmail({
+  to,
+  subject,
+  text,
+}: {
+  to: string;
+  subject: string;
+  text: string;
+}) {
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject,
+    text,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 export async function sendCancellationEmail({
   to,
   firstName,

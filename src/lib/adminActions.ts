@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { supabaseAdmin } from "@/lib/supabase";
 import { isVolunteerAvailableForShift, hasOverlap } from "@/lib/shiftEligibility";
 import { logActivity } from "@/lib/activityLog";
+import { sendCustomEmail } from "@/lib/email";
 
 export type ActionResult<T = undefined> =
   | { ok: true; data: T }
@@ -428,6 +429,37 @@ export async function setAssignmentCheckedIn(
   return { ok: true, data: { checkedInAt } };
 }
 
+// Separate from setAssignmentCheckedIn above — see
+// PlanningAssignment.peopleCheckedIn for what distinguishes the two. A plain
+// boolean toggle (the column doesn't store a timestamp).
+export async function setAssignmentPeopleCheckedIn(
+  assignmentId: number,
+  checkedIn: boolean,
+): Promise<ActionResult<{ peopleCheckedIn: boolean }>> {
+  const { data, error } = await supabaseAdmin
+    .from("assignments")
+    .update({ people_checkin: checkedIn })
+    .eq("id", assignmentId)
+    .select("volunteer_id, shift_id")
+    .maybeSingle();
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  if (data) {
+    await logActivity({
+      eventType: checkedIn ? "people_checked_in" : "people_checked_out",
+      actorType: "admin",
+      volunteerId: data.volunteer_id,
+      shiftId: data.shift_id,
+      assignmentId,
+    });
+  }
+
+  return { ok: true, data: { peopleCheckedIn: checkedIn } };
+}
+
 export async function createVolunteer(input: {
   firstName: string;
   lastName: string;
@@ -486,4 +518,43 @@ export async function createVolunteer(input: {
   }
 
   return { ok: true, data: { id, magicLinkToken } };
+}
+
+// Sends one at a time (never a single Resend call with every recipient in
+// "to") so volunteers' addresses are never exposed to each other, matching
+// every other function in email.ts. Best-effort per recipient — one bad
+// address shouldn't stop the rest of the mailing from going out.
+export async function sendBulkEmail(input: {
+  recipients: { email: string }[];
+  subject: string;
+  body: string;
+}): Promise<ActionResult<{ sentCount: number; failedEmails: string[] }>> {
+  const subject = input.subject.trim();
+  const body = input.body.trim();
+
+  if (!subject || !body) {
+    return { ok: false, error: "Subject and body can't be empty." };
+  }
+
+  const uniqueEmails = Array.from(new Set(input.recipients.map((r) => r.email)));
+  if (uniqueEmails.length === 0) {
+    return { ok: false, error: "No recipients selected." };
+  }
+
+  const failedEmails: string[] = [];
+
+  await Promise.all(
+    uniqueEmails.map(async (email) => {
+      try {
+        await sendCustomEmail({ to: email, subject, text: body });
+      } catch {
+        failedEmails.push(email);
+      }
+    }),
+  );
+
+  return {
+    ok: true,
+    data: { sentCount: uniqueEmails.length - failedEmails.length, failedEmails },
+  };
 }

@@ -10,6 +10,8 @@ const LINKS = [
   { href: "/admin/templates", label: "Templates" },
   { href: "/admin/volunteers", label: "Volunteers" },
   { href: "/admin/activity", label: "Activity" },
+  { href: "/admin/mail", label: "Mail" },
+  { href: "/admin/checkin", label: "Check-in" },
 ];
 
 function PencilIcon() {
